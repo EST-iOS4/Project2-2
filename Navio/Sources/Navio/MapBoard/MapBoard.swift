@@ -41,7 +41,7 @@ public final class MapBoard: Sendable, ObservableObject {
     
     
     // action
-    public func updateLocationOnce() async {
+    public func updateLocation() async {
         // capture
         
         
@@ -82,14 +82,19 @@ public final class MapBoard: Sendable, ObservableObject {
         await LocationManager.shared.stopStreaming()
     }
     
-    public func loadLikedSpots() async { }
-    public func loadRecentSpots() async { }
+    public func loadLikedSpots() async {
+        fatalError()
+    }
+    public func loadRecentSpots() async {
+        fatalError()
+    }
     public func fetchFindSpots() async {
         // capture
         
         // compute
         
         // mutate
+        fatalError()
     }
     
     

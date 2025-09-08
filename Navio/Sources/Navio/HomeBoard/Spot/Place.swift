@@ -33,7 +33,7 @@ public final class Place: Sendable, ObservableObject {
     
     // action
     public func likePlace() {
-        
+        // 좋아요 기록
     }
     public func dislikePlace() {
         

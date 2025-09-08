@@ -31,8 +31,8 @@ public final class HomeBoard: Sendable, ObservableObject {
     
     
     // MARK: action
-    public func fetchSpots() async {
-        
+    public func setUpFromLocalDB() async {
+        // LocalDB에서 SpotData를 가져와 Spot을 초기화한다.
     }
     
     

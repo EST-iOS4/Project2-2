@@ -32,7 +32,7 @@ public final class Spot: Sendable, ObservableObject {
     
     
     // action
-    public func fetchPlaces() {
+    public func setUpFromLocalDB() {
         
     }
     

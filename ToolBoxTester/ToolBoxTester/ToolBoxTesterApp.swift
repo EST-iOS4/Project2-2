@@ -11,7 +11,15 @@ import SwiftUI
 struct ToolBoxTesterApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            TabView {
+                Tab("Location", systemImage: "home") {
+                    LocationManagerView()
+                }
+                Tab("Local", systemImage: "heart") {
+                    LocalDBView()
+                }
+            }
+            
         }
     }
 }
