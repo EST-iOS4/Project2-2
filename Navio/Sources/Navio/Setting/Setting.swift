@@ -26,8 +26,19 @@ public final class Setting: Sendable, ObservableObject {
     public nonisolated let id = ID()
     internal nonisolated let owner: Navio.ID
     
+    @Published public var displayMode: DisplayMode = .system
+    @Published public var collectKeyword: Bool = true
+    
     
     // action
+    public func loadSettingFromDB() {
+        // UserDefaults로 저장
+    }
+    public func saveToDB() {
+        // UserDefaults에서 불러오기
+    }
+    
+    
     
     
     // value
@@ -42,6 +53,12 @@ public final class Setting: Sendable, ObservableObject {
         public var ref: Setting? {
             SettingManager.container[self]
         }
+    }
+    
+    public enum DisplayMode: String, Sendable, Hashable {
+        case light
+        case dark
+        case system
     }
 }
 

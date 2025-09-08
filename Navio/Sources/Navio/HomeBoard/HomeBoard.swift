@@ -11,7 +11,7 @@ import Combine
 // MARK: Object
 @MainActor
 public final class HomeBoard: Sendable, ObservableObject {
-    // core
+    // MARK: core
     internal init(owner: Navio.ID) {
         self.owner = owner
         
@@ -22,12 +22,18 @@ public final class HomeBoard: Sendable, ObservableObject {
     }
     
     
-    // state
+    // MARK: state
     public nonisolated let id = ID()
     internal nonisolated let owner: Navio.ID
     
+    public internal(set) var spots: [Spot.ID] = []
     
-    // action
+    
+    
+    // MARK: action
+    public func fetchSpots() async {
+        
+    }
     
     
     // value
