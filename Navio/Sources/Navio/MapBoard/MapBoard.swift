@@ -1,8 +1,8 @@
 //
-//  Stats.swift
+//  MapBoard.swift
 //  Navio
 //
-//  Created by 김민우 on 9/4/25.
+//  Created by 김민우 on 9/8/25.
 //
 import Foundation
 import Combine
@@ -10,15 +10,15 @@ import Combine
 
 // MARK: Object
 @MainActor
-public final class Stats: Sendable, ObservableObject {
+public final class MapBoard: Sendable, ObservableObject {
     // core
     internal init(owner: Navio.ID) {
         self.owner = owner
         
-        StatsManager.register(self)
+        MapBoardManager.register(self)
     }
     internal func delete() {
-        StatsManager.unregister(self.id)
+        MapBoardManager.unregister(self.id)
     }
     
     
@@ -37,10 +37,10 @@ public final class Stats: Sendable, ObservableObject {
         nonisolated init() { }
         
         public var isExist: Bool {
-            fatalError()
+            MapBoardManager.container[self] != nil
         }
-        public var ref: Stats? {
-            fatalError()
+        public var ref: MapBoard? {
+            MapBoardManager.container[self]
         }
     }
 }
@@ -48,13 +48,13 @@ public final class Stats: Sendable, ObservableObject {
 
 // MARK: ObjectManager
 @MainActor
-fileprivate final class StatsManager: Sendable {
+fileprivate final class MapBoardManager: Sendable {
     // core
-    static var container: [Stats.ID: Stats] = [:]
-    static func register(_ object: Stats) {
+    static var container: [MapBoard.ID: MapBoard] = [:]
+    static func register(_ object: MapBoard) {
         container[object.id] = object
     }
-    static func unregister(_ id: Stats.ID) {
+    static func unregister(_ id: MapBoard.ID) {
         container[id] = nil
     }
 }

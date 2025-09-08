@@ -33,6 +33,8 @@ public final class Navio: Sendable, ObservableObject {
     @Published public internal(set) var spots: Set<Spot.ID> = []
     @Published public internal(set) var stats: Stats.ID? = nil
     
+    public var searchInput: String = ""
+    
     @Published public internal(set) var issue: String? = nil
     
     
@@ -41,6 +43,17 @@ public final class Navio: Sendable, ObservableObject {
         // 1. setting 객체를 생성하고, 이를 setting에 할당한다.
         // 2. spot 객체를 생성하고, 이를 stats에 할당한다.
         fatalError()
+    }
+    
+    public func showSetting() {
+        // 현재 setting이 있다면 조기 종료.
+        
+        // Setting 인스턴스 생성
+        let settingRef = Setting(owner: self.id)
+        self.setting = settingRef.id
+    }
+    public func showStats() {
+        // Stats 인스턴스 생성 -> self.stats에 할당
     }
     
     public func bringWhereIAm() async {
