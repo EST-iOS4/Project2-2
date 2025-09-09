@@ -24,6 +24,9 @@ let package = Package(
         .target(
             name: "Navio",
             dependencies: ["ToolBox"],
+            resources: [
+              .process("HomeBoard/Spot/images")
+            ]
         ),
         .testTarget(
             name: "NavioTests",
@@ -33,10 +36,7 @@ let package = Package(
         
         // ToolBox
         .target(
-            name: "ToolBox",
-            resources: [
-              .process("Objects/LocalDB/images")
-            ]
+            name: "ToolBox"
         )
     ]
 )

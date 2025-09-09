@@ -32,12 +32,12 @@ public final class MapBoard: Sendable, ObservableObject {
     private func setLocation(_ newLocation: Location?) {
         self.currentLocation = newLocation
     }
+        
+    @Published public internal(set) var likePlaces: [LikePlace.ID] = []
+    @Published public internal(set) var recentPlaces: [RecentPlace.ID] = []
     
-    public var searchInput: String = ""
-    
-    public internal(set) var likedSpots: [LikedSpot.ID] = []
-    public internal(set) var recentSpots: [RecentSpot.ID] = []
-    public internal(set) var findSpots: [FindSpot.ID] = []
+    @Published public var searchInput: String = ""
+    @Published public internal(set) var searchPlaces: [SearchPlace.ID] = []
     
     
     // action
@@ -82,13 +82,22 @@ public final class MapBoard: Sendable, ObservableObject {
         await LocationManager.shared.stopStreaming()
     }
     
-    public func loadLikedSpots() async {
-        fatalError()
+    public func fetchLikePlaces() async {
+        // capture
+        
+        
+        // compute
+        
+        
+        // mutate
+        self.likePlaces = []
     }
-    public func loadRecentSpots() async {
-        fatalError()
+    public func fetchRecentPlaces() async {
+        
+        // mutate
+        self.recentPlaces = []
     }
-    public func fetchFindSpots() async {
+    public func fetchSearchPlaces() async {
         // capture
         
         // compute

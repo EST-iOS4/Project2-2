@@ -49,7 +49,6 @@ public final class Navio: Sendable, ObservableObject {
     }
     
 
-    
     // MARK: value
     @MainActor
     public struct ID: Sendable, Hashable {

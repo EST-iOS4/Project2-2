@@ -13,48 +13,51 @@ import ToolBox
 // MARK: Object
 @MainActor
 public final class Place: Sendable, ObservableObject {
-    // core
-    internal init(owner: Spot.ID,
-                  data: LocalDB.PlaceData) {
+    // MARK: core
+    internal init(owner: Spot.ID, data: PlaceData) {
         self.owner = owner
         self.name = data.name
+        self.imageName = data.imageName
         self.address = data.address
         self.number = data.number
         self.location = data.location
-        self.image = data.image
+        
+        PlaceManager.register(self)
     }
     
     
-    // state
+    // MARK: state
     public nonisolated let id = ID()
     internal nonisolated let owner: Spot.ID
     
     public internal(set) var name: String
+    public internal(set) var imageName: String
+    public var image: UIImage {
+        let imageURL = Bundle.module.url(
+            forResource: imageName,
+            withExtension: "png")!
+        let data = try? Data(contentsOf: imageURL)
+        let uiImage = UIImage(data: data!)
+        return uiImage!
+    }
+    
     public internal(set) var address: String
     public internal(set) var number: String
     public internal(set) var location: Location
-    public internal(set) var image: UIImage
     public internal(set) var like: Bool = false
     
     
-    // action
-    public func likePlace() {
-        let defaults = UserDefaults.standard
+    // MARK: action
+    public func toggleLike() {
+        // 변경된 like를 UserDefaults에 저장
         
-        // 저장
-        defaults.set(true, forKey: "\(name).like")
-    }
-    public func dislikePlace() {
-        // compute
-        let defaults = UserDefaults.standard
-        defaults.set(false, forKey: "\(name).like")
-        
-        // mutate
-        self.like = false
+        // 어떤 상태 변화?
+        // false -> true
+        // true -> false
     }
     
     
-    // value
+    // MARK: value
     @MainActor
     public struct ID: Sendable, Hashable {
         public let value = UUID()
@@ -67,18 +70,13 @@ public final class Place: Sendable, ObservableObject {
             PlaceManager.container[self]
         }
     }
-    
-    public func setUpFromLocalDB() {
-        
-    
-    }
 }
 
 
 // MARK: ObjectManager
 @MainActor
 fileprivate final class PlaceManager: Sendable {
-    // core
+    // MARK: core
     static var container: [Place.ID: Place] = [:]
     static func register(_ object: Place) {
         container[object.id] = object

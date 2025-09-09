@@ -30,14 +30,29 @@ public final class HomeBoard: Sendable, ObservableObject {
     public internal(set) var spots: [Spot.ID] = []
     
     
-    
     // MARK: action
     public func fetchSpots() async {
+        // capture
+        guard spots.isEmpty else {
+            print(#file, #function, #line, "already fetched")
+            return
+        }
         
+        // compute
+        let spots = LocalDB.builtInSpots
+            .map { spotData in
+                let newSpotRef = Spot(owner: self.id,
+                                      name: spotData.name,
+                                      imageName: spotData.imageName)
+                return newSpotRef.id
+            }
+        
+        // mutate
+        self.spots = spots
     }
     
     
-    // value
+    // MARK: value
     @MainActor
     public struct ID: Sendable, Hashable {
         public let value = UUID()

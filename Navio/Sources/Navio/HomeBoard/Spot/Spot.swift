@@ -7,54 +7,68 @@
 import Foundation
 import Combine
 import ToolBox
+import UIKit
 
 
 // MARK: Object
 @MainActor
 public final class Spot: Sendable, ObservableObject {
-    // core
-    internal init(owner: HomeBoard.ID) {
+    // MARK: core
+    internal init(owner: HomeBoard.ID, name: String, imageName: String) {
         self.owner = owner
-        self.seed = nil
+        self.name = name
+        self.imageName = imageName
+        
         SpotManager.register(self)
-    }
-    public convenience init(owner: HomeBoard.ID, data: LocalDB.SpotData) {
-        self.init(owner: owner)
-        self.seed = data
-        // seed를 기반으로 Place들을 구성
-        self.setUpFromLocalDB()
     }
     internal func delete() {
         SpotManager.unregister(self.id)
     }
     
     
-    // state
+    // MARK: state
     public nonisolated let id = ID()
     internal nonisolated let owner: HomeBoard.ID
     
-    public var image: URL? = nil
-    internal var seed: LocalDB.SpotData? = nil
+    public nonisolated let name: String
+    public nonisolated let imageName: String
+    public var image: UIImage {
+        let imageURL = Bundle.module.url(
+            forResource: imageName,
+            withExtension: "png")!
+        let data = try? Data(contentsOf: imageURL)
+        let uiImage = UIImage(data: data!)
+        return uiImage!
+    }
     
     public internal(set) var places: [Place.ID] = []
     
     
-    // action
-    public func setUpFromLocalDB() {
-        guard let seed else {
+    
+    // MARK: action
+    public func fetchPlaces() async {
+        // capture
+        guard places.isEmpty else {
+            print(#file, #function, #line, "already fetched")
             return
         }
-        var ids: [Place.ID] = []
-        for placeData in seed.places {
-            // Place의 시그니처가 (owner: Spot.ID, data: LocalDB.PlaceData)라고 가정
-            let place = Place(owner: self.id, data: placeData)
-            ids.append(place.id)
-        }
-        self.places = ids
+        
+        // compute
+        let places = LocalDB.builtInSpots
+            .filter { $0.name == self.name }
+            .flatMap { $0.places }
+            .map {
+                let newPlaceRef = Place(owner: self.id, data: $0)
+                return newPlaceRef.id
+            }
+        
+        // mutate
+        self.places = places
     }
     
     
-    // value
+    
+    // MARK: value
     @MainActor
     public struct ID: Sendable, Hashable {
         public let value = UUID()

@@ -16,43 +16,12 @@ public actor LocalDB: Sendable {
     // MARK: core
     public static let shared: LocalDB = .init()
     private init() {
-        // 저장소에서 keywords를 가져와 로딩
-        let defaults = UserDefaults.standard
-        if let stored = defaults.array(forKey: "LocalDB.keywords") as? [String] {
-            self.keywords = stored.map { SearchKeyword($0) }
-        }
+        
     }
     
     // MARK: fixtures
     public static var builtInSpots: [SpotData] {
         [.홍대, .부산, .경주, .잠실]
-    }
-    
-    // MARK: state
-    public internal(set) var keywords: [SearchKeyword] = []
-    public func appendKeyword(_ keyword: String) {
-        let newKeyword = SearchKeyword(keyword)
-        if !keywords.contains(newKeyword) {
-            keywords.append(newKeyword)
-            save()
-        }
-    }
-    
-
-    // MARK: action
-    public func save() {
-        let defaults = UserDefaults.standard
-        let rawValues = keywords.map { $0.rawValue }
-        defaults.set(rawValues, forKey: "LocalDB.keywords")
-    }
-    
-    
-    // MARK: value
-    public struct SearchKeyword: Sendable, Hashable {
-        public let rawValue: String
-        public init(_ rawValue: String) {
-            self.rawValue = rawValue
-        }
     }
     
     
@@ -171,43 +140,5 @@ public actor LocalDB: Sendable {
                 )
             ]
         )
-        
-        // operator
-        public var image: UIImage {
-            let imageURL = Bundle.module.url(
-                forResource: imageName,
-                withExtension: "png")!
-            let data = try! Data(contentsOf: imageURL)
-            let uiImage = UIImage(data: data)
-            return uiImage!
-        }
-    }
-    
-    public struct PlaceData: Sendable, Hashable {
-        // core
-        public let name: String
-        public let imageName: String
-        public let location: Location
-        public let address: String
-        public let number: String
-        
-        fileprivate init(name: String, imageName: String, location: Location, address: String, number: String) {
-            self.name = name
-            self.imageName = imageName
-            self.location = location
-            self.address = address
-            self.number = number
-        }
-        
-        
-        // operator
-        public var image: UIImage {
-            let imageURL = Bundle.module.url(
-                forResource: imageName,
-                withExtension: "png")!
-            let data = try? Data(contentsOf: imageURL)
-            let uiImage = UIImage(data: data!)
-            return uiImage!
-        }
     }
 }

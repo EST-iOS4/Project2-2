@@ -30,7 +30,7 @@ public final class Setting: Sendable, ObservableObject {
     @Published public var collectKeyword: Bool = true
     
     // action
-    public func loadSettingFromDB() {
+    public func load() {
         let defaults = UserDefaults.standard
         if let rawMode = defaults.string(forKey: "Setting.displayMode"),
            let mode = DisplayMode(rawValue: rawMode) {
@@ -38,7 +38,7 @@ public final class Setting: Sendable, ObservableObject {
         }
         self.collectKeyword = defaults.bool(forKey: "Setting.collectKeyword")
     }
-    public func saveToDB() {
+    public func save() {
         let defaults = UserDefaults.standard
         
         defaults.set(self.displayMode.rawValue,
@@ -46,7 +46,6 @@ public final class Setting: Sendable, ObservableObject {
         
         defaults.set(self.collectKeyword, forKey: "Setting.collectKeyword")
     }
-    
     
     
     
