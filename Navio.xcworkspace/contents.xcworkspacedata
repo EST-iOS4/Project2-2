@@ -2,6 +2,9 @@
 <Workspace
    version = "1.0">
    <FileRef
+      location = "group:ToolBoxTester/ToolBoxTester.xcodeproj">
+   </FileRef>
+   <FileRef
       location = "group:NavioiOS/NavioiOS.xcodeproj">
    </FileRef>
    <FileRef

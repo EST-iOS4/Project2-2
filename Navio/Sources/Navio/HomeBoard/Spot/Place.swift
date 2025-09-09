@@ -2,40 +2,56 @@
 //  Place.swift
 //  Navio
 //
-//  Created by 김민우 on 9/4/25.
+//  Created by 김민우 on 9/8/25.
 //
 import Foundation
 import Combine
+import UIKit
+import ToolBox
 
 
 // MARK: Object
-// Place: 역전할머니맥주, CU 잠실점 등 명확한 위치
 @MainActor
 public final class Place: Sendable, ObservableObject {
-    // core
-    internal init(owner: Spot.ID) {
+    // MARK: core
+    internal init(owner: Spot.ID, name: String, imageName: String, address: String, number: String, location: Location) {
         self.owner = owner
+        self.name = name
+        self.imageName = imageName
+        self.address = address
+        self.number = number
+        self.location = location
         
         PlaceManager.register(self)
     }
-    internal func delete() {
-        PlaceManager.unregister(self.id)
-    }
     
     
-    // state
+    // MARK: state
     public nonisolated let id = ID()
     internal nonisolated let owner: Spot.ID
     
+    public internal(set) var name: String
+    public internal(set) var imageName: String
     
-    // action
+    public internal(set) var address: String
+    public internal(set) var number: String
+    public internal(set) var location: Location
+    public internal(set) var like: Bool = false
     
     
+    // MARK: action
+    public func toggleLike() {
+        // 변경된 like를 UserDefaults에 저장
+        
+        // 어떤 상태 변화?
+        // false -> true
+        // true -> false
+    }
     
-    // value
+    
+    // MARK: value
     @MainActor
     public struct ID: Sendable, Hashable {
-        // core
         public let value = UUID()
         nonisolated init() { }
         
@@ -52,7 +68,7 @@ public final class Place: Sendable, ObservableObject {
 // MARK: ObjectManager
 @MainActor
 fileprivate final class PlaceManager: Sendable {
-    // core
+    // MARK: core
     static var container: [Place.ID: Place] = [:]
     static func register(_ object: Place) {
         container[object.id] = object

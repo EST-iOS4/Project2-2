@@ -23,7 +23,10 @@ let package = Package(
         // Navio
         .target(
             name: "Navio",
-            dependencies: ["ToolBox"]
+            dependencies: ["ToolBox"],
+            resources: [
+              .process("HomeBoard/Spot/images")
+            ]
         ),
         .testTarget(
             name: "NavioTests",

@@ -26,8 +26,27 @@ public final class Setting: Sendable, ObservableObject {
     public nonisolated let id = ID()
     internal nonisolated let owner: Navio.ID
     
+    @Published public var displayMode: DisplayMode = .system
+    @Published public var collectKeyword: Bool = true
     
     // action
+    public func load() {
+        let defaults = UserDefaults.standard
+        if let rawMode = defaults.string(forKey: "Setting.displayMode"),
+           let mode = DisplayMode(rawValue: rawMode) {
+            self.displayMode = mode
+        }
+        self.collectKeyword = defaults.bool(forKey: "Setting.collectKeyword")
+    }
+    public func save() {
+        let defaults = UserDefaults.standard
+        
+        defaults.set(self.displayMode.rawValue,
+                     forKey: "Setting.displayMode")
+        
+        defaults.set(self.collectKeyword, forKey: "Setting.collectKeyword")
+    }
+    
     
     
     // value
@@ -42,6 +61,12 @@ public final class Setting: Sendable, ObservableObject {
         public var ref: Setting? {
             SettingManager.container[self]
         }
+    }
+    
+    public enum DisplayMode: String, Sendable, Hashable {
+        case light
+        case dark
+        case system
     }
 }
 

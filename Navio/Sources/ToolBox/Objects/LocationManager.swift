@@ -13,7 +13,7 @@ import CoreLocation
 // MARK: Object
 @globalActor
 public actor LocationManager: Sendable {
-    // core
+    // MARK: core
     public static let shared: LocationManager = .init()
     private init() {
         coreLocationManager = CLLocationManager()
@@ -27,13 +27,14 @@ public actor LocationManager: Sendable {
     }
     
     
-    // state
+    // MARK: state
     private let coreLocationManager: CLLocationManager
     private let coreLocationDelegate: CLDelegate
     
     public private(set) var location: Location? = nil
     private let locationStream = PassthroughSubject<Location, Never>()
     private func sendLocation(_ newLocation: Location) {
+        self.location = newLocation
         self.locationStream.send(newLocation)
     }
     
@@ -46,7 +47,7 @@ public actor LocationManager: Sendable {
     }
     
     
-    // action
+    // MARK: action
     public func getUserAuthentication() {
         // Check if location services are enabled on the device
         guard CLLocationManager.locationServicesEnabled() else {
@@ -71,9 +72,27 @@ public actor LocationManager: Sendable {
     }
     
     public func fetchMyLocation() {
-        #warning("LocationManager.fetchMyLocation 구현")
-        // 1. CoreLocationManager를 사용해 현재 위치를 가져온다.
-        // 2. 가져온 현재 위치를 self.location에 업데이트한다.
+        guard CLLocationManager.locationServicesEnabled() else {
+            print("[LocationManager] services disabled"); return
+        }
+        switch coreLocationManager.authorizationStatus {
+        case .notDetermined:
+            coreLocationManager.requestWhenInUseAuthorization(); return
+        case .restricted, .denied:
+            print("[LocationManager] permission denied"); return
+        case .authorizedWhenInUse, .authorizedAlways: break
+        @unknown default: break
+        }
+
+        // 캐시된 값 우선 사용
+        if let coord = coreLocationManager.location?.coordinate {
+            let loc = coord.forNavio()
+            self.location = loc
+            self.locationStream.send(loc)
+        }
+
+        // 최신 1회 요청
+        coreLocationManager.requestLocation()
     }
     
     public func startStreaming() {
