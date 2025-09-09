@@ -14,13 +14,13 @@ import ToolBox
 @MainActor
 public final class Place: Sendable, ObservableObject {
     // MARK: core
-    internal init(owner: Spot.ID, name: String, imageName: String, address: String, number: String, location: Location) {
+    internal init(owner: Spot.ID, data: PlaceData) {
         self.owner = owner
-        self.name = name
-        self.imageName = imageName
-        self.address = address
-        self.number = number
-        self.location = location
+        self.name = data.name
+        self.imageName = data.imageName
+        self.address = data.address
+        self.number = data.number
+        self.location = data.location
         
         PlaceManager.register(self)
     }
@@ -32,6 +32,14 @@ public final class Place: Sendable, ObservableObject {
     
     public internal(set) var name: String
     public internal(set) var imageName: String
+    public var image: UIImage {
+        let imageURL = Bundle.module.url(
+            forResource: imageName,
+            withExtension: "png")!
+        let data = try? Data(contentsOf: imageURL)
+        let uiImage = UIImage(data: data!)
+        return uiImage!
+    }
     
     public internal(set) var address: String
     public internal(set) var number: String
