@@ -104,13 +104,13 @@ class MapBoardViewController: UIViewController {
             }
             .store(in: &cancellables)
         
-        // TODO: 로직 구현 후 수정 필요
         // ViewModel의 LikeplaceObjects(객체 배열)가 바뀔 때마다 핀 업데이트
-//        mapBoard.$likePlaceObjects
-//            .sink { [weak self] places in
-//                self?.updatePins(for: places)
-//            }
-//            .store(in: &cancellables)
+        mapBoard.$likePlaces
+            .sink { [weak self] placeIDs in
+                let placeObjects = placeIDs.compactMap { $0.ref }
+                self?.updatePins(for: placeObjects)
+            }
+            .store(in: &cancellables)
     }
     
     private func moveMap(to coordinate: CLLocationCoordinate2D) {
