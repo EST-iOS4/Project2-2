@@ -54,6 +54,44 @@ public final class Place: Sendable, ObservableObject {
         // 어떤 상태 변화?
         // false -> true
         // true -> false
+        
+        let userDefaultsKey = "liked_places"
+        let listkey = "liked_list"
+        let ud = UserDefaults.standard
+        
+        
+        var box = (ud.dictionary(forKey: userDefaultsKey) as? [String: [String: String]]) ?? [:]
+        let key = self.name
+        
+        if like == false {
+            box[key] = [
+                "name": self.name,
+                "imageName": self.imageName,
+                "address": self.address
+            ]
+            ud.set(box, forKey: userDefaultsKey)
+            like = true
+        } else {
+            box[key] = nil
+            if box.isEmpty { ud.removeObject(forKey: userDefaultsKey) }
+            else { ud.set(box, forKey: userDefaultsKey) }
+            like = false
+        }
+        
+        let list: [[String: String]] = box.values.map { rec in
+            [
+                "name": rec["name"] ?? "",
+                "imageName": rec["imageName"] ?? "",
+                "address": rec["address"] ?? ""
+            ]
+        }
+            .sorted { ($0["name"] ?? "") < ($1["name"] ?? "")}
+        
+        if list.isEmpty {
+            ud.removeObject(forKey: listkey)
+        } else {
+            ud.set(list, forKey: listkey)
+        }
     }
     
     

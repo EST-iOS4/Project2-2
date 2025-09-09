@@ -19,7 +19,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         let window = UIWindow(windowScene: windowScene)
         // 여기서 직접 초기 화면을 설정
-        let rootViewController = ViewController() // 예: Navio 테스트용 VC
+        let rootViewController = MainTabBarController() // 예: Navio 테스트용 VC
         window.rootViewController = UINavigationController(rootViewController: rootViewController)
         self.window = window
         window.makeKeyAndVisible()
