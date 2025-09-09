@@ -6,6 +6,7 @@
 //
 import Foundation
 import Combine
+import ToolBox
 
 
 // MARK: Object
@@ -31,8 +32,8 @@ public final class HomeBoard: Sendable, ObservableObject {
     
     
     // MARK: action
-    public func setUpFromLocalDB() async {
-        // LocalDB에서 SpotData를 가져와 Spot을 초기화한다.
+    public func fetchSpots() async {
+        
     }
     
     

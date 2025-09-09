@@ -14,13 +14,16 @@ import ToolBox
 @MainActor
 public final class Navio: Sendable, ObservableObject {
     // MARK: core
-    public init() {
+    public init(mode: SystemMode = .test) {
+        self.mode = mode
+        
         NavioManager.register(self)
     }
 
     
     // MARK: state
     public nonisolated let id = ID()
+    internal nonisolated let mode: SystemMode
     
     @Published public private(set) var homeBoard: HomeBoard.ID? = nil
     @Published public private(set) var mapBoard: MapBoard.ID? = nil

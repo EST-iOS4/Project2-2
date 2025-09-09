@@ -6,19 +6,22 @@
 //
 import Foundation
 import Combine
+import UIKit
+import ToolBox
 
 
 // MARK: Object
 @MainActor
 public final class Place: Sendable, ObservableObject {
     // core
-    internal init(owner: Spot.ID) {
+    internal init(owner: Spot.ID,
+                  data: LocalDB.PlaceData) {
         self.owner = owner
-        
-        PlaceManager.register(self)
-    }
-    internal func delete() {
-        PlaceManager.unregister(self.id)
+        self.name = data.name
+        self.address = data.address
+        self.number = data.number
+        self.location = data.location
+        self.image = data.image
     }
     
     
@@ -26,17 +29,28 @@ public final class Place: Sendable, ObservableObject {
     public nonisolated let id = ID()
     internal nonisolated let owner: Spot.ID
     
-    public internal(set) var image: URL? = nil
-    
+    public internal(set) var name: String
+    public internal(set) var address: String
+    public internal(set) var number: String
+    public internal(set) var location: Location
+    public internal(set) var image: UIImage
     public internal(set) var like: Bool = false
     
     
     // action
     public func likePlace() {
-        // 좋아요 기록
+        let defaults = UserDefaults.standard
+        
+        // 저장
+        defaults.set(true, forKey: "\(name).like")
     }
     public func dislikePlace() {
+        // compute
+        let defaults = UserDefaults.standard
+        defaults.set(false, forKey: "\(name).like")
         
+        // mutate
+        self.like = false
     }
     
     
@@ -53,6 +67,11 @@ public final class Place: Sendable, ObservableObject {
             PlaceManager.container[self]
         }
     }
+    
+    public func setUpFromLocalDB() {
+        
+    
+    }
 }
 
 
@@ -68,6 +87,3 @@ fileprivate final class PlaceManager: Sendable {
         container[id] = nil
     }
 }
-
-
-

@@ -29,13 +29,22 @@ public final class Setting: Sendable, ObservableObject {
     @Published public var displayMode: DisplayMode = .system
     @Published public var collectKeyword: Bool = true
     
-    
     // action
     public func loadSettingFromDB() {
-        // UserDefaults로 저장
+        let defaults = UserDefaults.standard
+        if let rawMode = defaults.string(forKey: "Setting.displayMode"),
+           let mode = DisplayMode(rawValue: rawMode) {
+            self.displayMode = mode
+        }
+        self.collectKeyword = defaults.bool(forKey: "Setting.collectKeyword")
     }
     public func saveToDB() {
-        // UserDefaults에서 불러오기
+        let defaults = UserDefaults.standard
+        
+        defaults.set(self.displayMode.rawValue,
+                     forKey: "Setting.displayMode")
+        
+        defaults.set(self.collectKeyword, forKey: "Setting.collectKeyword")
     }
     
     
