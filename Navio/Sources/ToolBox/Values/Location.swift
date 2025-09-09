@@ -9,7 +9,7 @@ import CoreLocation
 
 
 // MARK: Value
-public struct Location: Sendable, Hashable {
+public struct Location: Sendable, Hashable, Codable {
     // core
     public let latitude: Double
     public let longitude: Double

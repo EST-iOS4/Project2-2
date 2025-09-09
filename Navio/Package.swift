@@ -23,7 +23,7 @@ let package = Package(
         // Navio
         .target(
             name: "Navio",
-            dependencies: ["ToolBox"]
+            dependencies: ["ToolBox"],
         ),
         .testTarget(
             name: "NavioTests",
@@ -33,7 +33,10 @@ let package = Package(
         
         // ToolBox
         .target(
-            name: "ToolBox"
+            name: "ToolBox",
+            resources: [
+              .process("Objects/LocalDB/images")
+            ]
         )
     ]
 )
