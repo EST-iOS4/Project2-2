@@ -27,17 +27,13 @@ public final class HomeBoard: Sendable, ObservableObject {
     public nonisolated let id = ID()
     internal nonisolated let owner: Navio.ID
     
-    public internal(set) var spots: [Spot.ID] = []
-    
+    public nonisolated let spots: [Spot.ID] = getSampleSpots()
     
     
     // MARK: action
-    public func fetchSpots() async {
-        
-    }
     
     
-    // value
+    // MARK: value
     @MainActor
     public struct ID: Sendable, Hashable {
         public let value = UUID()
@@ -49,6 +45,10 @@ public final class HomeBoard: Sendable, ObservableObject {
         public var ref: HomeBoard? {
             HomeBoardManager.container[self]
         }
+    }
+    
+    static nonisolated func getSampleSpots() -> [Spot.ID] {
+        return []
     }
 }
 

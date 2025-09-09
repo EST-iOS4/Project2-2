@@ -13,7 +13,7 @@ import ToolBox
 // MARK: Object
 @MainActor
 public final class Place: Sendable, ObservableObject {
-    // core
+    // MARK: core
     internal init(owner: Spot.ID,
                   data: LocalDB.PlaceData) {
         self.owner = owner
@@ -25,36 +25,31 @@ public final class Place: Sendable, ObservableObject {
     }
     
     
-    // state
+    // MARK: state
     public nonisolated let id = ID()
     internal nonisolated let owner: Spot.ID
     
     public internal(set) var name: String
+    public internal(set) var image: UIImage
+    
     public internal(set) var address: String
     public internal(set) var number: String
     public internal(set) var location: Location
-    public internal(set) var image: UIImage
-    public internal(set) var like: Bool = false
+    public var like: Bool = false
     
     
-    // action
-    public func likePlace() {
-        let defaults = UserDefaults.standard
-        
-        // 저장
-        defaults.set(true, forKey: "\(name).like")
+    // MARK: action
+    public func loadLikeData() {
+        // UserDefaults에서 저장된 like 데이터를 불러온다.
     }
-    public func dislikePlace() {
+    public func saveLikeData() {
         // compute
         let defaults = UserDefaults.standard
-        defaults.set(false, forKey: "\(name).like")
-        
-        // mutate
-        self.like = false
+        defaults.set(self.like, forKey: "\(name).like")
     }
     
     
-    // value
+    // MARK: value
     @MainActor
     public struct ID: Sendable, Hashable {
         public let value = UUID()
@@ -67,18 +62,13 @@ public final class Place: Sendable, ObservableObject {
             PlaceManager.container[self]
         }
     }
-    
-    public func setUpFromLocalDB() {
-        
-    
-    }
 }
 
 
 // MARK: ObjectManager
 @MainActor
 fileprivate final class PlaceManager: Sendable {
-    // core
+    // MARK: core
     static var container: [Place.ID: Place] = [:]
     static func register(_ object: Place) {
         container[object.id] = object
