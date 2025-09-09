@@ -7,7 +7,11 @@
 
 import Foundation
 import UIKit
+import MapKit
+import Combine
+import ToolBox
 import SwiftUI
+import Navio
 
 
 // MARK: - 캐러셀 데이터 모델
@@ -201,7 +205,10 @@ extension SearchModalViewController: UICollectionViewDataSource, UICollectionVie
 // MARK: - Home 뷰컨트롤러
 class LikePlaceViewController: UIViewController {
     
-    let mapView = UIView()
+    private var mapBoard: MapBoard!
+    private var cancellables = Set<AnyCancellable>()
+    
+    let mapView = MKMapView()
     let modalContainerView = UIView()
     let searchBar = UISearchBar()
     
@@ -211,6 +218,8 @@ class LikePlaceViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        let navioID = Navio.ID()
         setupUI()
     }
     
@@ -219,10 +228,6 @@ class LikePlaceViewController: UIViewController {
         
         // 지도 설정
         mapView.backgroundColor = .systemGray4
-        let mapLabel = UILabel()
-        mapLabel.text = "지도 영역"
-        mapLabel.textAlignment = .center
-        mapView.addSubview(mapLabel)
         view.addSubview(mapView)
         
         // 모달 설정
@@ -245,7 +250,6 @@ class LikePlaceViewController: UIViewController {
         
         mapView.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: availableHeight - modalHeight)
         modalContainerView.frame = CGRect(x: 0, y: availableHeight - modalHeight, width: view.frame.width, height: modalHeight)
-        mapLabel.frame = CGRect(x: 0, y: (availableHeight - modalHeight) / 2 - 15, width: view.frame.width, height: 30)
         
         // 드래그 제스처 추가
         let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
@@ -356,60 +360,27 @@ class LikePlaceViewController: UIViewController {
     }
 }
 
-// MARK: - 기본 뷰컨트롤러들
-class MapViewController: UIViewController {
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        view.backgroundColor = .systemBackground
-    }
-}
-
-class SettingViewController: UIViewController {
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        view.backgroundColor = .systemBackground
-    }
-}
-
-// MARK: - 메인 TabBarController
-class MainTabBarController: UITabBarController {
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        
-        let likePlaceVC = LikePlaceViewController()
-        let mapVC = MapViewController()
-        let settingVC = SettingViewController()
-        
-        likePlaceVC.tabBarItem = UITabBarItem(title: "Home", image: UIImage(systemName: "house"), tag: 0)
-        mapVC.tabBarItem = UITabBarItem(title: "Map", image: UIImage(systemName: "map"), tag: 1)
-        settingVC.tabBarItem = UITabBarItem(title: "Setting", image: UIImage(systemName: "gearshape"), tag: 2)
-        
-        viewControllers = [likePlaceVC, mapVC, settingVC]
-    }
-}
-
 // MARK: - SwiftUI Preview
-#if DEBUG
-struct MainTabBarController_Previews: PreviewProvider {
-    static var previews: some View {
-        UIViewControllerPreview {
-            MainTabBarController()
-        }
-    }
-}
-
-struct UIViewControllerPreview<ViewController: UIViewController>: UIViewControllerRepresentable {
-    let viewController: ViewController
-
-    init(_ builder: @escaping () -> ViewController) {
-        viewController = builder()
-    }
-
-    func makeUIViewController(context: Context) -> ViewController {
-        viewController
-    }
-
-    func updateUIViewController(_ uiViewController: ViewController, context: Context) {}
-}
-#endif
+//#if DEBUG
+//struct MainTabBarController_Previews: PreviewProvider {
+//    static var previews: some View {
+//        UIViewControllerPreview {
+//            MainTabBarController(mapBoard: mapBoard)
+//        }
+//    }
+//}
+//
+//struct UIViewControllerPreview<ViewController: UIViewController>: UIViewControllerRepresentable {
+//    let viewController: ViewController
+//
+//    init(_ builder: @escaping () -> ViewController) {
+//        viewController = builder()
+//    }
+//
+//    func makeUIViewController(context: Context) -> ViewController {
+//        viewController
+//    }
+//
+//    func updateUIViewController(_ uiViewController: ViewController, context: Context) {}
+//}
+//#endif
