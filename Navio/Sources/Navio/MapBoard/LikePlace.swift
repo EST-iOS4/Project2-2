@@ -9,7 +9,6 @@ import Combine
 import ToolBox
 import UIKit
 
-
 // MARK: Object
 @MainActor
 public final class LikePlace: Sendable, ObservableObject {
