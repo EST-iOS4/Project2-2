@@ -43,7 +43,7 @@ public final class HomeBoard: Sendable, ObservableObject {
             .map { spotData in
                 let newSpotRef = Spot(owner: self.id,
                                       name: spotData.name,
-                                      image: spotData.image)
+                                      imageName: spotData.imageName)
                 return newSpotRef.id
             }
         

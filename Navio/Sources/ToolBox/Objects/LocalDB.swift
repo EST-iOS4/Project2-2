@@ -140,38 +140,5 @@ public actor LocalDB: Sendable {
                 )
             ]
         )
-        
-        // operator
-        public var image: UIImage {
-            let imageURL = Bundle.module.url(
-                forResource: imageName,
-                withExtension: "png")!
-            let data = try! Data(contentsOf: imageURL)
-            let uiImage = UIImage(data: data)
-            return uiImage!
-        }
-    }
-    
-    public struct PlaceData: Sendable, Hashable {
-        // core
-        public let name: String
-        private let imageName: String
-        public let location: Location
-        public let address: String
-        public let number: String
-        
-        fileprivate init(name: String, imageName: String, location: Location, address: String, number: String) {
-            self.name = name
-            self.imageName = imageName
-            self.location = location
-            self.address = address
-            self.number = number
-        }
-        
-        
-        // operator
-        public var image: UIImage {
-            
-        }
     }
 }

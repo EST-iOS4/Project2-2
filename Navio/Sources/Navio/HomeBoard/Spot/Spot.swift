@@ -14,10 +14,10 @@ import UIKit
 @MainActor
 public final class Spot: Sendable, ObservableObject {
     // MARK: core
-    internal init(owner: HomeBoard.ID, name: String, image: UIImage) {
+    internal init(owner: HomeBoard.ID, name: String, imageName: String) {
         self.owner = owner
         self.name = name
-        self.image = image
+        self.imageName = imageName
         
         SpotManager.register(self)
     }
@@ -31,7 +31,15 @@ public final class Spot: Sendable, ObservableObject {
     internal nonisolated let owner: HomeBoard.ID
     
     public nonisolated let name: String
-    public nonisolated let image: UIImage
+    public nonisolated let imageName: String
+    public var image: UIImage {
+        let imageURL = Bundle.module.url(
+            forResource: imageName,
+            withExtension: "png")!
+        let data = try? Data(contentsOf: imageURL)
+        let uiImage = UIImage(data: data!)
+        return uiImage!
+    }
     
     public internal(set) var places: [Place.ID] = []
     
@@ -49,15 +57,8 @@ public final class Spot: Sendable, ObservableObject {
         let places = LocalDB.builtInSpots
             .filter { $0.name == self.name }
             .flatMap { $0.places }
-            .map { placeData in
-                let newPlaceRef = Place(
-                    owner: self.id,
-                    name: placeData.name,
-                    image: placeData.image,
-                    address: placeData.address,
-                    number: placeData.name,
-                    location: placeData.location)
-                
+            .map {
+                let newPlaceRef = Place(owner: self.id, data: $0)
                 return newPlaceRef.id
             }
         
