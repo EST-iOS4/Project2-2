@@ -14,11 +14,10 @@ import UIKit
 @MainActor
 public final class Spot: Sendable, ObservableObject {
     // MARK: core
-    internal init(owner: HomeBoard.ID, name: String, image: UIImage, places: [Place.ID]) {
+    internal init(owner: HomeBoard.ID, name: String, image: UIImage) {
         self.owner = owner
         self.name = name
         self.image = image
-        self.places = places
         
         SpotManager.register(self)
     }
@@ -34,10 +33,37 @@ public final class Spot: Sendable, ObservableObject {
     public nonisolated let name: String
     public nonisolated let image: UIImage
     
-    public nonisolated let places: [Place.ID]
+    public internal(set) var places: [Place.ID] = []
+    
     
     
     // MARK: action
+    public func fetchPlaces() async {
+        // capture
+        guard places.isEmpty else {
+            print(#file, #function, #line, "already fetched")
+            return
+        }
+        
+        // compute
+        let places = LocalDB.builtInSpots
+            .filter { $0.name == self.name }
+            .flatMap { $0.places }
+            .map { placeData in
+                let newPlaceRef = Place(
+                    owner: self.id,
+                    name: placeData.name,
+                    image: placeData.image,
+                    address: placeData.address,
+                    number: placeData.name,
+                    location: placeData.location)
+                
+                return newPlaceRef.id
+            }
+        
+        // mutate
+        self.places = places
+    }
     
     
     

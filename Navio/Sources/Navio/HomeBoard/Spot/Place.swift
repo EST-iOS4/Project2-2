@@ -14,14 +14,15 @@ import ToolBox
 @MainActor
 public final class Place: Sendable, ObservableObject {
     // MARK: core
-    internal init(owner: Spot.ID,
-                  data: LocalDB.PlaceData) {
+    internal init(owner: Spot.ID, name: String, imageName: String, address: String, number: String, location: Location) {
         self.owner = owner
-        self.name = data.name
-        self.address = data.address
-        self.number = data.number
-        self.location = data.location
-        self.image = data.image
+        self.name = name
+        self.imageName = imageName
+        self.address = address
+        self.number = number
+        self.location = location
+        
+        PlaceManager.register(self)
     }
     
     
@@ -30,22 +31,21 @@ public final class Place: Sendable, ObservableObject {
     internal nonisolated let owner: Spot.ID
     
     public internal(set) var name: String
-    public internal(set) var image: UIImage
+    public internal(set) var imageName: String
     
     public internal(set) var address: String
     public internal(set) var number: String
     public internal(set) var location: Location
-    public var like: Bool = false
+    public internal(set) var like: Bool = false
     
     
     // MARK: action
-    public func loadLikeData() {
-        // UserDefaults에서 저장된 like 데이터를 불러온다.
-    }
-    public func saveLikeData() {
-        // compute
-        let defaults = UserDefaults.standard
-        defaults.set(self.like, forKey: "\(name).like")
+    public func toggleLike() {
+        // 변경된 like를 UserDefaults에 저장
+        
+        // 어떤 상태 변화?
+        // false -> true
+        // true -> false
     }
     
     

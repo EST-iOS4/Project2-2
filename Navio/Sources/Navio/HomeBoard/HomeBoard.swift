@@ -27,10 +27,29 @@ public final class HomeBoard: Sendable, ObservableObject {
     public nonisolated let id = ID()
     internal nonisolated let owner: Navio.ID
     
-    public nonisolated let spots: [Spot.ID] = getSampleSpots()
+    public internal(set) var spots: [Spot.ID] = []
     
     
     // MARK: action
+    public func fetchSpots() async {
+        // capture
+        guard spots.isEmpty else {
+            print(#file, #function, #line, "already fetched")
+            return
+        }
+        
+        // compute
+        let spots = LocalDB.builtInSpots
+            .map { spotData in
+                let newSpotRef = Spot(owner: self.id,
+                                      name: spotData.name,
+                                      image: spotData.image)
+                return newSpotRef.id
+            }
+        
+        // mutate
+        self.spots = spots
+    }
     
     
     // MARK: value
@@ -45,10 +64,6 @@ public final class HomeBoard: Sendable, ObservableObject {
         public var ref: HomeBoard? {
             HomeBoardManager.container[self]
         }
-    }
-    
-    static nonisolated func getSampleSpots() -> [Spot.ID] {
-        return []
     }
 }
 
