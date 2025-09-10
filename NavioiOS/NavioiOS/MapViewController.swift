@@ -88,6 +88,7 @@ class PlaceCardCell: UICollectionViewCell {
             containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+
             
             placeImageView.topAnchor.constraint(equalTo: containerView.topAnchor),
             placeImageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
@@ -164,21 +165,17 @@ class LikeModalViewController: UIViewController {
     func setupUI() {
         view.backgroundColor = .systemBackground
         
-        collectionView.backgroundColor = .clear
-        collectionView.showsHorizontalScrollIndicator = false
-        collectionView.dataSource = self
-        collectionView.delegate = self
-        collectionView.register(PlaceCardCell.self, forCellWithReuseIdentifier: "PlaceCardCell")
-        
         view.addSubview(searchBar)
         view.addSubview(likeLabel)
         view.addSubview(collectionView)
         
         // 오토레이아웃
+        collectionView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             searchBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
             searchBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
             searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
+            searchBar.heightAnchor.constraint(equalToConstant: 50),
             
             likeLabel.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 20),
             likeLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
@@ -188,12 +185,14 @@ class LikeModalViewController: UIViewController {
             collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             collectionView.heightAnchor.constraint(equalToConstant: 220)
         ])
+        
+        collectionView.backgroundColor = .clear
+        collectionView.showsHorizontalScrollIndicator = false
+        collectionView.dataSource = self
+        collectionView.delegate = self
+        collectionView.register(PlaceCardCell.self, forCellWithReuseIdentifier: "PlaceCardCell")
     }
     
-    func updateLayout(isExpanded: Bool) {
-        likeLabel.isHidden = !isExpanded
-        collectionView.isHidden = !isExpanded
-    }
 }
 
 // MARK: - CollectionView DataSource & Delegate
@@ -211,12 +210,8 @@ extension LikeModalViewController: UICollectionViewDataSource, UICollectionViewD
   
   func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
     
-    let totalInsets: CGFloat = 40
-    let spacing: CGFloat = 16
-    let availableWidth = view.frame.width - totalInsets - spacing
-    let cellWidth = availableWidth / 1.5
-    let originalHeight = (cellWidth * 238) / 202
-    let cellHeight = originalHeight * 1.8
+      let cellHeight = collectionView.bounds.height - 20
+      let cellWidth = cellHeight * (202.0 / 200.0)
     
     return CGSize(width: cellWidth, height: cellHeight)
   }
@@ -227,19 +222,25 @@ class MapViewController: UIViewController {
     
     private let mapBoard: MapBoard
     private let mapView = MKMapView()
-    private var cancellables = Set<AnyCancellable>()
-    
-    private let modalContainerView: UIView = {
-        let view = UIView()
-        view.backgroundColor = .systemBackground
-        view.layer.cornerRadius = 20
-        view.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
-        view.translatesAutoresizingMaskIntoConstraints = false
-        return view
+    private let showSearchButton: UIButton = {
+        let button = UIButton(type: .system)
+        let config = UIImage.SymbolConfiguration(pointSize: 20, weight: .bold)
+        let image = UIImage(systemName: "magnifyingglass", withConfiguration: config)
+        
+        button.setImage(image, for: .normal)
+        button.backgroundColor = .systemBlue
+        button.tintColor = .white
+        button.layer.cornerRadius = 25
+        button.layer.shadowColor = UIColor.black.cgColor
+        button.layer.shadowOpacity = 0.2
+        button.layer.shadowRadius = 5
+        button.translatesAutoresizingMaskIntoConstraints = false
+        
+        return button
     }()
-    
-    private var modalHeightConstraint: NSLayoutConstraint!
-    
+        
+    private var cancellables = Set<AnyCancellable>()
+        
     private var currentModalVC: UIViewController?
     private let collapsedHeight: CGFloat = 100
     private var expandedHeight: CGFloat = 400
@@ -259,11 +260,11 @@ class MapViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         bindViewModel()
-        showLikeModal()
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        showLikeModal()
         Task {
             await mapBoard.startUpdating()
         }
@@ -272,25 +273,26 @@ class MapViewController: UIViewController {
     private func setupUI() {
         view.backgroundColor = .systemBackground
         view.addSubview(mapView)
-        view.addSubview(modalContainerView)
+        view.addSubview(showSearchButton)
+        showSearchButton.addTarget(self, action: #selector(showSearchButtonTapped), for: .touchUpInside)
         
         mapView.translatesAutoresizingMaskIntoConstraints = false
-        
-        modalHeightConstraint = modalContainerView.heightAnchor.constraint(equalToConstant: collapsedHeight)
-        
         NSLayoutConstraint.activate([
             mapView.topAnchor.constraint(equalTo: view.topAnchor),
             mapView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             mapView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            mapView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            mapView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
             
-            modalContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            modalContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            modalContainerView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            modalHeightConstraint
+            showSearchButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            showSearchButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+            showSearchButton.widthAnchor.constraint(equalToConstant: 50),
+            showSearchButton.heightAnchor.constraint(equalToConstant: 50)
         ])
-        let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
-        modalContainerView.addGestureRecognizer(panGesture)
+
+    }
+    
+    @objc private func showSearchButtonTapped() {
+        showLikeModal()
     }
     
     private func bindViewModel() {
@@ -356,113 +358,41 @@ class MapViewController: UIViewController {
         self.present(searchModalVC, animated: true)
     }
     
-    
-    private func switchModalContent(to newModalVC: UIViewController) {
-        currentModalVC?.willMove(toParent: nil)
-        currentModalVC?.removeFromParent()
-        currentModalVC?.view.removeFromSuperview()
-        
-        addChild(newModalVC)
-        modalContainerView.addSubview(newModalVC.view)
-        
-        newModalVC.view.translatesAutoresizingMaskIntoConstraints = false
-        
-        NSLayoutConstraint.activate([
-            newModalVC.view.topAnchor.constraint(equalTo: modalContainerView.topAnchor),
-            newModalVC.view.leadingAnchor.constraint(equalTo: modalContainerView.leadingAnchor),
-            newModalVC.view.trailingAnchor.constraint(equalTo: modalContainerView.trailingAnchor),
-            newModalVC.view.bottomAnchor.constraint(equalTo: modalContainerView.bottomAnchor)
-        ])
-        newModalVC.didMove(toParent: self)
-        currentModalVC = newModalVC
+    private func presentAsSheet(_ viewController: UIViewController) {
+        if self.presentedViewController != nil {
+            self.dismiss(animated: true) { [weak self] in
+                self?.presentSheet(viewController)
+            }
+        } else {
+            presentSheet(viewController)
+        }
     }
     
-    private func presentAsSheet(_ viewController: UIViewController) {
+    private func presentSheet(_ viewController: UIViewController) {
         if let sheet = viewController.sheetPresentationController {
             sheet.detents = [.medium(), .large()]
             sheet.prefersGrabberVisible = true
             sheet.largestUndimmedDetentIdentifier = .medium
         }
-        self.present(viewController, animated: true)
+        self.present(viewController, animated: false)
     }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         expandedHeight = view.safeAreaLayoutGuide.layoutFrame.height * 0.5
     }
-    
-    @objc func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
-        let translation = gesture.translation(in: view)
-        //        let velocity = gesture.velocity(in: view)
-        
-        switch gesture.state {
-        case .changed:
-            // 드래그에 따른 모달 높이 조정
-            let newHeight = modalHeightConstraint.constant - translation.y
-            
-            modalHeightConstraint.constant = max(collapsedHeight, min(newHeight, expandedHeight))
-            gesture.setTranslation(.zero, in: view)
-            //            let tabBarHeight: CGFloat = 83
-            //            let availableHeight = view.frame.height - tabBarHeight
-            //            let currentY = modalContainerView.frame.origin.y
-            //            let newY = currentY + translation.y
-            //
-            //            let minY = availableHeight - expandedHeight
-            //            let maxY = availableHeight - collapsedHeight
-            //
-            //            let constrainedY = max(minY, min(maxY, newY))
-            //
-            //            modalContainerView.frame.origin.y = constrainedY
-            //            mapView.frame.size.height = constrainedY
-            //
-            //            if let mapLabel = mapView.subviews.first as? UILabel {
-            //                mapLabel.frame = CGRect(x: 0, y: mapView.frame.height / 2 - 15, width: view.frame.width, height: 30)
-            //            }
-            //
-            //            gesture.setTranslation(.zero, in: view)
-            
-        case .ended:
-            // 드래그가 끝났을 때 속도를 보고 모달 상태 결정
-            let velocity = gesture.velocity(in: view)
-            
-            if velocity.y < 0 {
-                isModalExpanded = true
-            }
-            else if velocity.y > 500 {
-                isModalExpanded = false
-            }
-            else {
-                isModalExpanded = modalHeightConstraint.constant > (collapsedHeight + expandedHeight) / 2
-            }
-            
-            updateModalHeight(animated: true)
-            
-        default:
-            break
-        }
-    }
-    private func updateModalHeight(animated: Bool) {
-        modalHeightConstraint.constant = self.isModalExpanded ? self.expandedHeight : self.collapsedHeight
-        
-        if animated {
-            UIView.animate(withDuration: 0.3, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0) {
-                self.view.layoutIfNeeded()
-            }
-        } else {
-            self.view.layoutIfNeeded()
-        }
-    }
+
 }
   
   // MARK: - SearchBar Delegate
-  extension MapViewController: UISearchBarDelegate {
+extension MapViewController: UISearchBarDelegate {
     func searchBarShouldBeginEditing(_ searchBar: UISearchBar) -> Bool {
-        self.dismiss(animated: true) { [weak self] in
+        self.dismiss(animated: false) { [weak self] in
             self?.showRecentModal()
         }
-      return false
+        return false
     }
-  }
+}
 
 // MARK: - SwiftUI Preview
 //#if DEBUG

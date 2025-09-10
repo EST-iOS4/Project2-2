@@ -81,6 +81,13 @@ class RecentPlaceViewController: UIViewController {
         return sb
     }()
     
+    private let shortcutScrollView: UIScrollView = {
+            let scrollView = UIScrollView()
+            scrollView.showsHorizontalScrollIndicator = false // 하단 스크롤바 숨기기
+            scrollView.translatesAutoresizingMaskIntoConstraints = false
+            return scrollView
+        }()
+    
     let shortcutStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .horizontal
@@ -140,6 +147,8 @@ class RecentPlaceViewController: UIViewController {
     tableView.register(RecentPlaceCell.self, forCellReuseIdentifier: "RecentPlaceCell")
     
     view.addSubview(searchBar)
+    view.addSubview(shortcutScrollView)
+    shortcutScrollView.addSubview(shortcutStackView)
     view.addSubview(recentSearchLabel)
     view.addSubview(deleteAllButton)
     view.addSubview(tableView)
@@ -149,9 +158,17 @@ class RecentPlaceViewController: UIViewController {
         searchBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
         searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
         
-        shortcutStackView.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 12),
-        shortcutStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-        shortcutStackView.heightAnchor.constraint(equalToConstant: 30),
+        shortcutScrollView.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 12),
+        shortcutScrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+        shortcutScrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+        shortcutScrollView.heightAnchor.constraint(equalToConstant: 35), // 스크롤뷰의 높이
+                
+        shortcutStackView.topAnchor.constraint(equalTo: shortcutScrollView.contentLayoutGuide.topAnchor),
+        shortcutStackView.bottomAnchor.constraint(equalTo: shortcutScrollView.contentLayoutGuide.bottomAnchor),
+        shortcutStackView.leadingAnchor.constraint(equalTo: shortcutScrollView.contentLayoutGuide.leadingAnchor, constant: 20), // 좌측 여백
+        shortcutStackView.trailingAnchor.constraint(equalTo: shortcutScrollView.contentLayoutGuide.trailingAnchor, constant: -20), // 우측 여백
+                
+        shortcutStackView.heightAnchor.constraint(equalTo: shortcutScrollView.heightAnchor),
         
         recentSearchLabel.topAnchor.constraint(equalTo: shortcutStackView.bottomAnchor, constant: 20),
         recentSearchLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
