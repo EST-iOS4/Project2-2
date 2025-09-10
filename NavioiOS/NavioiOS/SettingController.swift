@@ -8,7 +8,7 @@ import UIKit
 import Navio
 
 
-final class SettingViewController: UIViewController {
+final class SettingController: UIViewController {
     private let settingRef: Setting
     init(settingRef: Setting) {
         self.settingRef = settingRef

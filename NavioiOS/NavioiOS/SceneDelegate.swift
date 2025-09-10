@@ -6,6 +6,10 @@
 //
 
 import UIKit
+import Navio
+import Combine
+import MapKit
+import ToolBox
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
@@ -17,12 +21,22 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
                options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = (scene as? UIWindowScene) else { return }
 
-        let window = UIWindow(windowScene: windowScene)
+        self.window = UIWindow(windowScene: windowScene)
         // 여기서 직접 초기 화면을 설정
-        let rootViewController = ViewController() // 예: Navio 테스트용 VC
-        window.rootViewController = UINavigationController(rootViewController: rootViewController)
-        self.window = window
-        window.makeKeyAndVisible()
+        let navio = Navio()
+        
+        Task {
+            await navio.setUp()
+            guard let mapBoard = navio.mapBoard?.ref,
+                  let setting = navio.setting?.ref else { return }
+            
+            
+            let mainTabBarController = MainTabBarController(mapBoard: mapBoard, setting: setting)
+            
+            self.window?.rootViewController = mainTabBarController
+            self.window?.makeKeyAndVisible()
+            
+        }
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {
