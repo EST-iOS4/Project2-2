@@ -31,7 +31,7 @@ class MainTabBarController: UITabBarController {
         super.viewDidLoad()
         let HomeVC = HomeViewController()
         let mapBoardVC = MapViewController(mapBoard: mapBoard)
-        let settingVC = SettingController(settingRef: self.setting)
+        let settingVC = SettingViewController(settingRef: self.setting)
         let settingNav = UINavigationController(rootViewController: settingVC)
         
         HomeVC.tabBarItem = UITabBarItem(title: "Home", image: UIImage(systemName: "house"), tag: 0)
