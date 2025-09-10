@@ -2,11 +2,15 @@
 //  MapViewController.swift
 //  NavioiOS
 //
-//  Created by EunYoung Wang on 9/9/25.
+//  Created by EunYoung Wang, 구현모 on 9/10/25.
 //
 
 import Foundation
 import UIKit
+import Navio
+import Combine
+import MapKit
+import ToolBox
 import SwiftUI
 
 
@@ -189,8 +193,20 @@ extension LikeModalViewController: UICollectionViewDataSource, UICollectionViewD
 // MARK: - Map 뷰컨트롤러 (Map 탭+모달 교체 기능)
 class MapViewController: UIViewController {
   
-  let mapView = UIView()
+  private let mapBoard: MapBoard
+  private let mapView = MKMapView()
+  private var cancellables = Set<AnyCancellable>()
+    
   let modalContainerView = UIView()
+    
+    init(mapBoard: MapBoard) {
+        self.mapBoard = mapBoard
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
   
   var isModalExpanded = false
   let collapsedHeight: CGFloat = 100
@@ -200,16 +216,19 @@ class MapViewController: UIViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
     setupUI()
+      bindViewModel()
   }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        Task {
+            await mapBoard.startUpdating()
+        }
+    }
   
   func setupUI() {
     view.backgroundColor = .systemBackground
     
-    mapView.backgroundColor = .systemGray4
-    let mapLabel = UILabel()
-    mapLabel.text = "지도 영역"
-    mapLabel.textAlignment = .center
-    mapView.addSubview(mapLabel)
     view.addSubview(mapView)
     
     modalContainerView.backgroundColor = .systemBackground
@@ -224,6 +243,48 @@ class MapViewController: UIViewController {
     modalContainerView.addGestureRecognizer(panGesture)
   }
   
+    private func bindViewModel() {
+        mapBoard.$currentLocation
+            .compactMap { $0 }
+            .sink { [weak self] location in
+                let coordinate = CLLocationCoordinate2D(latitude: location.latitude, longitude: location.longitude)
+                self?.moveMap(to: coordinate)
+            }
+            .store(in: &cancellables)
+        
+        mapBoard.$likePlaces
+            .sink { [weak self] placeIDs in
+                let placeObjects = placeIDs.compactMap { $0.ref }
+                self?.updatePins(for: placeObjects)
+            }
+            .store(in: &cancellables)
+    }
+    private func moveMap(to coordinate: CLLocationCoordinate2D) {
+        let region = MKCoordinateRegion(center: coordinate, latitudinalMeters: 1000, longitudinalMeters: 1000)
+        mapView.setRegion(region, animated: true)
+    }
+    private func updatePins(for places: [LikePlace]) {
+        // 기존 핀 제거
+        mapView.removeAnnotations(mapView.annotations)
+        
+        // 전달받은 배열 변환
+        let newAnnotations = places.map { place -> MKPointAnnotation in
+            let pin = MKPointAnnotation()
+            pin.coordinate = CLLocationCoordinate2D(latitude: place.location.latitude, longitude: place.location.longitude)
+            pin.title = place.name
+            pin.subtitle = place.address
+            return pin
+        }
+        
+        // 새로운 핀 추가
+        mapView.addAnnotations(newAnnotations)
+        
+        // 추가된 핀이 있다면, 모든 핀이 보이도록 지도 조정
+        if !newAnnotations.isEmpty {
+            mapView.showAnnotations(newAnnotations, animated: true)
+        }
+    }
+    
   func setupInitialLayout() {
     let tabBarHeight: CGFloat = 83
     let modalHeight: CGFloat = 100
@@ -414,61 +475,28 @@ class MapViewController: UIViewController {
       return false
     }
   }
-  
-  // MARK: - 기본 뷰컨트롤러들
-  class HomeViewController: UIViewController {
-    override func viewDidLoad() {
-      super.viewDidLoad()
-      view.backgroundColor = .systemBackground
-    }
-  }
-  
-  class SettingViewController: UIViewController {
-    override func viewDidLoad() {
-      super.viewDidLoad()
-      view.backgroundColor = .systemBackground
-    }
-  }
-  
-  // MARK: - Map의 TabBarController
-  class MapBaseViewTabBarController: UITabBarController {
-    
-    override func viewDidLoad() {
-      super.viewDidLoad()
-      
-      let homeVC = HomeViewController()
-      let mapVC = MapViewController()
-      let settingVC = SettingViewController()
-      
-      homeVC.tabBarItem = UITabBarItem(title: "Home", image: UIImage(systemName: "house"), tag: 0)
-      mapVC.tabBarItem = UITabBarItem(title: "Map", image: UIImage(systemName: "map"), tag: 1)
-      settingVC.tabBarItem = UITabBarItem(title: "Setting", image: UIImage(systemName: "gearshape"), tag: 2)
-      
-      viewControllers = [homeVC, mapVC, settingVC]
-    }
-  }
-  
-  // MARK: - SwiftUI Preview
-#if DEBUG
-  struct MapBaseViewTabBarController_Previews: PreviewProvider {
-    static var previews: some View {
-      UIViewControllerPreview {
-        MapBaseViewTabBarController()
-      }
-    }
-  }
-  
-  struct UIViewControllerPreview<ViewController: UIViewController>: UIViewControllerRepresentable {
-    let viewController: ViewController
-    
-    init(_ builder: @escaping () -> ViewController) {
-      viewController = builder()
-    }
-    
-    func makeUIViewController(context: Context) -> ViewController {
-      viewController
-    }
-    
-    func updateUIViewController(_ uiViewController: ViewController, context: Context) {}
-  }
-#endif
+
+// MARK: - SwiftUI Preview
+//#if DEBUG
+//  struct MapBaseViewTabBarController_Previews: PreviewProvider {
+//    static var previews: some View {
+//      UIViewControllerPreview {
+//        MapBaseViewTabBarController()
+//      }
+//    }
+//  }
+//  
+//  struct UIViewControllerPreview<ViewController: UIViewController>: UIViewControllerRepresentable {
+//    let viewController: ViewController
+//    
+//    init(_ builder: @escaping () -> ViewController) {
+//      viewController = builder()
+//    }
+//    
+//    func makeUIViewController(context: Context) -> ViewController {
+//      viewController
+//    }
+//    
+//    func updateUIViewController(_ uiViewController: ViewController, context: Context) {}
+//  }
+//#endif

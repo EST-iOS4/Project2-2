@@ -254,27 +254,27 @@ extension RecentPlaceViewController: UISearchBarDelegate {
 }
 
 // MARK: - SwiftUI Preview
-#if DEBUG
-struct RecentPlaceViewController_Previews: PreviewProvider {
-  static var previews: some View {
-    UIViewControllerPreview {
-      RecentPlaceViewController()
-    }
-    .previewDevice("iPhone 16 Pro")
-  }
-}
-
-struct RecentPlaceViewControllerPreview<ViewController: UIViewController>: UIViewControllerRepresentable {
-  let viewController: ViewController
-  
-  init(_ builder: @escaping () -> ViewController) {
-    viewController = builder()
-  }
-  
-  func makeUIViewController(context: Context) -> ViewController {
-    viewController
-  }
-  
-  func updateUIViewController(_ uiViewController: ViewController, context: Context) {}
-}
-#endif
+//#if DEBUG
+//struct RecentPlaceViewController_Previews: PreviewProvider {
+//  static var previews: some View {
+//    UIViewControllerPreview {
+//      RecentPlaceViewController()
+//    }
+//    .previewDevice("iPhone 16 Pro")
+//  }
+//}
+//
+//struct RecentPlaceViewControllerPreview<ViewController: UIViewController>: UIViewControllerRepresentable {
+//  let viewController: ViewController
+//  
+//  init(_ builder: @escaping () -> ViewController) {
+//    viewController = builder()
+//  }
+//  
+//  func makeUIViewController(context: Context) -> ViewController {
+//    viewController
+//  }
+//  
+//  func updateUIViewController(_ uiViewController: ViewController, context: Context) {}
+//}
+//#endif

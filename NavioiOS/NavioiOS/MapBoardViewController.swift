@@ -2,7 +2,7 @@
 //  MapBoardViewController.swift
 //  NavioiOS
 //
-//  Created by 구현모 on 9/9/25.
+//  Created by 구현모 on 9/10/25.
 //
 
 import UIKit
