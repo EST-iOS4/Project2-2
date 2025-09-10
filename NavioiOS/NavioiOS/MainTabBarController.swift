@@ -30,15 +30,15 @@ class MainTabBarController: UITabBarController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let likePlaceVC = LikePlaceViewController()
-        let mapVC = MapBoardViewController(mapBoard: mapBoard)
+        let mapVC = MapViewController()
+        let mapBoardVC = MapBoardViewController(mapBoard: mapBoard)
         let settingVC = SettingController(settingRef: self.setting)
         let settingNav = UINavigationController(rootViewController: settingVC)
         
-        likePlaceVC.tabBarItem = UITabBarItem(title: "Home", image: UIImage(systemName: "house"), tag: 0)
-        mapVC.tabBarItem = UITabBarItem(title: "Map", image: UIImage(systemName: "map"), tag: 1)
+        mapVC.tabBarItem = UITabBarItem(title: "Home", image: UIImage(systemName: "house"), tag: 0)
+        mapBoardVC.tabBarItem = UITabBarItem(title: "Map", image: UIImage(systemName: "map"), tag: 1)
         settingNav.tabBarItem = UITabBarItem(title: "Setting", image: UIImage(systemName: "gearshape"), tag: 2)
         
-        viewControllers = [likePlaceVC, mapVC, settingVC]
+        viewControllers = [mapVC, mapBoardVC, settingVC]
     }
 }
