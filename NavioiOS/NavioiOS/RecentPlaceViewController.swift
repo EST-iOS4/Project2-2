@@ -2,7 +2,7 @@
 //  RecentPlaceViewController.swift
 //  NavioiOS
 //
-//  Created by EunYoung Wang on 9/10/25.
+//  Created by EunYoung Wang, 구현모 on 9/10/25.
 //
 
 import Foundation
@@ -25,14 +25,16 @@ class RecentPlaceCell: UITableViewCell {
     iv.layer.cornerRadius = 20
     iv.backgroundColor = .systemGray5
     iv.tintColor = .systemGray
+      iv.translatesAutoresizingMaskIntoConstraints = false
     return iv
   }()
   
   private let placeNameLabel: UILabel = {
     let label = UILabel()
     label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-    label.textColor = .black
+    label.textColor = .label
     label.numberOfLines = 1
+      label.translatesAutoresizingMaskIntoConstraints = false
     return label
   }()
   
@@ -49,13 +51,17 @@ class RecentPlaceCell: UITableViewCell {
     contentView.addSubview(placeImageView)
     contentView.addSubview(placeNameLabel)
     selectionStyle = .none
-  }
-  
-  override func layoutSubviews() {
-    super.layoutSubviews()
-    
-    placeImageView.frame = CGRect(x: 20, y: 10, width: 40, height: 40)
-    placeNameLabel.frame = CGRect(x: 75, y: 20, width: contentView.frame.width - 100, height: 20)
+      
+      NSLayoutConstraint.activate([
+        placeImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+        placeImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+        placeImageView.widthAnchor.constraint(equalToConstant: 40),
+        placeImageView.heightAnchor.constraint(equalToConstant: 40),
+        
+        placeNameLabel.leadingAnchor.constraint(equalTo: placeImageView.trailingAnchor, constant: 15),
+        placeNameLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+        placeNameLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+      ])
   }
   
   func configure(with data: RecentPlaceData) {
@@ -67,12 +73,55 @@ class RecentPlaceCell: UITableViewCell {
 // MARK: - 최근 장소 모달 뷰컨트롤러
 class RecentPlaceViewController: UIViewController {
   
-  let searchBar = UISearchBar()
-  let dividerView = UIView()
-  let LikeButtonStackView = UIStackView()
-  let recentSearchLabel = UILabel()
-  let deleteAllButton = UIButton()
-  let tableView = UITableView()
+    let searchBar: UISearchBar = {
+        let sb = UISearchBar()
+        sb.placeholder = "검색하려는 장소를 입력하세요"
+        sb.searchBarStyle = .minimal
+        sb.translatesAutoresizingMaskIntoConstraints = false
+        return sb
+    }()
+    
+    private let shortcutScrollView: UIScrollView = {
+            let scrollView = UIScrollView()
+            scrollView.showsHorizontalScrollIndicator = false // 하단 스크롤바 숨기기
+            scrollView.translatesAutoresizingMaskIntoConstraints = false
+            return scrollView
+        }()
+    
+    let shortcutStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .horizontal
+        stackView.spacing = 8
+        stackView.distribution = .fillProportionally
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        return stackView
+    }()
+    
+    let recentSearchLabel: UILabel = {
+        let label = UILabel()
+        label.text = "최근 검색"
+        label.textColor = .label
+        label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    let deleteAllButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("삭제", for: .normal)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 16)
+        button.setTitleColor(.systemRed, for: .normal)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
+    let tableView: UITableView = {
+       let tv = UITableView()
+        tv.backgroundColor = .clear
+        tv.separatorStyle = .none
+        tv.translatesAutoresizingMaskIntoConstraints = false
+        return tv
+    }()
   
   let shortcutData = ["홍익대학교", "석촌호수", "오시리아관광단지"]
   
@@ -86,62 +135,70 @@ class RecentPlaceViewController: UIViewController {
     setupUI()
   }
   
-  // 프리뷰용으로 viewDidAppear 추가
-  override func viewDidAppear(_ animated: Bool) {
-    super.viewDidAppear(animated)
-    layoutViews(isExpanded: true)
-  }
-  
   func setupUI() {
     view.backgroundColor = .systemBackground
     
-    // 검색바 설정
-    searchBar.placeholder = "검색하려는 장소를 입력하세요"
-    searchBar.searchBarStyle = .minimal
-    searchBar.showsCancelButton = false
-    searchBar.delegate = self
-    
-    // 구분선 색상
-    dividerView.backgroundColor = .systemGray3
-    
-    // 바로가기 버튼 스택뷰 설정
-    LikeButtonStackView.axis = .horizontal
-    LikeButtonStackView.spacing = 8
-    LikeButtonStackView.distribution = .fillEqually
-    
-    for (index, shortcut) in shortcutData.enumerated() {
-      let button = likeButton(title: shortcut, isSelected: index == 0)
-      LikeButtonStackView.addArrangedSubview(button)
-    }
-    
-    // 최근 검색 라벨 설정
-    recentSearchLabel.text = "최근 검색"
-    recentSearchLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-    recentSearchLabel.textColor = .black
-    
-    // 삭제 버튼 설정
-    deleteAllButton.setTitle("삭제", for: .normal)
-    deleteAllButton.titleLabel?.font = UIFont.systemFont(ofSize: 16)
-    deleteAllButton.setTitleColor(.systemRed, for: .normal)
-    
-    // 테이블뷰 설정
-    tableView.backgroundColor = .clear
-    tableView.separatorStyle = .singleLine
-    tableView.separatorColor = .systemGray3
-    tableView.separatorInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
-    tableView.showsVerticalScrollIndicator = false
+      for title in shortcutData {
+          let button = createShortcutButton(title: title)
+          shortcutStackView.addArrangedSubview(button)
+      }
+        
     tableView.dataSource = self
     tableView.delegate = self
     tableView.register(RecentPlaceCell.self, forCellReuseIdentifier: "RecentPlaceCell")
     
     view.addSubview(searchBar)
-    view.addSubview(dividerView)
-    view.addSubview(LikeButtonStackView)
+    view.addSubview(shortcutScrollView)
+    shortcutScrollView.addSubview(shortcutStackView)
     view.addSubview(recentSearchLabel)
     view.addSubview(deleteAllButton)
     view.addSubview(tableView)
+      
+      NSLayoutConstraint.activate([
+        searchBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
+        searchBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
+        searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
+        
+        shortcutScrollView.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 12),
+        shortcutScrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+        shortcutScrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+        shortcutScrollView.heightAnchor.constraint(equalToConstant: 35), // 스크롤뷰의 높이
+                
+        shortcutStackView.topAnchor.constraint(equalTo: shortcutScrollView.contentLayoutGuide.topAnchor),
+        shortcutStackView.bottomAnchor.constraint(equalTo: shortcutScrollView.contentLayoutGuide.bottomAnchor),
+        shortcutStackView.leadingAnchor.constraint(equalTo: shortcutScrollView.contentLayoutGuide.leadingAnchor, constant: 20), // 좌측 여백
+        shortcutStackView.trailingAnchor.constraint(equalTo: shortcutScrollView.contentLayoutGuide.trailingAnchor, constant: -20), // 우측 여백
+                
+        shortcutStackView.heightAnchor.constraint(equalTo: shortcutScrollView.heightAnchor),
+        
+        recentSearchLabel.topAnchor.constraint(equalTo: shortcutStackView.bottomAnchor, constant: 20),
+        recentSearchLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+        
+        deleteAllButton.centerYAnchor.constraint(equalTo: recentSearchLabel.centerYAnchor),
+        deleteAllButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+        
+        tableView.topAnchor.constraint(equalTo: recentSearchLabel.bottomAnchor, constant: 10),
+        tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+        tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+        tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+      ])
   }
   
+    private func createShortcutButton(title: String) -> UIButton {
+        var config = UIButton.Configuration.filled()
+        config.title = title
+        config.baseBackgroundColor = .secondarySystemBackground
+        config.baseForegroundColor = .label
+        config.image = UIImage(systemName: "heart.fill")
+        config.imagePadding = 6
+        config.cornerStyle = .capsule
+        config.contentInsets = NSDirectionalEdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12)
+        
+        let button = UIButton(configuration: config)
+        button.tintColor = .systemPink
+        return button
+    }
+    
   private func likeButton(title: String, isSelected: Bool) -> UIButton {
     let button = UIButton()
     var config = UIButton.Configuration.plain()
@@ -180,38 +237,6 @@ class RecentPlaceViewController: UIViewController {
     return button
   }
   
-  func layoutViews(isExpanded: Bool) {
-    if isExpanded {
-      searchBar.frame = CGRect(x: 20, y: 25, width: view.frame.width - 40, height: 50)
-      dividerView.frame = CGRect(x: 20, y: 80, width: view.frame.width - 40, height: 1)
-      LikeButtonStackView.frame = CGRect(x: 20, y: 90, width: view.frame.width - 40, height: 30)
-      recentSearchLabel.frame = CGRect(x: 20, y: 140, width: 100, height: 20)
-      deleteAllButton.frame = CGRect(x: view.frame.width - 70, y: 140, width: 50, height: 20)
-      tableView.frame = CGRect(x: 0, y: 170, width: view.frame.width, height: view.frame.height - 170)
-      
-      LikeButtonStackView.isHidden = false
-      recentSearchLabel.isHidden = false
-      deleteAllButton.isHidden = false
-      tableView.isHidden = false
-      dividerView.isHidden = false
-    } else {
-      // 축소 상태 - 검색창만 보임
-      searchBar.frame = CGRect(x: 20, y: 25, width: view.frame.width - 40, height: 50)
-      
-      dividerView.frame = CGRect.zero
-      LikeButtonStackView.frame = CGRect.zero
-      recentSearchLabel.frame = CGRect.zero
-      deleteAllButton.frame = CGRect.zero
-      tableView.frame = CGRect.zero
-      
-      
-      LikeButtonStackView.isHidden = true
-      recentSearchLabel.isHidden = true
-      deleteAllButton.isHidden = true
-      tableView.isHidden = true
-      dividerView.isHidden = true
-    }
-  }
 }
 
 // MARK: - TableView DataSource & Delegate
@@ -254,27 +279,27 @@ extension RecentPlaceViewController: UISearchBarDelegate {
 }
 
 // MARK: - SwiftUI Preview
-#if DEBUG
-struct RecentPlaceViewController_Previews: PreviewProvider {
-  static var previews: some View {
-    UIViewControllerPreview {
-      RecentPlaceViewController()
-    }
-    .previewDevice("iPhone 16 Pro")
-  }
-}
-
-struct RecentPlaceViewControllerPreview<ViewController: UIViewController>: UIViewControllerRepresentable {
-  let viewController: ViewController
-  
-  init(_ builder: @escaping () -> ViewController) {
-    viewController = builder()
-  }
-  
-  func makeUIViewController(context: Context) -> ViewController {
-    viewController
-  }
-  
-  func updateUIViewController(_ uiViewController: ViewController, context: Context) {}
-}
-#endif
+//#if DEBUG
+//struct RecentPlaceViewController_Previews: PreviewProvider {
+//  static var previews: some View {
+//    UIViewControllerPreview {
+//      RecentPlaceViewController()
+//    }
+//    .previewDevice("iPhone 16 Pro")
+//  }
+//}
+//
+//struct RecentPlaceViewControllerPreview<ViewController: UIViewController>: UIViewControllerRepresentable {
+//  let viewController: ViewController
+//  
+//  init(_ builder: @escaping () -> ViewController) {
+//    viewController = builder()
+//  }
+//  
+//  func makeUIViewController(context: Context) -> ViewController {
+//    viewController
+//  }
+//  
+//  func updateUIViewController(_ uiViewController: ViewController, context: Context) {}
+//}
+//#endif

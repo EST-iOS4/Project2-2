@@ -2,7 +2,7 @@
 //  MainTabBarController.swift
 //  NavioiOS
 //
-//  Created by EunYoung Wang on 9/9/25.
+//  Created by EunYoung Wang, 구현모 on 9/10/25.
 //
 
 import UIKit
@@ -29,16 +29,15 @@ class MainTabBarController: UITabBarController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        let mapVC = MapViewController()
-        let mapBoardVC = MapBoardViewController(mapBoard: mapBoard)
-        let settingVC = SettingController(settingRef: self.setting)
+        let HomeVC = HomeViewController()
+        let mapBoardVC = MapViewController(mapBoard: mapBoard)
+        let settingVC = SettingViewController(settingRef: self.setting)
         let settingNav = UINavigationController(rootViewController: settingVC)
         
-        mapVC.tabBarItem = UITabBarItem(title: "Home", image: UIImage(systemName: "house"), tag: 0)
+        HomeVC.tabBarItem = UITabBarItem(title: "Home", image: UIImage(systemName: "house"), tag: 0)
         mapBoardVC.tabBarItem = UITabBarItem(title: "Map", image: UIImage(systemName: "map"), tag: 1)
-        settingNav.tabBarItem = UITabBarItem(title: "Setting", image: UIImage(systemName: "gearshape"), tag: 2)
+        settingNav.tabBarItem = UITabBarItem(title: "Setting", image: UIImage(systemName: "gear"), tag: 2)
         
-        viewControllers = [mapVC, mapBoardVC, settingVC]
+        viewControllers = [HomeVC, mapBoardVC, settingNav]
     }
 }
