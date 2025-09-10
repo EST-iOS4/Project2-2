@@ -46,7 +46,6 @@ public final class Place: Sendable, ObservableObject {
     public internal(set) var location: Location
     public internal(set) var like: Bool = false
     
-    
     // MARK: action
     public func toggleLike() {
         // capture
