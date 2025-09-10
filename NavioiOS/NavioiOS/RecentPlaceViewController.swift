@@ -32,7 +32,7 @@ class RecentPlaceCell: UITableViewCell {
   private let placeNameLabel: UILabel = {
     let label = UILabel()
     label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-    label.textColor = .black
+    label.textColor = .label
     label.numberOfLines = 1
       label.translatesAutoresizingMaskIntoConstraints = false
     return label
@@ -100,6 +100,7 @@ class RecentPlaceViewController: UIViewController {
     let recentSearchLabel: UILabel = {
         let label = UILabel()
         label.text = "최근 검색"
+        label.textColor = .label
         label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -186,8 +187,8 @@ class RecentPlaceViewController: UIViewController {
     private func createShortcutButton(title: String) -> UIButton {
         var config = UIButton.Configuration.filled()
         config.title = title
-        config.baseBackgroundColor = .systemGray6
-        config.baseForegroundColor = .black
+        config.baseBackgroundColor = .secondarySystemBackground
+        config.baseForegroundColor = .label
         config.image = UIImage(systemName: "heart.fill")
         config.imagePadding = 6
         config.cornerStyle = .capsule

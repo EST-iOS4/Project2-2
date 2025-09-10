@@ -26,7 +26,7 @@ class PlaceCardCell: UICollectionViewCell {
   
   private let containerView: UIView = {
     let view = UIView()
-    view.backgroundColor = .white
+    view.backgroundColor = .secondarySystemBackground
     view.layer.cornerRadius = 34
     view.layer.shadowColor = UIColor.black.cgColor
     view.layer.shadowOpacity = 0.1
@@ -49,7 +49,7 @@ class PlaceCardCell: UICollectionViewCell {
   private let titleLabel: UILabel = {
     let label = UILabel()
     label.font = UIFont.boldSystemFont(ofSize: 20)
-    label.textColor = .black
+    label.textColor = .label
     label.textAlignment = .right
     label.numberOfLines = 1
       label.translatesAutoresizingMaskIntoConstraints = false
@@ -127,7 +127,7 @@ class LikeModalViewController: UIViewController {
         let label = UILabel()
         label.text = "Like"
         label.font = UIFont.systemFont(ofSize: 35, weight: .heavy)
-        label.textColor = .black
+        label.textColor = .label
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
