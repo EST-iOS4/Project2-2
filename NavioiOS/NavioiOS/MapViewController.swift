@@ -222,23 +222,47 @@ class MapViewController: UIViewController {
     
     private let mapBoard: MapBoard
     private let mapView = MKMapView()
-    private let showSearchButton: UIButton = {
+        
+    private let searchContainerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .systemBackground
+        view.layer.cornerRadius = 10
+        view.layer.shadowColor = UIColor.black.cgColor
+        view.layer.shadowOpacity = 0.1
+        view.layer.shadowRadius = 5
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private let searchIconView: UIImageView = {
+        let iv = UIImageView()
+        iv.image = UIImage(systemName: "magnifyingglass")
+        iv.tintColor = .systemGray
+        iv.contentMode = .scaleAspectFit
+        iv.translatesAutoresizingMaskIntoConstraints = false
+        return iv
+    }()
+    
+    private let searchLabel: UILabel = {
+        let label = UILabel()
+        label.text = "검색하기"
+        label.textColor = .systemGray
+        label.font = .systemFont(ofSize: 17)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let userTrackingButton: UIButton = {
         let button = UIButton(type: .system)
-        let config = UIImage.SymbolConfiguration(pointSize: 20, weight: .bold)
-        let image = UIImage(systemName: "magnifyingglass", withConfiguration: config)
-        
+        let image = UIImage(systemName: "location.fill")
         button.setImage(image, for: .normal)
-        button.backgroundColor = .systemBlue
-        button.tintColor = .white
-        button.layer.cornerRadius = 25
-        button.layer.shadowColor = UIColor.black.cgColor
-        button.layer.shadowOpacity = 0.2
-        button.layer.shadowRadius = 5
+        button.backgroundColor = .systemBackground
+        button.tintColor = .systemBlue
+        button.layer.cornerRadius = 5
         button.translatesAutoresizingMaskIntoConstraints = false
-        
         return button
     }()
-        
+    
     private var cancellables = Set<AnyCancellable>()
         
     private var currentModalVC: UIViewController?
@@ -258,6 +282,7 @@ class MapViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        mapView.delegate = self
         setupUI()
         bindViewModel()
     }
@@ -274,9 +299,14 @@ class MapViewController: UIViewController {
         view.addSubview(mapView)
         mapView.showsUserLocation = true
         mapView.showsCompass = true
-        mapView.userTrackingMode = .follow
-        view.addSubview(showSearchButton)
-        showSearchButton.addTarget(self, action: #selector(showSearchButtonTapped), for: .touchUpInside)
+//        mapView.userTrackingMode = .none
+        
+        view.addSubview(searchContainerView)
+        searchContainerView.addSubview(searchIconView)
+        searchContainerView.addSubview(searchLabel)
+        
+        view.addSubview(userTrackingButton)
+        userTrackingButton.addTarget(self, action: #selector(userTrackingButtonTapped), for: .touchUpInside)
         
         mapView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
@@ -285,16 +315,44 @@ class MapViewController: UIViewController {
             mapView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             mapView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
             
-            showSearchButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            showSearchButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
-            showSearchButton.widthAnchor.constraint(equalToConstant: 50),
-            showSearchButton.heightAnchor.constraint(equalToConstant: 50)
+             searchContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+             searchContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+             searchContainerView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10),
+             searchContainerView.heightAnchor.constraint(equalToConstant: 50),
+             
+             searchIconView.leadingAnchor.constraint(equalTo: searchContainerView.leadingAnchor, constant: 15),
+             searchIconView.centerYAnchor.constraint(equalTo: searchContainerView.centerYAnchor),
+             searchIconView.widthAnchor.constraint(equalToConstant: 20),
+             searchIconView.heightAnchor.constraint(equalToConstant: 20),
+             
+             searchLabel.leadingAnchor.constraint(equalTo: searchIconView.trailingAnchor, constant: 8),
+             searchLabel.centerYAnchor.constraint(equalTo: searchContainerView.centerYAnchor),
+             searchLabel.trailingAnchor.constraint(equalTo: searchContainerView.trailingAnchor, constant: -15),
+            
+            userTrackingButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            userTrackingButton.bottomAnchor.constraint(equalTo: searchContainerView.topAnchor, constant: -10),
+            userTrackingButton.widthAnchor.constraint(equalToConstant: 44),
+            userTrackingButton.heightAnchor.constraint(equalToConstant: 44)
         ])
-
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(searchContainerTapped))
+        searchContainerView.addGestureRecognizer(tapGesture)
     }
     
-    @objc private func showSearchButtonTapped() {
+    @objc private func searchContainerTapped() {
         showLikeModal()
+    }
+    
+    @objc private func userTrackingButtonTapped() {
+        switch mapView.userTrackingMode {
+        case .none:
+            mapView.setUserTrackingMode(.follow, animated: true)
+        case .follow:
+            mapView.setUserTrackingMode(.followWithHeading, animated: true)
+        case .followWithHeading:
+            mapView.setUserTrackingMode(.none, animated: true)
+        @unknown default:
+            fatalError("Unknown user tracking mode")
+        }
     }
     
     private func bindViewModel() {
@@ -396,6 +454,26 @@ extension MapViewController: UISearchBarDelegate {
     }
 }
 
+
+extension MapViewController: MKMapViewDelegate {
+    func mapView(_ mapView: MKMapView, didChange mode: MKUserTrackingMode, animated: Bool) {
+        switch mode {
+        case .none:
+            userTrackingButton.setImage(UIImage(systemName: "location"), for: .normal)
+            userTrackingButton.tintColor = .systemGray
+        case .follow:
+            userTrackingButton.setImage(UIImage(systemName: "location.fill"), for: .normal)
+            userTrackingButton.tintColor = .systemBlue
+        case .followWithHeading:
+            userTrackingButton.setImage(UIImage(systemName: "location.north.line.fill"), for: .normal)
+            userTrackingButton.tintColor = .systemBlue
+        @unknown default:
+            break
+        }
+    }
+}
+        
+        
 // MARK: - SwiftUI Preview
 //#if DEBUG
 //  struct MapBaseViewTabBarController_Previews: PreviewProvider {
