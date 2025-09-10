@@ -264,7 +264,6 @@ class MapViewController: UIViewController {
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        showLikeModal()
         Task {
             await mapBoard.startUpdating()
         }
@@ -273,6 +272,9 @@ class MapViewController: UIViewController {
     private func setupUI() {
         view.backgroundColor = .systemBackground
         view.addSubview(mapView)
+        mapView.showsUserLocation = true
+        mapView.showsCompass = true
+        mapView.userTrackingMode = .follow
         view.addSubview(showSearchButton)
         showSearchButton.addTarget(self, action: #selector(showSearchButtonTapped), for: .touchUpInside)
         
