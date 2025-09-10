@@ -84,14 +84,48 @@ public final class MapBoard: Sendable, ObservableObject {
     
     public func fetchLikePlaces() async {
         // capture
-        
+        let boardRef = self.id
+        let oldIDs = self.likePlaces
         
         // compute
+        let userDefaultBoxKey = "LIKED_PLACES"
+        let userDefaultIDsKey = "MAPBOARD_LIKEPLACE_IDS"
+        let ud = UserDefaults.standard
         
+        let box = (ud.dictionary(forKey: userDefaultBoxKey) as? [String: [String: String]]) ?? [:]
+        let orderedNames = (ud.array(forKey: userDefaultIDsKey) as? [String]) ?? box.keys.sorted()
         
         // mutate
+        for id in oldIDs {
+            guard let nm = id.ref?.name else { continue }
+            if orderedNames.contains(nm) == false {
+                id.ref?.delete()
+            }
+        }
+        
         self.likePlaces = []
+        
+        for name in orderedNames {
+            guard let rec = box[name] else { continue }
+            let imageName = rec["imageName"] ?? ""
+            let address = rec["address"] ?? ""
+            
+            if let exist = oldIDs.first(where: { $0.ref?.name == name }) {
+                self.likePlaces.append(exist)
+                continue
+            }
+            
+            let data = PlaceData(
+                name: name,
+                imageName: imageName,
+                location: .init(latitude: 0, longitude: 0),
+                address:address, number: ""
+            )
+            let likeRef = LikePlace(owner: boardRef, data: data)
+            self.likePlaces.append(likeRef.id)
+        }
     }
+    
     public func fetchRecentPlaces() async {
         
         // mutate

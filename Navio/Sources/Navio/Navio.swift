@@ -54,7 +54,7 @@ public final class Navio: Sendable, ObservableObject {
     public struct ID: Sendable, Hashable {
         // core
         public let value: UUID = UUID()
-        nonisolated init() { }
+        public nonisolated init() { }
         
         public var isExist: Bool {
             NavioManager.container[self] != nil
