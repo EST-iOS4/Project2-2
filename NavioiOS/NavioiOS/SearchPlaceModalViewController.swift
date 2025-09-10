@@ -2,7 +2,7 @@
 //  SearchPlaceViewController.swift
 //  NavioiOS
 //
-//  Created by EunYoung Wang on 9/9/25.
+//  Created by EunYoung Wang, 구현모 on 9/10/25.
 //
 
 import UIKit
@@ -24,6 +24,7 @@ class SearchListCell: UITableViewCell {
     iv.layer.cornerRadius = 25
     iv.backgroundColor = .systemGray5
     iv.tintColor = .systemBlue
+      iv.translatesAutoresizingMaskIntoConstraints = false
     return iv
   }()
   
@@ -32,6 +33,7 @@ class SearchListCell: UITableViewCell {
     label.font = UIFont.systemFont(ofSize: 18, weight: .medium)
     label.textColor = .black
     label.numberOfLines = 1
+      label.translatesAutoresizingMaskIntoConstraints = false
     return label
   }()
   
@@ -40,6 +42,7 @@ class SearchListCell: UITableViewCell {
     label.font = UIFont.systemFont(ofSize: 14)
     label.textColor = .systemGray
     label.numberOfLines = 1
+      label.translatesAutoresizingMaskIntoConstraints = false
     return label
   }()
   
@@ -52,20 +55,27 @@ class SearchListCell: UITableViewCell {
     fatalError("init(coder:) has not been implemented")
   }
   
-  private func setupUI() {
-    contentView.addSubview(itemImageView)
-    contentView.addSubview(titleLabel)
-    contentView.addSubview(subtitleLabel)
-    
-    selectionStyle = .none
-  }
-  
-  override func layoutSubviews() {
-    super.layoutSubviews()
-    
-    itemImageView.frame = CGRect(x: 20, y: 10, width: 50, height: 50)
-    titleLabel.frame = CGRect(x: 85, y: 15, width: contentView.frame.width - 100, height: 20)
-    subtitleLabel.frame = CGRect(x: 85, y: 35, width: contentView.frame.width - 130, height: 20)
+    private func setupUI() {
+        contentView.addSubview(itemImageView)
+        contentView.addSubview(titleLabel)
+        contentView.addSubview(subtitleLabel)
+        
+        selectionStyle = .none
+        
+        NSLayoutConstraint.activate([
+            itemImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            itemImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            itemImageView.widthAnchor.constraint(equalToConstant: 50),
+            itemImageView.heightAnchor.constraint(equalToConstant: 50),
+            
+            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 15),
+            titleLabel.leadingAnchor.constraint(equalTo: itemImageView.trailingAnchor, constant: 15),
+            titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            
+            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 2),
+            subtitleLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
+            subtitleLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
+        ])
   }
   
   func configure(with data: SearchItemData) {
@@ -77,54 +87,60 @@ class SearchListCell: UITableViewCell {
 
 // MARK: - 검색 모달 뷰컨트롤러
 class SearchPlaceModalViewController: UIViewController {
-  
-  let searchBar = UISearchBar()
-  let tableView = UITableView()
-  
-  let searchData = [
-    SearchItemData(imageName: "cup.and.saucer.fill", title: "스타벅스", subtitle: "영업중 • 리뷰 999+ • 크림라떼와 부드러운 에스프레소를 드립니다."),
-    SearchItemData(imageName: "mug.fill", title: "커피빈", subtitle: "영업중 • 리뷰 850+ • 스페셜 커피 음료를 제공합니다."),
-    SearchItemData(imageName: "takeoutbag.and.cup.and.straw.fill", title: "투썸플레이스", subtitle: "영업 중 • 리뷰 650+ • 디저트와 음료 전문"),
-    SearchItemData(imageName: "cup.and.saucer", title: "폴바셋", subtitle: "영업 중 • 리뷰 420+ • 프리미엄 커피 체인")
-  ]
-  
-  override func viewDidLoad() {
-    super.viewDidLoad()
-    setupUI()
-  }
-  
-  func setupUI() {
-    view.backgroundColor = .systemBackground
     
-    // 검색바 설정
-    searchBar.placeholder = "카페"
-    searchBar.searchBarStyle = .minimal
+    let searchBar: UISearchBar = {
+        let sb = UISearchBar()
+        sb.placeholder = "카페"
+        sb.searchBarStyle = .minimal
+        sb.translatesAutoresizingMaskIntoConstraints = false
+        return sb
+    }()
     
-    // 테이블뷰 설정
-    tableView.backgroundColor = .clear
-    tableView.separatorStyle = .singleLine
-    tableView.separatorColor = .systemGray4
-    tableView.separatorInset = UIEdgeInsets(top: 0, left: 80, bottom: 0, right: 30)
-    tableView.showsVerticalScrollIndicator = false
-    tableView.dataSource = self
-    tableView.delegate = self
-    tableView.register(SearchListCell.self, forCellReuseIdentifier: "SearchListCell")
+    let tableView: UITableView = {
+        let tv = UITableView()
+        tv.backgroundColor = .clear
+        tv.separatorStyle = .singleLine
+        tv.separatorColor = .systemGray4
+        tv.separatorInset = UIEdgeInsets(top: 0, left: 80, bottom: 0, right: 30)
+        tv.showsVerticalScrollIndicator = false
+        tv.translatesAutoresizingMaskIntoConstraints = false
+        return tv
+    }()
     
-    view.addSubview(searchBar)
-    view.addSubview(tableView)
-  }
-  
-  func layoutViews(isExpanded: Bool) {
-    if isExpanded {
-      // 50% 확장 상태 - 리스트 보임
-      searchBar.frame = CGRect(x: 20, y: 25, width: view.frame.width - 40, height: 50)
-      tableView.frame = CGRect(x: 0, y: 85, width: view.frame.width, height: view.frame.height - 85)
-    } else {
-      // 축소 상태 - 검색창만 보임
-      searchBar.frame = CGRect(x: 20, y: 25, width: view.frame.width - 40, height: 50)
-      tableView.frame = CGRect.zero // 숨김
+    let searchData = [
+        SearchItemData(imageName: "cup.and.saucer.fill", title: "스타벅스", subtitle: "영업중 • 리뷰 999+ • 크림라떼와 부드러운 에스프레소를 드립니다."),
+        SearchItemData(imageName: "mug.fill", title: "커피빈", subtitle: "영업중 • 리뷰 850+ • 스페셜 커피 음료를 제공합니다."),
+        SearchItemData(imageName: "takeoutbag.and.cup.and.straw.fill", title: "투썸플레이스", subtitle: "영업 중 • 리뷰 650+ • 디저트와 음료 전문"),
+        SearchItemData(imageName: "cup.and.saucer", title: "폴바셋", subtitle: "영업 중 • 리뷰 420+ • 프리미엄 커피 체인")
+    ]
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupUI()
     }
-  }
+    
+    func setupUI() {
+        view.backgroundColor = .systemBackground
+        
+        tableView.dataSource = self
+        tableView.delegate = self
+        tableView.register(SearchListCell.self, forCellReuseIdentifier: "SearchListCell")
+        
+        view.addSubview(searchBar)
+        view.addSubview(tableView)
+        
+        NSLayoutConstraint.activate([
+            searchBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
+            searchBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
+            searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
+            
+            tableView.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 10),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+        
+    }
 }
 
 // MARK: - TableView DataSource & Delegate

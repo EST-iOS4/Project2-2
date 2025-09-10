@@ -32,6 +32,7 @@ class PlaceCardCell: UICollectionViewCell {
     view.layer.shadowOpacity = 0.1
     view.layer.shadowOffset = CGSize(width: 0, height: 2)
     view.layer.shadowRadius = 8
+      view.translatesAutoresizingMaskIntoConstraints = false
     return view
   }()
   
@@ -41,6 +42,7 @@ class PlaceCardCell: UICollectionViewCell {
     iv.clipsToBounds = true
     iv.layer.cornerRadius = 34
     iv.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+      iv.translatesAutoresizingMaskIntoConstraints = false
     return iv
   }()
   
@@ -50,6 +52,7 @@ class PlaceCardCell: UICollectionViewCell {
     label.textColor = .black
     label.textAlignment = .right
     label.numberOfLines = 1
+      label.translatesAutoresizingMaskIntoConstraints = false
     return label
   }()
   
@@ -60,6 +63,7 @@ class PlaceCardCell: UICollectionViewCell {
     label.textAlignment = .right
     label.numberOfLines = 2
     label.lineBreakMode = .byWordWrapping
+        label.translatesAutoresizingMaskIntoConstraints = false
     return label
   }()
   
@@ -77,15 +81,27 @@ class PlaceCardCell: UICollectionViewCell {
     containerView.addSubview(placeImageView)
     containerView.addSubview(titleLabel)
     containerView.addSubview(subtitleLabel)
-  }
-  
-  override func layoutSubviews() {
-    super.layoutSubviews()
-    
-    containerView.frame = CGRect(x: 0, y: 145, width: 202, height: 200)
-    placeImageView.frame = CGRect(x: 3, y: 0, width: 200, height: 130)
-    titleLabel.frame = CGRect(x: 50, y: 130, width: 126, height: 22)
-    subtitleLabel.frame = CGRect(x: 50, y: 153, width: 126, height: 45)
+      
+      // 오토레이아웃
+      NSLayoutConstraint.activate([
+            containerView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            
+            placeImageView.topAnchor.constraint(equalTo: containerView.topAnchor),
+            placeImageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+            placeImageView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+            placeImageView.heightAnchor.constraint(equalTo: containerView.heightAnchor, multiplier: 0.65),
+            
+            titleLabel.topAnchor.constraint(equalTo: placeImageView.bottomAnchor, constant: 8),
+            titleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            titleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            
+            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
+            subtitleLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
+            subtitleLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
+            ])
   }
   
   func configure(with data: PlaceCardData) {
@@ -97,71 +113,87 @@ class PlaceCardCell: UICollectionViewCell {
 
 // MARK: - Like 모달 뷰컨트롤러
 class LikeModalViewController: UIViewController {
-  
-  let searchBar = UISearchBar()
-  let likeLabel = UILabel()
-  let collectionView: UICollectionView
-  
-  let placeData = [
-    PlaceCardData(imageName: "building.2.fill", title: "홍익대학교", subtitle: "서울특별시 마포구 와우산로 94"),
-    PlaceCardData(imageName: "building.columns.fill", title: "연세대학교", subtitle: "서울특별시 서대문구 연세로 50"),
-    PlaceCardData(imageName: "graduationcap.fill", title: "고려대학교", subtitle: "서울특별시 성북구 안암로 145"),
-    PlaceCardData(imageName: "book.fill", title: "서울대학교", subtitle: "서울특별시 관악구 관악로 1")
-  ]
-  
-  override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
-    let layout = UICollectionViewFlowLayout()
-    layout.scrollDirection = .horizontal
-    layout.minimumLineSpacing = 8
-    layout.minimumInteritemSpacing = 0
-    layout.sectionInset = UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20)
     
-    collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
+    let searchBar: UISearchBar = {
+        let sb = UISearchBar()
+        sb.placeholder = "검색하기"
+        sb.searchBarStyle = .minimal
+        sb.translatesAutoresizingMaskIntoConstraints = false
+        return sb
+    }()
     
-    super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
-  }
-  
-  required init?(coder: NSCoder) {
-    fatalError("init(coder:) has not been implemented")
-  }
-  
-  override func viewDidLoad() {
-    super.viewDidLoad()
-    setupUI()
-  }
-  
-  func setupUI() {
-    view.backgroundColor = .systemBackground
+    let likeLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Like"
+        label.font = UIFont.systemFont(ofSize: 35, weight: .heavy)
+        label.textColor = .black
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
     
-    searchBar.placeholder = "검색하기"
-    searchBar.searchBarStyle = .minimal
+    let collectionView: UICollectionView
     
-    likeLabel.text = "Like"
-    likeLabel.font = UIFont.systemFont(ofSize: 35, weight: .heavy)
-    likeLabel.textColor = .black
+    let placeData = [
+        PlaceCardData(imageName: "building.2.fill", title: "홍익대학교", subtitle: "서울특별시 마포구 와우산로 94"),
+        PlaceCardData(imageName: "building.columns.fill", title: "연세대학교", subtitle: "서울특별시 서대문구 연세로 50"),
+        PlaceCardData(imageName: "graduationcap.fill", title: "고려대학교", subtitle: "서울특별시 성북구 안암로 145"),
+        PlaceCardData(imageName: "book.fill", title: "서울대학교", subtitle: "서울특별시 관악구 관악로 1")
+    ]
     
-    collectionView.backgroundColor = .clear
-    collectionView.showsHorizontalScrollIndicator = false
-    collectionView.dataSource = self
-    collectionView.delegate = self
-    collectionView.register(PlaceCardCell.self, forCellWithReuseIdentifier: "PlaceCardCell")
-    
-    view.addSubview(searchBar)
-    view.addSubview(likeLabel)
-    view.addSubview(collectionView)
-  }
-  
-  func layoutViews(isExpanded: Bool) {
-    if isExpanded {
-      searchBar.frame = CGRect(x: 20, y: 25, width: view.frame.width - 40, height: 50)
-      likeLabel.frame = CGRect(x: 30, y: 91, width: 100, height: 30)
-      collectionView.frame = CGRect(x: 0, y: 129, width: view.frame.width, height: 220)
-    } else {
-      searchBar.frame = CGRect(x: 20, y: 25, width: view.frame.width - 40, height: 50)
-      likeLabel.frame = CGRect.zero
-      collectionView.frame = CGRect.zero
+    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .horizontal
+        layout.minimumLineSpacing = 8
+        layout.minimumInteritemSpacing = 0
+        layout.sectionInset = UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20)
+        
+        collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        
+        super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
     }
-  }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupUI()
+    }
+    
+    func setupUI() {
+        view.backgroundColor = .systemBackground
+        
+        collectionView.backgroundColor = .clear
+        collectionView.showsHorizontalScrollIndicator = false
+        collectionView.dataSource = self
+        collectionView.delegate = self
+        collectionView.register(PlaceCardCell.self, forCellWithReuseIdentifier: "PlaceCardCell")
+        
+        view.addSubview(searchBar)
+        view.addSubview(likeLabel)
+        view.addSubview(collectionView)
+        
+        // 오토레이아웃
+        NSLayoutConstraint.activate([
+            searchBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
+            searchBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
+            searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
+            
+            likeLabel.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 20),
+            likeLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            
+            collectionView.topAnchor.constraint(equalTo: likeLabel.bottomAnchor, constant: 8),
+            collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            collectionView.heightAnchor.constraint(equalToConstant: 220)
+        ])
+    }
+    
+    func updateLayout(isExpanded: Bool) {
+        likeLabel.isHidden = !isExpanded
+        collectionView.isHidden = !isExpanded
+    }
 }
 
 // MARK: - CollectionView DataSource & Delegate
@@ -192,12 +224,27 @@ extension LikeModalViewController: UICollectionViewDataSource, UICollectionViewD
 
 // MARK: - Map 뷰컨트롤러 (Map 탭+모달 교체 기능)
 class MapViewController: UIViewController {
-  
-  private let mapBoard: MapBoard
-  private let mapView = MKMapView()
-  private var cancellables = Set<AnyCancellable>()
     
-  let modalContainerView = UIView()
+    private let mapBoard: MapBoard
+    private let mapView = MKMapView()
+    private var cancellables = Set<AnyCancellable>()
+    
+    private let modalContainerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .systemBackground
+        view.layer.cornerRadius = 20
+        view.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private var modalHeightConstraint: NSLayoutConstraint!
+    
+    private var currentModalVC: UIViewController?
+    private let collapsedHeight: CGFloat = 100
+    private var expandedHeight: CGFloat = 400
+    private var isModalExpanded = false
+    
     
     init(mapBoard: MapBoard) {
         self.mapBoard = mapBoard
@@ -207,17 +254,13 @@ class MapViewController: UIViewController {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-  
-  var isModalExpanded = false
-  let collapsedHeight: CGFloat = 100
-  var expandedHeight: CGFloat = 0
-  var currentModalVC: UIViewController?
-  
-  override func viewDidLoad() {
-    super.viewDidLoad()
-    setupUI()
-      bindViewModel()
-  }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupUI()
+        bindViewModel()
+        showLikeModal()
+    }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
@@ -225,24 +268,31 @@ class MapViewController: UIViewController {
             await mapBoard.startUpdating()
         }
     }
-  
-  func setupUI() {
-    view.backgroundColor = .systemBackground
     
-    view.addSubview(mapView)
+    private func setupUI() {
+        view.backgroundColor = .systemBackground
+        view.addSubview(mapView)
+        view.addSubview(modalContainerView)
+        
+        mapView.translatesAutoresizingMaskIntoConstraints = false
+        
+        modalHeightConstraint = modalContainerView.heightAnchor.constraint(equalToConstant: collapsedHeight)
+        
+        NSLayoutConstraint.activate([
+            mapView.topAnchor.constraint(equalTo: view.topAnchor),
+            mapView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            mapView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            mapView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            
+            modalContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            modalContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            modalContainerView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            modalHeightConstraint
+        ])
+        let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
+        modalContainerView.addGestureRecognizer(panGesture)
+    }
     
-    modalContainerView.backgroundColor = .systemBackground
-    modalContainerView.layer.cornerRadius = 20
-    modalContainerView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
-    view.addSubview(modalContainerView)
-    
-    showLikeModal()
-    setupInitialLayout()
-    
-    let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
-    modalContainerView.addGestureRecognizer(panGesture)
-  }
-  
     private func bindViewModel() {
         mapBoard.$currentLocation
             .compactMap { $0 }
@@ -285,193 +335,131 @@ class MapViewController: UIViewController {
         }
     }
     
-  func setupInitialLayout() {
-    let tabBarHeight: CGFloat = 83
-    let modalHeight: CGFloat = 100
-    let availableHeight = view.frame.height - tabBarHeight
-    
-    mapView.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: availableHeight - modalHeight)
-    modalContainerView.frame = CGRect(x: 0, y: availableHeight - modalHeight, width: view.frame.width, height: modalHeight)
-    
-    if let mapLabel = mapView.subviews.first as? UILabel {
-      mapLabel.frame = CGRect(x: 0, y: (availableHeight - modalHeight) / 2 - 15, width: view.frame.width, height: 30)
-    }
-    
-    if let likeModal = currentModalVC as? LikeModalViewController {
-      likeModal.view.frame = modalContainerView.bounds
-      likeModal.layoutViews(isExpanded: false)
-    }else if let recentModal = currentModalVC as? RecentPlaceViewController {
-      recentModal.view.frame = modalContainerView.bounds
-      recentModal.layoutViews(isExpanded: false)
-    }
-  }
-  
-  override func viewDidLayoutSubviews() {
-    super.viewDidLayoutSubviews()
-    
-    let tabBarHeight: CGFloat = 83
-    let availableHeight = view.frame.height - tabBarHeight
-    expandedHeight = availableHeight * 0.5
-    layoutModal()
-  }
-  
-  func layoutModal() {
-    let tabBarHeight: CGFloat = 83
-    let availableHeight = view.frame.height - tabBarHeight
-    
-    if isModalExpanded {
-      mapView.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: availableHeight - expandedHeight)
-      modalContainerView.frame = CGRect(x: 0, y: availableHeight - expandedHeight, width: view.frame.width, height: expandedHeight)
-      
-      if let likeModal = currentModalVC as? LikeModalViewController {
-        likeModal.view.frame = modalContainerView.bounds
-        likeModal.layoutViews(isExpanded: true)
-      } else if let recentModal = currentModalVC as? RecentPlaceViewController {
-        recentModal.view.frame = modalContainerView.bounds
-        recentModal.layoutViews(isExpanded: true)
-      } else if let searchModal = currentModalVC as? SearchPlaceModalViewController {  // 추가
-        searchModal.view.frame = modalContainerView.bounds
-        searchModal.layoutViews(isExpanded: true)
-    }
-    } else {
-        mapView.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: availableHeight - collapsedHeight)
-        modalContainerView.frame = CGRect(x: 0, y: availableHeight - collapsedHeight, width: view.frame.width, height: collapsedHeight)
-      
-        
-        if let likeModal = currentModalVC as? LikeModalViewController {
-          likeModal.view.frame = modalContainerView.bounds
-          likeModal.layoutViews(isExpanded: false)
-        } else if let recentModal = currentModalVC as? RecentPlaceViewController {
-          recentModal.view.frame = modalContainerView.bounds
-          recentModal.layoutViews(isExpanded: false)
-        }
-      }
-      
-      if let mapLabel = mapView.subviews.first as? UILabel {
-        mapLabel.frame = CGRect(x: 0, y: mapView.frame.height / 2 - 15, width: view.frame.width, height: 30)
-      }
-    }
-    
-    @objc func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
-      let translation = gesture.translation(in: view)
-      let velocity = gesture.velocity(in: view)
-      
-      switch gesture.state {
-      case .changed:
-        let tabBarHeight: CGFloat = 83
-        let availableHeight = view.frame.height - tabBarHeight
-        let currentY = modalContainerView.frame.origin.y
-        let newY = currentY + translation.y
-        
-        let minY = availableHeight - expandedHeight
-        let maxY = availableHeight - collapsedHeight
-        
-        let constrainedY = max(minY, min(maxY, newY))
-        
-        modalContainerView.frame.origin.y = constrainedY
-        mapView.frame.size.height = constrainedY
-        
-        if let mapLabel = mapView.subviews.first as? UILabel {
-          mapLabel.frame = CGRect(x: 0, y: mapView.frame.height / 2 - 15, width: view.frame.width, height: 30)
-        }
-        
-        gesture.setTranslation(.zero, in: view)
-        
-      case .ended:
-        let tabBarHeight: CGFloat = 83
-        let availableHeight = view.frame.height - tabBarHeight
-        let currentY = modalContainerView.frame.origin.y
-        let midPoint = availableHeight - (expandedHeight + collapsedHeight) / 2
-        
-        if velocity.y < -300 || (velocity.y > 300) {
-          if velocity.y < 0 {
-            isModalExpanded = true
-          } else {
-            isModalExpanded = false
-            showLikeModal()
-          }
-        } else {
-          if currentY < midPoint {
-            isModalExpanded = true
-          } else {
-            isModalExpanded = false
-            showLikeModal()
-          }
-        }
-        
-        UIView.animate(withDuration: 0.3) {
-          self.layoutModal()
-        }
-        
-      default:
-        break
-      }
-    }
-    
-    
     func showLikeModal() {
-      view.endEditing(true)
-      
-      let likeModalVC = LikeModalViewController()
-      likeModalVC.searchBar.delegate = self
-      switchModalContent(to: likeModalVC)
+        let likeModalVC = LikeModalViewController()
+        likeModalVC.searchBar.delegate = self
+        presentAsSheet(likeModalVC)
     }
     
     func showRecentModal() {
-      let recentModalVC = RecentPlaceViewController()
-      switchModalContent(to: recentModalVC)
-      isModalExpanded = true
-      let tabBarHeight: CGFloat = 83
-      let availableHeight = view.frame.height - tabBarHeight
-      expandedHeight = availableHeight * 0.8  // 80%
-      
-      UIView.animate(withDuration: 0.3) {
-        self.layoutModal()
-      }
+        let recentModalVC = RecentPlaceViewController()
+        presentAsSheet(recentModalVC)
     }
-  func showSearchModal() {
-      let searchModalVC = SearchPlaceModalViewController()
-      switchModalContent(to: searchModalVC)
-      isModalExpanded = true
-      let tabBarHeight: CGFloat = 83
-      let availableHeight = view.frame.height - tabBarHeight
-      expandedHeight = availableHeight * 0.5  // 50%
-      
-      UIView.animate(withDuration: 0.3) {
-          self.layoutModal()
-      }
-  }
-  
-  
+    
+    func showSearchModal() {
+        let searchModalVC = SearchPlaceModalViewController()
+        
+        if let sheet = searchModalVC.sheetPresentationController {
+            sheet.detents = [.medium(), .large()]
+            sheet.prefersGrabberVisible = true
+        }
+        self.present(searchModalVC, animated: true)
+    }
+    
+    
     private func switchModalContent(to newModalVC: UIViewController) {
-      currentModalVC?.removeFromParent()
-      currentModalVC?.view.removeFromSuperview()
-      
-      addChild(newModalVC)
-      modalContainerView.addSubview(newModalVC.view)
-      newModalVC.view.frame = modalContainerView.bounds
-      
-      if let LikeModal = newModalVC as? LikeModalViewController {
-        LikeModal.layoutViews(isExpanded: isModalExpanded)
-      } else if let recentModal = newModalVC as? RecentPlaceViewController {
-        recentModal.layoutViews(isExpanded: isModalExpanded)
-        if isModalExpanded {
-                    recentModal.searchBar.becomeFirstResponder()
-                }
-      } else if let searchModal = newModalVC as? SearchPlaceModalViewController {
-        searchModal.layoutViews(isExpanded: isModalExpanded)
-        searchModal.searchBar.becomeFirstResponder()
+        currentModalVC?.willMove(toParent: nil)
+        currentModalVC?.removeFromParent()
+        currentModalVC?.view.removeFromSuperview()
+        
+        addChild(newModalVC)
+        modalContainerView.addSubview(newModalVC.view)
+        
+        newModalVC.view.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            newModalVC.view.topAnchor.constraint(equalTo: modalContainerView.topAnchor),
+            newModalVC.view.leadingAnchor.constraint(equalTo: modalContainerView.leadingAnchor),
+            newModalVC.view.trailingAnchor.constraint(equalTo: modalContainerView.trailingAnchor),
+            newModalVC.view.bottomAnchor.constraint(equalTo: modalContainerView.bottomAnchor)
+        ])
+        newModalVC.didMove(toParent: self)
+        currentModalVC = newModalVC
     }
-      
-      newModalVC.didMove(toParent: self)
-      currentModalVC = newModalVC
+    
+    private func presentAsSheet(_ viewController: UIViewController) {
+        if let sheet = viewController.sheetPresentationController {
+            sheet.detents = [.medium(), .large()]
+            sheet.prefersGrabberVisible = true
+            sheet.largestUndimmedDetentIdentifier = .medium
+        }
+        self.present(viewController, animated: true)
     }
-  }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        expandedHeight = view.safeAreaLayoutGuide.layoutFrame.height * 0.5
+    }
+    
+    @objc func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
+        let translation = gesture.translation(in: view)
+        //        let velocity = gesture.velocity(in: view)
+        
+        switch gesture.state {
+        case .changed:
+            // 드래그에 따른 모달 높이 조정
+            let newHeight = modalHeightConstraint.constant - translation.y
+            
+            modalHeightConstraint.constant = max(collapsedHeight, min(newHeight, expandedHeight))
+            gesture.setTranslation(.zero, in: view)
+            //            let tabBarHeight: CGFloat = 83
+            //            let availableHeight = view.frame.height - tabBarHeight
+            //            let currentY = modalContainerView.frame.origin.y
+            //            let newY = currentY + translation.y
+            //
+            //            let minY = availableHeight - expandedHeight
+            //            let maxY = availableHeight - collapsedHeight
+            //
+            //            let constrainedY = max(minY, min(maxY, newY))
+            //
+            //            modalContainerView.frame.origin.y = constrainedY
+            //            mapView.frame.size.height = constrainedY
+            //
+            //            if let mapLabel = mapView.subviews.first as? UILabel {
+            //                mapLabel.frame = CGRect(x: 0, y: mapView.frame.height / 2 - 15, width: view.frame.width, height: 30)
+            //            }
+            //
+            //            gesture.setTranslation(.zero, in: view)
+            
+        case .ended:
+            // 드래그가 끝났을 때 속도를 보고 모달 상태 결정
+            let velocity = gesture.velocity(in: view)
+            
+            if velocity.y < 0 {
+                isModalExpanded = true
+            }
+            else if velocity.y > 500 {
+                isModalExpanded = false
+            }
+            else {
+                isModalExpanded = modalHeightConstraint.constant > (collapsedHeight + expandedHeight) / 2
+            }
+            
+            updateModalHeight(animated: true)
+            
+        default:
+            break
+        }
+    }
+    private func updateModalHeight(animated: Bool) {
+        modalHeightConstraint.constant = self.isModalExpanded ? self.expandedHeight : self.collapsedHeight
+        
+        if animated {
+            UIView.animate(withDuration: 0.3, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0) {
+                self.view.layoutIfNeeded()
+            }
+        } else {
+            self.view.layoutIfNeeded()
+        }
+    }
+}
   
   // MARK: - SearchBar Delegate
   extension MapViewController: UISearchBarDelegate {
     func searchBarShouldBeginEditing(_ searchBar: UISearchBar) -> Bool {
-      showRecentModal()
+        self.dismiss(animated: true) { [weak self] in
+            self?.showRecentModal()
+        }
       return false
     }
   }
