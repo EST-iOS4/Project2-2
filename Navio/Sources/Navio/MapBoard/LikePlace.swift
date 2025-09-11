@@ -2,6 +2,7 @@ import Foundation
 import Combine
 import ToolBox
 import UIKit
+import CoreLocation
 
 // MARK: Object
 @MainActor
@@ -73,3 +74,10 @@ fileprivate final class LikedSpotManager: Sendable {
     }
 }
 
+extension LikePlace: Pinnable {
+    public nonisolated var coordinate: CLLocationCoordinate2D {
+        return .init(latitude: self.location.latitude, longitude: self.location.longitude)
+    }
+    public nonisolated var title: String { self.name }
+    public nonisolated var subtitle: String? { self.address }
+}

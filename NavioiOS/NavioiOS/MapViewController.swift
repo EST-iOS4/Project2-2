@@ -13,12 +13,17 @@ import MapKit
 import ToolBox
 import SwiftUI
 
-
 // MARK: - 캐러셀 데이터 모델
-struct PlaceCardData {
-  let imageName: String
-  let title: String
-  let subtitle: String
+struct PlaceCardData: Pinnable {
+    let imageName: String
+    let title: String
+    let subtitle: String?
+    let latitude: Double
+    let longitude: Double
+    
+    var coordinate: CLLocationCoordinate2D {
+        return CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+    }
 }
 
 // MARK: - 커스텀 캐러셀 셀
@@ -32,7 +37,7 @@ class PlaceCardCell: UICollectionViewCell {
     view.layer.shadowOpacity = 0.1
     view.layer.shadowOffset = CGSize(width: 0, height: 2)
     view.layer.shadowRadius = 8
-      view.translatesAutoresizingMaskIntoConstraints = false
+    view.translatesAutoresizingMaskIntoConstraints = false
     return view
   }()
   
@@ -42,7 +47,7 @@ class PlaceCardCell: UICollectionViewCell {
     iv.clipsToBounds = true
     iv.layer.cornerRadius = 34
     iv.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
-      iv.translatesAutoresizingMaskIntoConstraints = false
+    iv.translatesAutoresizingMaskIntoConstraints = false
     return iv
   }()
   
@@ -52,7 +57,7 @@ class PlaceCardCell: UICollectionViewCell {
     label.textColor = .label
     label.textAlignment = .right
     label.numberOfLines = 1
-      label.translatesAutoresizingMaskIntoConstraints = false
+    label.translatesAutoresizingMaskIntoConstraints = false
     return label
   }()
   
@@ -63,7 +68,7 @@ class PlaceCardCell: UICollectionViewCell {
     label.textAlignment = .right
     label.numberOfLines = 2
     label.lineBreakMode = .byWordWrapping
-        label.translatesAutoresizingMaskIntoConstraints = false
+    label.translatesAutoresizingMaskIntoConstraints = false
     return label
   }()
   
@@ -135,10 +140,10 @@ class LikeModalViewController: UIViewController {
     let collectionView: UICollectionView
     
     let placeData = [
-        PlaceCardData(imageName: "building.2.fill", title: "홍익대학교", subtitle: "서울특별시 마포구 와우산로 94"),
-        PlaceCardData(imageName: "building.columns.fill", title: "연세대학교", subtitle: "서울특별시 서대문구 연세로 50"),
-        PlaceCardData(imageName: "graduationcap.fill", title: "고려대학교", subtitle: "서울특별시 성북구 안암로 145"),
-        PlaceCardData(imageName: "book.fill", title: "서울대학교", subtitle: "서울특별시 관악구 관악로 1")
+        PlaceCardData(imageName: "building.2.fill", title: "홍익대학교", subtitle: "서울특별시 마포구 와우산로 94", latitude: 37.5514, longitude: 126.9249),
+        PlaceCardData(imageName: "building.columns.fill", title: "연세대학교", subtitle: "서울특별시 서대문구 연세로 50", latitude: 37.5658, longitude: 126.9386),
+        PlaceCardData(imageName: "graduationcap.fill", title: "고려대학교", subtitle: "서울특별시 성북구 안암로 145", latitude: 37.5895, longitude: 127.0323),
+        PlaceCardData(imageName: "book.fill", title: "서울대학교", subtitle: "서울특별시 관악구 관악로 1", latitude: 37.4598, longitude: 126.9519),
     ]
     
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
@@ -373,16 +378,16 @@ class MapViewController: UIViewController {
         let region = MKCoordinateRegion(center: coordinate, latitudinalMeters: 1000, longitudinalMeters: 1000)
         mapView.setRegion(region, animated: true)
     }
-    private func updatePins(for places: [LikePlace]) {
+    private func updatePins(for pinnableItems: [any Pinnable]) {
         // 기존 핀 제거
         mapView.removeAnnotations(mapView.annotations)
         
         // 전달받은 배열 변환
-        let newAnnotations = places.map { place -> MKPointAnnotation in
+        let newAnnotations = pinnableItems.map { item -> MKPointAnnotation in
             let pin = MKPointAnnotation()
-            pin.coordinate = CLLocationCoordinate2D(latitude: place.location.latitude, longitude: place.location.longitude)
-            pin.title = place.name
-            pin.subtitle = place.address
+            pin.coordinate = item.coordinate
+            pin.title = item.title
+            pin.subtitle = item.subtitle
             return pin
         }
         
@@ -398,6 +403,9 @@ class MapViewController: UIViewController {
     func showLikeModal() {
         let likeModalVC = LikeModalViewController()
         likeModalVC.searchBar.delegate = self
+        
+        updatePins(for: likeModalVC.placeData)
+        
         presentAsSheet(likeModalVC)
     }
     
