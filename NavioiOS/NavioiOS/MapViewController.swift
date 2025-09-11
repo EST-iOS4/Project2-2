@@ -2,7 +2,7 @@
 //  MapViewController.swift
 //  NavioiOS
 //
-//  Created by EunYoung Wang, 구현모 on 9/10/25.
+//  Created by EunYoung Wang, 구현모 on 9/11/25.
 //
 
 import Foundation
@@ -13,209 +13,6 @@ import MapKit
 import ToolBox
 import SwiftUI
 
-
-// MARK: - 캐러셀 데이터 모델
-struct PlaceCardData {
-  let imageName: String
-  let title: String
-  let subtitle: String
-}
-
-// MARK: - 커스텀 캐러셀 셀
-class PlaceCardCell: UICollectionViewCell {
-  
-  private let containerView: UIView = {
-    let view = UIView()
-    view.backgroundColor = .secondarySystemBackground
-    view.layer.cornerRadius = 34
-    view.layer.shadowColor = UIColor.black.cgColor
-    view.layer.shadowOpacity = 0.1
-    view.layer.shadowOffset = CGSize(width: 0, height: 2)
-    view.layer.shadowRadius = 8
-      view.translatesAutoresizingMaskIntoConstraints = false
-    return view
-  }()
-  
-  private let placeImageView: UIImageView = {
-    let iv = UIImageView()
-    iv.contentMode = .scaleToFill
-    iv.clipsToBounds = true
-    iv.layer.cornerRadius = 34
-    iv.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
-      iv.translatesAutoresizingMaskIntoConstraints = false
-    return iv
-  }()
-  
-  private let titleLabel: UILabel = {
-    let label = UILabel()
-    label.font = UIFont.boldSystemFont(ofSize: 20)
-    label.textColor = .label
-    label.textAlignment = .right
-    label.numberOfLines = 1
-      label.translatesAutoresizingMaskIntoConstraints = false
-    return label
-  }()
-  
-  private let subtitleLabel: UILabel = {
-    let label = UILabel()
-    label.font = UIFont.systemFont(ofSize: 15)
-    label.textColor = .systemGray
-    label.textAlignment = .right
-    label.numberOfLines = 2
-    label.lineBreakMode = .byWordWrapping
-        label.translatesAutoresizingMaskIntoConstraints = false
-    return label
-  }()
-  
-  override init(frame: CGRect) {
-    super.init(frame: frame)
-    setupUI()
-  }
-  
-  required init?(coder: NSCoder) {
-    fatalError("init(coder:) has not been implemented")
-  }
-  
-  private func setupUI() {
-    contentView.addSubview(containerView)
-    containerView.addSubview(placeImageView)
-    containerView.addSubview(titleLabel)
-    containerView.addSubview(subtitleLabel)
-      
-      // 오토레이아웃
-      NSLayoutConstraint.activate([
-            containerView.topAnchor.constraint(equalTo: contentView.topAnchor),
-            containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
-
-            
-            placeImageView.topAnchor.constraint(equalTo: containerView.topAnchor),
-            placeImageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
-            placeImageView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
-            placeImageView.heightAnchor.constraint(equalTo: containerView.heightAnchor, multiplier: 0.65),
-            
-            titleLabel.topAnchor.constraint(equalTo: placeImageView.bottomAnchor, constant: 8),
-            titleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
-            titleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
-            
-            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
-            subtitleLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
-            subtitleLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
-            ])
-  }
-  
-  func configure(with data: PlaceCardData) {
-    placeImageView.image = UIImage(named: data.imageName) ?? UIImage(systemName: "photo.fill")
-    titleLabel.text = data.title
-    subtitleLabel.text = data.subtitle
-  }
-}
-
-// MARK: - Like 모달 뷰컨트롤러
-class LikeModalViewController: UIViewController {
-    
-    let searchBar: UISearchBar = {
-        let sb = UISearchBar()
-        sb.placeholder = "검색하기"
-        sb.searchBarStyle = .minimal
-        sb.translatesAutoresizingMaskIntoConstraints = false
-        return sb
-    }()
-    
-    let likeLabel: UILabel = {
-        let label = UILabel()
-        label.text = "Like"
-        label.font = UIFont.systemFont(ofSize: 35, weight: .heavy)
-        label.textColor = .label
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
-    }()
-    
-    let collectionView: UICollectionView
-    
-    let placeData = [
-        PlaceCardData(imageName: "building.2.fill", title: "홍익대학교", subtitle: "서울특별시 마포구 와우산로 94"),
-        PlaceCardData(imageName: "building.columns.fill", title: "연세대학교", subtitle: "서울특별시 서대문구 연세로 50"),
-        PlaceCardData(imageName: "graduationcap.fill", title: "고려대학교", subtitle: "서울특별시 성북구 안암로 145"),
-        PlaceCardData(imageName: "book.fill", title: "서울대학교", subtitle: "서울특별시 관악구 관악로 1")
-    ]
-    
-    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
-        let layout = UICollectionViewFlowLayout()
-        layout.scrollDirection = .horizontal
-        layout.minimumLineSpacing = 8
-        layout.minimumInteritemSpacing = 0
-        layout.sectionInset = UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20)
-        
-        collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        
-        super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        setupUI()
-    }
-    
-    func setupUI() {
-        view.backgroundColor = .systemBackground
-        
-        view.addSubview(searchBar)
-        view.addSubview(likeLabel)
-        view.addSubview(collectionView)
-        
-        // 오토레이아웃
-        collectionView.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            searchBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
-            searchBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
-            searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
-            searchBar.heightAnchor.constraint(equalToConstant: 50),
-            
-            likeLabel.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 20),
-            likeLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            
-            collectionView.topAnchor.constraint(equalTo: likeLabel.bottomAnchor, constant: 8),
-            collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            collectionView.heightAnchor.constraint(equalToConstant: 220)
-        ])
-        
-        collectionView.backgroundColor = .clear
-        collectionView.showsHorizontalScrollIndicator = false
-        collectionView.dataSource = self
-        collectionView.delegate = self
-        collectionView.register(PlaceCardCell.self, forCellWithReuseIdentifier: "PlaceCardCell")
-    }
-    
-}
-
-// MARK: - CollectionView DataSource & Delegate
-extension LikeModalViewController: UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
-  
-  func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-    return placeData.count
-  }
-  
-  func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-    let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PlaceCardCell", for: indexPath) as! PlaceCardCell
-    cell.configure(with: placeData[indexPath.item])
-    return cell
-  }
-  
-  func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-    
-      let cellHeight = collectionView.bounds.height - 20
-      let cellWidth = cellHeight * (202.0 / 200.0)
-    
-    return CGSize(width: cellWidth, height: cellHeight)
-  }
-}
 
 // MARK: - Map 뷰컨트롤러 (Map 탭+모달 교체 기능)
 class MapViewController: UIViewController {
@@ -254,7 +51,7 @@ class MapViewController: UIViewController {
     
     private let userTrackingButton: UIButton = {
         let button = UIButton(type: .system)
-        let image = UIImage(systemName: "location.fill")
+        let image = UIImage(systemName: "location")
         button.setImage(image, for: .normal)
         button.backgroundColor = .systemBackground
         button.tintColor = .systemBlue
@@ -299,7 +96,6 @@ class MapViewController: UIViewController {
         view.addSubview(mapView)
         mapView.showsUserLocation = true
         mapView.showsCompass = true
-//        mapView.userTrackingMode = .none
         
         view.addSubview(searchContainerView)
         searchContainerView.addSubview(searchIconView)
@@ -315,19 +111,19 @@ class MapViewController: UIViewController {
             mapView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             mapView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
             
-             searchContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-             searchContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-             searchContainerView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10),
-             searchContainerView.heightAnchor.constraint(equalToConstant: 50),
+            searchContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            searchContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            searchContainerView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10),
+            searchContainerView.heightAnchor.constraint(equalToConstant: 50),
              
-             searchIconView.leadingAnchor.constraint(equalTo: searchContainerView.leadingAnchor, constant: 15),
-             searchIconView.centerYAnchor.constraint(equalTo: searchContainerView.centerYAnchor),
-             searchIconView.widthAnchor.constraint(equalToConstant: 20),
-             searchIconView.heightAnchor.constraint(equalToConstant: 20),
+            searchIconView.leadingAnchor.constraint(equalTo: searchContainerView.leadingAnchor, constant: 15),
+            searchIconView.centerYAnchor.constraint(equalTo: searchContainerView.centerYAnchor),
+            searchIconView.widthAnchor.constraint(equalToConstant: 20),
+            searchIconView.heightAnchor.constraint(equalToConstant: 20),
              
-             searchLabel.leadingAnchor.constraint(equalTo: searchIconView.trailingAnchor, constant: 8),
-             searchLabel.centerYAnchor.constraint(equalTo: searchContainerView.centerYAnchor),
-             searchLabel.trailingAnchor.constraint(equalTo: searchContainerView.trailingAnchor, constant: -15),
+            searchLabel.leadingAnchor.constraint(equalTo: searchIconView.trailingAnchor, constant: 8),
+            searchLabel.centerYAnchor.constraint(equalTo: searchContainerView.centerYAnchor),
+            searchLabel.trailingAnchor.constraint(equalTo: searchContainerView.trailingAnchor, constant: -15),
             
             userTrackingButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             userTrackingButton.bottomAnchor.constraint(equalTo: searchContainerView.topAnchor, constant: -10),
@@ -359,8 +155,7 @@ class MapViewController: UIViewController {
         mapBoard.$currentLocation
             .compactMap { $0 }
             .sink { [weak self] location in
-                let coordinate = CLLocationCoordinate2D(latitude: location.latitude, longitude: location.longitude)
-                self?.moveMap(to: coordinate)
+
             }
             .store(in: &cancellables)
         
@@ -375,16 +170,16 @@ class MapViewController: UIViewController {
         let region = MKCoordinateRegion(center: coordinate, latitudinalMeters: 1000, longitudinalMeters: 1000)
         mapView.setRegion(region, animated: true)
     }
-    private func updatePins(for places: [LikePlace]) {
+    private func updatePins(for pinnableItems: [any Pinnable]) {
         // 기존 핀 제거
         mapView.removeAnnotations(mapView.annotations)
         
         // 전달받은 배열 변환
-        let newAnnotations = places.map { place -> MKPointAnnotation in
+        let newAnnotations = pinnableItems.map { item -> MKPointAnnotation in
             let pin = MKPointAnnotation()
-            pin.coordinate = CLLocationCoordinate2D(latitude: place.location.latitude, longitude: place.location.longitude)
-            pin.title = place.name
-            pin.subtitle = place.address
+            pin.coordinate = item.coordinate
+            pin.title = item.title
+            pin.subtitle = item.subtitle
             return pin
         }
         
@@ -400,6 +195,9 @@ class MapViewController: UIViewController {
     func showLikeModal() {
         let likeModalVC = LikeModalViewController()
         likeModalVC.searchBar.delegate = self
+        
+        updatePins(for: likeModalVC.placeData)
+        
         presentAsSheet(likeModalVC)
     }
     
