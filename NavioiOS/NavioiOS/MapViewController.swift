@@ -269,6 +269,26 @@ extension MapViewController: MKMapViewDelegate {
             break
         }
     }
+    
+    func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+        guard !(annotation is MKUserLocation) else {
+            return nil
+        }
+        
+        let identifier = "PlaceAnnotationView"
+        var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier) as? MKMarkerAnnotationView
+        
+        if annotationView == nil {
+            annotationView = MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: identifier)
+            annotationView?.clusteringIdentifier = "place"
+        } else {
+            annotationView?.annotation = annotation
+        }
+        
+        annotationView?.canShowCallout = true
+        
+        return annotationView
+    }
 }
         
         
