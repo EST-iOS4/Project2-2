@@ -254,7 +254,7 @@ class MapViewController: UIViewController {
     
     private let userTrackingButton: UIButton = {
         let button = UIButton(type: .system)
-        let image = UIImage(systemName: "location.fill")
+        let image = UIImage(systemName: "location")
         button.setImage(image, for: .normal)
         button.backgroundColor = .systemBackground
         button.tintColor = .systemBlue
@@ -299,7 +299,6 @@ class MapViewController: UIViewController {
         view.addSubview(mapView)
         mapView.showsUserLocation = true
         mapView.showsCompass = true
-//        mapView.userTrackingMode = .none
         
         view.addSubview(searchContainerView)
         searchContainerView.addSubview(searchIconView)
@@ -315,19 +314,19 @@ class MapViewController: UIViewController {
             mapView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             mapView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
             
-             searchContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-             searchContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-             searchContainerView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10),
-             searchContainerView.heightAnchor.constraint(equalToConstant: 50),
+            searchContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            searchContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            searchContainerView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10),
+            searchContainerView.heightAnchor.constraint(equalToConstant: 50),
              
-             searchIconView.leadingAnchor.constraint(equalTo: searchContainerView.leadingAnchor, constant: 15),
-             searchIconView.centerYAnchor.constraint(equalTo: searchContainerView.centerYAnchor),
-             searchIconView.widthAnchor.constraint(equalToConstant: 20),
-             searchIconView.heightAnchor.constraint(equalToConstant: 20),
+            searchIconView.leadingAnchor.constraint(equalTo: searchContainerView.leadingAnchor, constant: 15),
+            searchIconView.centerYAnchor.constraint(equalTo: searchContainerView.centerYAnchor),
+            searchIconView.widthAnchor.constraint(equalToConstant: 20),
+            searchIconView.heightAnchor.constraint(equalToConstant: 20),
              
-             searchLabel.leadingAnchor.constraint(equalTo: searchIconView.trailingAnchor, constant: 8),
-             searchLabel.centerYAnchor.constraint(equalTo: searchContainerView.centerYAnchor),
-             searchLabel.trailingAnchor.constraint(equalTo: searchContainerView.trailingAnchor, constant: -15),
+            searchLabel.leadingAnchor.constraint(equalTo: searchIconView.trailingAnchor, constant: 8),
+            searchLabel.centerYAnchor.constraint(equalTo: searchContainerView.centerYAnchor),
+            searchLabel.trailingAnchor.constraint(equalTo: searchContainerView.trailingAnchor, constant: -15),
             
             userTrackingButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             userTrackingButton.bottomAnchor.constraint(equalTo: searchContainerView.topAnchor, constant: -10),
@@ -359,8 +358,7 @@ class MapViewController: UIViewController {
         mapBoard.$currentLocation
             .compactMap { $0 }
             .sink { [weak self] location in
-                let coordinate = CLLocationCoordinate2D(latitude: location.latitude, longitude: location.longitude)
-                self?.moveMap(to: coordinate)
+
             }
             .store(in: &cancellables)
         
