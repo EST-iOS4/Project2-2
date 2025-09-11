@@ -280,15 +280,42 @@ extension MapViewController: MKMapViewDelegate {
         
         if annotationView == nil {
             annotationView = MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: identifier)
-            annotationView?.clusteringIdentifier = "place"
         } else {
             annotationView?.annotation = annotation
         }
-        
+        annotationView?.clusteringIdentifier = "place"
         annotationView?.canShowCallout = true
         
+        if annotationView?.rightCalloutAccessoryView == nil {
+            let detailButton = UIButton(type: .detailDisclosure)
+            annotationView?.rightCalloutAccessoryView = detailButton
+        }
         return annotationView
     }
+    
+    func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
+        guard let cluster = view.annotation as? MKClusterAnnotation else {
+            return
+        }
+        mapView.showAnnotations(cluster.memberAnnotations, animated: true)
+    }
+    
+//  핀 터치 시 상세 정보 뷰로 이동 (현재 주석 처리)
+//    func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
+//        guard let tappedTitle = view.annotation?.title, let title = tappedTitle else { return }
+//        if let place = mapBoard.likePlaces.first(where: { $0.title == title }) {
+//            let placeID = place.id
+//
+//            상세 정보 뷰 컨트롤러는 여기에 연결하시면 됩니다. placeID를 전달받도록 만들어주세요.
+//            let detailVC = PlaceDetailViewController(placeID: placeID)
+//
+//            if let navigationController = self.navigationController {
+//                navigationController.pushViewController(detailVC, animated: true)
+//            } else {
+//                self.present(detailVC, animated: true)
+//            }
+//        }
+//    }
 }
         
         
