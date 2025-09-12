@@ -19,7 +19,7 @@ class MapViewController: UIViewController {
     
     private let mapBoard: MapBoard
     private let mapView = MKMapView()
-        
+    
     private let searchContainerView: UIView = {
         let view = UIView()
         view.backgroundColor = .systemBackground
@@ -61,12 +61,6 @@ class MapViewController: UIViewController {
     }()
     
     private var cancellables = Set<AnyCancellable>()
-        
-    private var currentModalVC: UIViewController?
-    private let collapsedHeight: CGFloat = 100
-    private var expandedHeight: CGFloat = 400
-    private var isModalExpanded = false
-    
     
     init(mapBoard: MapBoard) {
         self.mapBoard = mapBoard
@@ -115,12 +109,12 @@ class MapViewController: UIViewController {
             searchContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             searchContainerView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10),
             searchContainerView.heightAnchor.constraint(equalToConstant: 50),
-             
+            
             searchIconView.leadingAnchor.constraint(equalTo: searchContainerView.leadingAnchor, constant: 15),
             searchIconView.centerYAnchor.constraint(equalTo: searchContainerView.centerYAnchor),
             searchIconView.widthAnchor.constraint(equalToConstant: 20),
             searchIconView.heightAnchor.constraint(equalToConstant: 20),
-             
+            
             searchLabel.leadingAnchor.constraint(equalTo: searchIconView.trailingAnchor, constant: 8),
             searchLabel.centerYAnchor.constraint(equalTo: searchContainerView.centerYAnchor),
             searchLabel.trailingAnchor.constraint(equalTo: searchContainerView.trailingAnchor, constant: -15),
@@ -135,7 +129,17 @@ class MapViewController: UIViewController {
     }
     
     @objc private func searchContainerTapped() {
-        showLikeModal()
+        let modalContainer = ModalContainerViewController()
+        let likeModalVC = LikeModalViewController()
+        
+        updatePins(for: likeModalVC.placeData)
+        
+        if let sheet = modalContainer.sheetPresentationController {
+            sheet.detents = [.medium(), .large()]
+            sheet.prefersGrabberVisible = true
+            sheet.largestUndimmedDetentIdentifier = .medium
+        }
+        present(modalContainer, animated: true)
     }
     
     @objc private func userTrackingButtonTapped() {
@@ -152,13 +156,6 @@ class MapViewController: UIViewController {
     }
     
     private func bindViewModel() {
-        mapBoard.$currentLocation
-            .compactMap { $0 }
-            .sink { [weak self] location in
-
-            }
-            .store(in: &cancellables)
-        
         mapBoard.$likePlaces
             .sink { [weak self] placeIDs in
                 let placeObjects = placeIDs.compactMap { $0.ref }
@@ -166,10 +163,12 @@ class MapViewController: UIViewController {
             }
             .store(in: &cancellables)
     }
+    
     private func moveMap(to coordinate: CLLocationCoordinate2D) {
         let region = MKCoordinateRegion(center: coordinate, latitudinalMeters: 1000, longitudinalMeters: 1000)
         mapView.setRegion(region, animated: true)
     }
+    
     private func updatePins(for pinnableItems: [any Pinnable]) {
         // 기존 핀 제거
         mapView.removeAnnotations(mapView.annotations)
@@ -191,67 +190,7 @@ class MapViewController: UIViewController {
             mapView.showAnnotations(newAnnotations, animated: true)
         }
     }
-    
-    func showLikeModal() {
-        let likeModalVC = LikeModalViewController()
-        likeModalVC.searchBar.delegate = self
-        
-        updatePins(for: likeModalVC.placeData)
-        
-        presentAsSheet(likeModalVC)
-    }
-    
-    func showRecentModal() {
-        let recentModalVC = RecentPlaceViewController()
-        presentAsSheet(recentModalVC)
-    }
-    
-    func showSearchModal() {
-        let searchModalVC = SearchPlaceModalViewController()
-        
-        if let sheet = searchModalVC.sheetPresentationController {
-            sheet.detents = [.medium(), .large()]
-            sheet.prefersGrabberVisible = true
-        }
-        self.present(searchModalVC, animated: true)
-    }
-    
-    private func presentAsSheet(_ viewController: UIViewController) {
-        if self.presentedViewController != nil {
-            self.dismiss(animated: true) { [weak self] in
-                self?.presentSheet(viewController)
-            }
-        } else {
-            presentSheet(viewController)
-        }
-    }
-    
-    private func presentSheet(_ viewController: UIViewController) {
-        if let sheet = viewController.sheetPresentationController {
-            sheet.detents = [.medium(), .large()]
-            sheet.prefersGrabberVisible = true
-            sheet.largestUndimmedDetentIdentifier = .medium
-        }
-        self.present(viewController, animated: false)
-    }
-    
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        expandedHeight = view.safeAreaLayoutGuide.layoutFrame.height * 0.5
-    }
-
 }
-  
-  // MARK: - SearchBar Delegate
-extension MapViewController: UISearchBarDelegate {
-    func searchBarShouldBeginEditing(_ searchBar: UISearchBar) -> Bool {
-        self.dismiss(animated: false) { [weak self] in
-            self?.showRecentModal()
-        }
-        return false
-    }
-}
-
 
 extension MapViewController: MKMapViewDelegate {
     func mapView(_ mapView: MKMapView, didChange mode: MKUserTrackingMode, animated: Bool) {
@@ -269,6 +208,53 @@ extension MapViewController: MKMapViewDelegate {
             break
         }
     }
+    
+    func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+        guard !(annotation is MKUserLocation) else {
+            return nil
+        }
+        
+        let identifier = "PlaceAnnotationView"
+        var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier) as? MKMarkerAnnotationView
+        
+        if annotationView == nil {
+            annotationView = MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: identifier)
+        } else {
+            annotationView?.annotation = annotation
+        }
+        annotationView?.clusteringIdentifier = "place"
+        annotationView?.canShowCallout = true
+        
+        if annotationView?.rightCalloutAccessoryView == nil {
+            let detailButton = UIButton(type: .detailDisclosure)
+            annotationView?.rightCalloutAccessoryView = detailButton
+        }
+        return annotationView
+    }
+    
+    func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
+        guard let cluster = view.annotation as? MKClusterAnnotation else {
+            return
+        }
+        mapView.showAnnotations(cluster.memberAnnotations, animated: true)
+    }
+    
+//  핀 터치 시 상세 정보 뷰로 이동 (현재 주석 처리)
+//    func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
+//        guard let tappedTitle = view.annotation?.title, let title = tappedTitle else { return }
+//        if let place = mapBoard.likePlaces.first(where: { $0.title == title }) {
+//            let placeID = place.id
+//
+//            상세 정보 뷰 컨트롤러는 여기에 연결하시면 됩니다. placeID를 전달받도록 만들어주세요.
+//            let detailVC = PlaceDetailViewController(placeID: placeID)
+//
+//            if let navigationController = self.navigationController {
+//                navigationController.pushViewController(detailVC, animated: true)
+//            } else {
+//                self.present(detailVC, animated: true)
+//            }
+//        }
+//    }
 }
         
         

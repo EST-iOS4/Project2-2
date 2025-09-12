@@ -31,7 +31,7 @@ class SearchListCell: UITableViewCell {
   private let titleLabel: UILabel = {
     let label = UILabel()
     label.font = UIFont.systemFont(ofSize: 18, weight: .medium)
-    label.textColor = .black
+    label.textColor = .label
     label.numberOfLines = 1
       label.translatesAutoresizingMaskIntoConstraints = false
     return label
@@ -88,14 +88,6 @@ class SearchListCell: UITableViewCell {
 // MARK: - 검색 모달 뷰컨트롤러
 class SearchPlaceModalViewController: UIViewController {
     
-    let searchBar: UISearchBar = {
-        let sb = UISearchBar()
-        sb.placeholder = "카페"
-        sb.searchBarStyle = .minimal
-        sb.translatesAutoresizingMaskIntoConstraints = false
-        return sb
-    }()
-    
     let tableView: UITableView = {
         let tv = UITableView()
         tv.backgroundColor = .clear
@@ -126,15 +118,10 @@ class SearchPlaceModalViewController: UIViewController {
         tableView.delegate = self
         tableView.register(SearchListCell.self, forCellReuseIdentifier: "SearchListCell")
         
-        view.addSubview(searchBar)
         view.addSubview(tableView)
         
         NSLayoutConstraint.activate([
-            searchBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
-            searchBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
-            searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
-            
-            tableView.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 10),
+            tableView.topAnchor.constraint(equalTo: view.topAnchor, constant: 10),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)

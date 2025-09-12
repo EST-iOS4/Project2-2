@@ -73,14 +73,6 @@ class RecentPlaceCell: UITableViewCell {
 // MARK: - 최근 장소 모달 뷰컨트롤러
 class RecentPlaceViewController: UIViewController {
   
-    let searchBar: UISearchBar = {
-        let sb = UISearchBar()
-        sb.placeholder = "검색하려는 장소를 입력하세요"
-        sb.searchBarStyle = .minimal
-        sb.translatesAutoresizingMaskIntoConstraints = false
-        return sb
-    }()
-    
     private let shortcutScrollView: UIScrollView = {
             let scrollView = UIScrollView()
             scrollView.showsHorizontalScrollIndicator = false // 하단 스크롤바 숨기기
@@ -147,7 +139,6 @@ class RecentPlaceViewController: UIViewController {
     tableView.delegate = self
     tableView.register(RecentPlaceCell.self, forCellReuseIdentifier: "RecentPlaceCell")
     
-    view.addSubview(searchBar)
     view.addSubview(shortcutScrollView)
     shortcutScrollView.addSubview(shortcutStackView)
     view.addSubview(recentSearchLabel)
@@ -155,11 +146,7 @@ class RecentPlaceViewController: UIViewController {
     view.addSubview(tableView)
       
       NSLayoutConstraint.activate([
-        searchBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
-        searchBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
-        searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
-        
-        shortcutScrollView.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 12),
+        shortcutScrollView.topAnchor.constraint(equalTo: view.topAnchor, constant: 12),
         shortcutScrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
         shortcutScrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
         shortcutScrollView.heightAnchor.constraint(equalToConstant: 35), // 스크롤뷰의 높이
@@ -255,27 +242,6 @@ extension RecentPlaceViewController: UITableViewDataSource, UITableViewDelegate 
   func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
     return 60
   }
-}
-
-// MARK: - SearchBar Delegate (RecentPlaceViewController 끝에 추가)
-extension RecentPlaceViewController: UISearchBarDelegate {
-  func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-          // 검색어가 있을 때만 전환
-          guard let searchText = searchBar.text, !searchText.isEmpty else { return }
-          
-          // 키보드 숨기기
-          searchBar.resignFirstResponder()
-          
-          // 부모 MapViewController에게 SearchModal 전환 요청
-          if let parent = parent as? MapViewController {
-              parent.showSearchModal()
-          }
-      }
-      
-      // 타이핑 중에는 아무것도 하지 않음
-      func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-      }
-  
 }
 
 // MARK: - SwiftUI Preview

@@ -118,14 +118,6 @@ class PlaceCardCell: UICollectionViewCell {
 // MARK: - Like 모달 뷰컨트롤러
 class LikeModalViewController: UIViewController {
     
-    let searchBar: UISearchBar = {
-        let sb = UISearchBar()
-        sb.placeholder = "검색하기"
-        sb.searchBarStyle = .minimal
-        sb.translatesAutoresizingMaskIntoConstraints = false
-        return sb
-    }()
-    
     let likeLabel: UILabel = {
         let label = UILabel()
         label.text = "Like"
@@ -168,19 +160,13 @@ class LikeModalViewController: UIViewController {
     func setupUI() {
         view.backgroundColor = .systemBackground
         
-        view.addSubview(searchBar)
         view.addSubview(likeLabel)
         view.addSubview(collectionView)
         
         // 오토레이아웃
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            searchBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
-            searchBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
-            searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
-            searchBar.heightAnchor.constraint(equalToConstant: 50),
-            
-            likeLabel.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 20),
+            likeLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: 20),
             likeLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             
             collectionView.topAnchor.constraint(equalTo: likeLabel.bottomAnchor, constant: 8),
