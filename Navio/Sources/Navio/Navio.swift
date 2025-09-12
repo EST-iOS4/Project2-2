@@ -16,6 +16,7 @@ private let logger = NavioLogger("Navio")
 @MainActor
 public final class Navio: Sendable, ObservableObject {
     // MARK: core
+    public static let shared: Navio = .init()
     public init(mode: SystemMode = .test) {
         self.mode = mode
     }

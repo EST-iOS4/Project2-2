@@ -15,7 +15,6 @@ import ToolBox
 // MARK: - Map 뷰컨트롤러
 // 역할: 지도 표시, ViewModel 데이터 바인딩, 검색 모달 띄우기
 class MapViewController: UIViewController {
-    
     private let mapBoard: MapBoard
     private let mapView = MKMapView()
     
@@ -137,11 +136,10 @@ class MapViewController: UIViewController {
     // 검색 컨테이너 뷰 탭 액션
     @objc private func searchContainerTapped() {
         // 모달 컨테이너 뷰 컨트롤러와 LikeModal 뷰 컨트롤러 생성
-        let modalContainer = ModalContainerViewController()
-        let likeModalVC = LikeModalViewController()
+        let modalContainer = ModalContainerViewController(mapBoard)
         
         // LikeModal에 있는 목데이터로 핀 찍기
-        updatePins(for: likeModalVC.placeData)
+        updatePins(for: mapBoard.likePlaces)
         
         // 모달 컨테이너 띄우기
         if let sheet = modalContainer.sheetPresentationController {
@@ -184,16 +182,16 @@ class MapViewController: UIViewController {
     }
     
     // 핀 업데이트 메서드
-    private func updatePins(for pinnableItems: [any Pinnable]) {
+    private func updatePins(for pinnableItems: [LikePlace]) {
         // 기존 핀 제거
         mapView.removeAnnotations(mapView.annotations)
         
         // 전달받은 배열 변환
         let newAnnotations = pinnableItems.map { item -> MKPointAnnotation in
             let pin = MKPointAnnotation()
-            pin.coordinate = item.coordinate
-            pin.title = item.title
-            pin.subtitle = item.subtitle
+            pin.coordinate = item.location.toCLLocationCoordinate2D
+            pin.title = item.name
+            pin.subtitle = item.address
             return pin
         }
         

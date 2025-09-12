@@ -40,20 +40,11 @@ public final class LikePlace: Sendable, ObservableObject {
     public nonisolated let number: String
     
     
+    
     // MARK: action
     public func cancelLike() {
         fatalError("구현 예정")
         // UserDefaults에서 isLikedKey에 해당하는 값을 false로 변경
         // MapBoard에서 LikePlace 제거
     }
-}
-
-
-// MARK: Extension
-extension LikePlace: Pinnable {
-    public nonisolated var coordinate: CLLocationCoordinate2D {
-        return .init(latitude: self.location.latitude, longitude: self.location.longitude)
-    }
-    public nonisolated var title: String { self.name }
-    public nonisolated var subtitle: String? { self.address }
 }
