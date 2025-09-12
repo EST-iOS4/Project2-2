@@ -10,6 +10,7 @@ public final class LikePlace: Sendable, ObservableObject {
     // MARK: core
     internal init(owner: MapBoard, data: PlaceData) {
         self.owner = owner
+        self.placeData = data
         self.name = data.name
         self.imageName = data.imageName
         self.location = data.location
@@ -20,6 +21,8 @@ public final class LikePlace: Sendable, ObservableObject {
     
     // MARK: state
     internal nonisolated let owner: MapBoard
+    private let userDefaults = UserDefaults.standard
+    private let placeData: PlaceData
     
     public nonisolated let name: String
     public nonisolated let imageName: String
@@ -38,9 +41,11 @@ public final class LikePlace: Sendable, ObservableObject {
     
     
     // MARK: action
-    
-    
-    // MARK: value
+    public func cancelLike() {
+        fatalError("구현 예정")
+        // UserDefaults에서 isLikedKey에 해당하는 값을 false로 변경
+        // MapBoard에서 LikePlace 제거
+    }
 }
 
 

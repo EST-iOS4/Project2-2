@@ -65,7 +65,7 @@ public final class Place: Sendable, ObservableObject {
         let mapBoardRef = navioRef.mapBoard!
         
         // compute
-        let isLikedFromDB = userDefaults.bool(forKey: "\(name).isLiked")
+        let isLikedFromDB = userDefaults.bool(forKey: placeData.isLikedKey)
         
         // mutate
         switch isLikedFromDB {
@@ -90,9 +90,9 @@ public final class Place: Sendable, ObservableObject {
         // compute
         switch isMarkingToLike {
         case true: // false -> true
-            userDefaults.set(true, forKey: "\(name).isLiked")
+            userDefaults.set(true, forKey: placeData.isLikedKey)
         case false: // true -> false
-            userDefaults.set(false, forKey: "\(name).isLiked")
+            userDefaults.set(false, forKey: placeData.isLikedKey)
         }
         
         // mutate

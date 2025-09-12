@@ -23,4 +23,9 @@ public struct PlaceData: Sendable, Hashable {
         self.address = address
         self.number = number
     }
+    
+    // MARK: operator
+    package var isLikedKey: String {
+        return "\(name).isLiked"
+    }
 }
