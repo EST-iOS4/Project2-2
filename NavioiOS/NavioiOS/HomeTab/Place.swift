@@ -118,7 +118,7 @@ class Place: UIViewController {
   private func createCardView(title: String, tag: Int) -> UIView {
     let containerView = UIView()
     containerView.translatesAutoresizingMaskIntoConstraints = false
-    containerView.backgroundColor = .systemBackground
+    containerView.backgroundColor = .secondarySystemBackground
     containerView.layer.cornerRadius = 16
     containerView.layer.shadowColor = UIColor.black.cgColor
     containerView.layer.shadowOpacity = 0.1
