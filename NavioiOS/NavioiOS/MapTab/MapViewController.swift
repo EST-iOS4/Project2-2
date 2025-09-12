@@ -130,6 +130,10 @@ class MapViewController: UIViewController {
     
     @objc private func searchContainerTapped() {
         let modalContainer = ModalContainerViewController()
+        let likeModalVC = LikeModalViewController()
+        
+        updatePins(for: likeModalVC.placeData)
+        
         if let sheet = modalContainer.sheetPresentationController {
             sheet.detents = [.medium(), .large()]
             sheet.prefersGrabberVisible = true
