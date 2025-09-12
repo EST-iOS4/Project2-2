@@ -7,7 +7,6 @@
 
 import UIKit
 import GooglePlaces
-import Navio
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -16,17 +15,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
-        UserDefaults.standard.set(["ko"], forKey: "AppleLanguages")
-        UserDefaults.standard.set("ko_KR", forKey: "AppleLocale")
-        UserDefaults.standard.synchronize()
-        print("App languages:", Locale.preferredLanguages)
-        print("App locale:", Locale.current.identifier)
-        print("Bundle preferred:", Bundle.main.preferredLocalizations)
-        print("Locale:", Locale.preferredLanguages, Locale.current.identifier)
-     //   print("SDK summary:", sdkSummary)
         GMSPlacesClient.provideAPIKey("AIzaSyDDr3hbGQMwDmN-up9IipCQOA5lIlIMCOo")
-            return true
-            
+        return true
     }
 
     // MARK: UISceneSession Lifecycle

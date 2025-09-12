@@ -1,5 +1,13 @@
-# Project 2-2
-EST-iOS 4 2차 프로젝트
+# 📍 스마트 여행 가이드, Navio
+<img width="3840" height="2160" alt="repo_title" src="https://github.com/user-attachments/assets/c9ba477b-83eb-4c51-98c0-0d7f06594a3a" />
+Navio는 현재 위치에 기반하여 여행 장소를 추천해주는 서비스로, 사용자가 앱을 실행하면 지도 위에서 자신의 위치를 확인하고 주변 장소를 탐색할 수 있습니다. 기본 지도 기능(장소 검색, 경로 탐색)을 제공하며, 즐겨찾기한 장소(POI)를 기반으로 맞춤형 추천도 지원합니다. 다크 모드 전환, 위치 정보 서비스 설정, CoreData 기반 로컬 저장과 같은 사용자 편의 기능도 제공합니다.
+
+## 🔧 기술스택
+
+- ```UIKit```
+- ```Combine```
+- ```URLSesssion```
+- ```UserDefaults```
 
 ## ✔️커밋 컨벤션
 
@@ -16,11 +24,6 @@ Init        : 프로젝트 생성
 Rename      : 파일 혹은 폴더명을 수정하거나 옮기는 작업만 한 경우
 Remove      : 파일 삭제
 ```
-
-## ✔️코드 컨벤션 
-
-- SSG (Swift Style Guide) 참고   
-[StyleShare에서 작성한 Swift 한국어 스타일 가이드](https://github.com/StyleShare/swift-style-guide)
 
 
 ## ✔️브랜치 워크플로우
@@ -39,3 +42,5 @@ develop/feat/각자-맡은-기능명
 4. develop 브랜치에 코드가 어느 정도 합쳐졌다면 main 브랜치에 병합하여 배포합니다.
 5. 1~4 과정을 반복합니다.
 ```
+
+
