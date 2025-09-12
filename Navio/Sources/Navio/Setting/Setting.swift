@@ -24,23 +24,28 @@ public final class Setting: Sendable, ObservableObject {
     @Published public var collectKeyword: Bool = true
     
     
-    
     // MARK: action
     public func load() {
+        // compute
         let defaults = UserDefaults.standard
         if let rawMode = defaults.string(forKey: "Setting.displayMode"),
            let mode = DisplayMode(rawValue: rawMode) {
             self.displayMode = mode
         }
+        
+        // mutate
         self.collectKeyword = defaults.bool(forKey: "Setting.collectKeyword")
     }
     public func save() {
+        // compute
         let defaults = UserDefaults.standard
         
         defaults.set(self.displayMode.rawValue,
                      forKey: "Setting.displayMode")
         
         defaults.set(self.collectKeyword, forKey: "Setting.collectKeyword")
+        
+        
     }
     
     
