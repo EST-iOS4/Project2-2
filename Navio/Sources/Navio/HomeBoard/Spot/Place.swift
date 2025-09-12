@@ -14,21 +14,18 @@ import ToolBox
 @MainActor
 public final class Place: Sendable, ObservableObject {
     // MARK: core
-    internal init(owner: Spot.ID, data: PlaceData) {
+    internal init(owner: Spot, data: PlaceData) {
         self.owner = owner
         self.name = data.name
         self.imageName = data.imageName
         self.address = data.address
         self.number = data.number
         self.location = data.location
-        
-        PlaceManager.register(self)
     }
     
     
     // MARK: state
-    public nonisolated let id = ID()
-    internal nonisolated let owner: Spot.ID
+    internal nonisolated let owner: Spot
     
     public internal(set) var name: String
     public internal(set) var imageName: String
@@ -49,10 +46,10 @@ public final class Place: Sendable, ObservableObject {
     // MARK: action
     public func toggleLike() {
         // capture
-        let spotRef = self.owner.ref!
-        let homeboardRef = spotRef.owner.ref!
-        let navioRef = homeboardRef.owner.ref!
-        let mapBoardRef = navioRef.mapBoard!.ref!
+        let spotRef = self.owner
+        let homeboardRef = spotRef.owner
+        let navioRef = homeboardRef.owner
+        let mapBoardRef = navioRef.mapBoard!
 
         let isChangedToLike = self.like == false
 
@@ -76,8 +73,8 @@ public final class Place: Sendable, ObservableObject {
         // mutate
         if isChangedToLike {
             // 인스턴스 생성
-            let newLikePlaceRef = LikePlace(owner: mapBoardRef.id, data: placeData)
-            mapBoardRef.likePlaces.append(newLikePlaceRef.id)
+            let newLikePlaceRef = LikePlace(owner: mapBoardRef, data: placeData)
+            mapBoardRef.likePlaces.append(newLikePlaceRef)
 
             // UserDefaults 추가
             box[placeKey] = [
@@ -89,14 +86,9 @@ public final class Place: Sendable, ObservableObject {
             ud.set(box, forKey: userDefaultBoxKey)
             ud.set(ids, forKey: userDefaultIDsKey)
         } else {
-            // 인스턴스 삭제
-            mapBoardRef.likePlaces
-                .first { $0.ref?.name == self.name }?
-                .ref?.delete()
-
-            // 배열에서 ID 제거
+            // 배열에서 인스턴스 제거
             mapBoardRef.likePlaces.removeAll { likePlace in
-                likePlace.ref?.name == self.name
+                likePlace.name == self.name
             }
 
             // UserDefaults 제거
@@ -112,30 +104,4 @@ public final class Place: Sendable, ObservableObject {
     
     
     // MARK: value
-    @MainActor
-    public struct ID: Sendable, Hashable {
-        public let value = UUID()
-        nonisolated init() { }
-        
-        public var isExist: Bool {
-            PlaceManager.container[self] != nil
-        }
-        public var ref: Place? {
-            PlaceManager.container[self]
-        }
-    }
-}
-
-
-// MARK: ObjectManager
-@MainActor
-fileprivate final class PlaceManager: Sendable {
-    // MARK: core
-    static var container: [Place.ID: Place] = [:]
-    static func register(_ object: Place) {
-        container[object.id] = object
-    }
-    static func unregister(_ id: Place.ID) {
-        container[id] = nil
-    }
 }

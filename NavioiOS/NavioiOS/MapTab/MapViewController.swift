@@ -171,7 +171,7 @@ class MapViewController: UIViewController {
     private func bindViewModel() {
         mapBoard.$likePlaces // 즐겨찾기 장소
             .sink { [weak self] placeIDs in
-                let placeObjects = placeIDs.compactMap { $0.ref }
+                let placeObjects = placeIDs.compactMap { $0 }
                 self?.updatePins(for: placeObjects)
             }
             .store(in: &cancellables)

@@ -14,21 +14,15 @@ import UIKit
 @MainActor
 public final class Spot: Sendable, ObservableObject {
     // MARK: core
-    internal init(owner: HomeBoard.ID, name: String, imageName: String) {
+    internal init(owner: HomeBoard, name: String, imageName: String) {
         self.owner = owner
         self.name = name
         self.imageName = imageName
-        
-        SpotManager.register(self)
-    }
-    internal func delete() {
-        SpotManager.unregister(self.id)
     }
     
     
     // MARK: state
-    public nonisolated let id = ID()
-    internal nonisolated let owner: HomeBoard.ID
+    internal nonisolated let owner: HomeBoard
     
     public nonisolated let name: String
     public nonisolated let imageName: String
@@ -41,7 +35,7 @@ public final class Spot: Sendable, ObservableObject {
         return uiImage!
     }
     
-    public internal(set) var places: [Place.ID] = []
+    public internal(set) var places: [Place] = []
     
     
     
@@ -58,8 +52,7 @@ public final class Spot: Sendable, ObservableObject {
             .filter { $0.name == self.name }
             .flatMap { $0.places }
             .map {
-                let newPlaceRef = Place(owner: self.id, data: $0)
-                return newPlaceRef.id
+                return Place(owner: self, data: $0)
             }
         
         // mutate
@@ -69,30 +62,4 @@ public final class Spot: Sendable, ObservableObject {
     
     
     // MARK: value
-    @MainActor
-    public struct ID: Sendable, Hashable {
-        public let value = UUID()
-        nonisolated init() { }
-        
-        public var isExist: Bool {
-            SpotManager.container[self] != nil
-        }
-        public var ref: Spot? {
-            SpotManager.container[self]
-        }
-    }
-}
-
-
-// MARK: ObjectManager
-@MainActor
-fileprivate final class SpotManager: Sendable {
-    // core
-    static var container: [Spot.ID: Spot] = [:]
-    static func register(_ object: Spot) {
-        container[object.id] = object
-    }
-    static func unregister(_ id: Spot.ID) {
-        container[id] = nil
-    }
 }

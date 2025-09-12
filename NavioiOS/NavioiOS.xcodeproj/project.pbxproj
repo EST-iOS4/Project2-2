@@ -165,7 +165,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = AHWGD5X6EC;
+				DEVELOPMENT_TEAM = 3X262XJF5T;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = NavioiOS/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.travel";
@@ -206,7 +206,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = AHWGD5X6EC;
+				DEVELOPMENT_TEAM = 3X262XJF5T;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = NavioiOS/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.travel";

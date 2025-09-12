@@ -4,15 +4,15 @@
 //
 //  Created by EunYoung Wang, 구현모 on 9/10/25.
 //
-
 import UIKit
 import Navio
 import Combine
 import MapKit
 import ToolBox
 
+
 // MARK: - 메인 TabBarController
-class MainTabBarController: UITabBarController {
+class NavioController: UITabBarController {
     
     private let mapBoard: MapBoard
     private let setting: Setting

@@ -11,25 +11,21 @@ import Combine
 // MARK: Object
 @MainActor
 public final class Setting: Sendable, ObservableObject {
-    // core
-    internal init(owner: Navio.ID) {
+    // MARK: core
+    internal init(owner: Navio) {
         self.owner = owner
-        
-        SettingManager.register(self)
-    }
-    internal func delete() {
-        SettingManager.unregister(self.id)
     }
     
     
-    // state
-    public nonisolated let id = ID()
-    internal nonisolated let owner: Navio.ID
+    // MARK: state
+    internal nonisolated let owner: Navio
     
     @Published public var displayMode: DisplayMode = .system
     @Published public var collectKeyword: Bool = true
     
-    // action
+    
+    
+    // MARK: action
     public func load() {
         let defaults = UserDefaults.standard
         if let rawMode = defaults.string(forKey: "Setting.displayMode"),
@@ -49,37 +45,10 @@ public final class Setting: Sendable, ObservableObject {
     
     
     
-    // value
-    @MainActor
-    public struct ID: Sendable, Hashable {
-        public let value = UUID()
-        nonisolated init() { }
-        
-        public var isExist: Bool {
-            SettingManager.container[self] != nil
-        }
-        public var ref: Setting? {
-            SettingManager.container[self]
-        }
-    }
-    
+    // MARK: value
     public enum DisplayMode: String, Sendable, Hashable {
         case light
         case dark
         case system
-    }
-}
-
-
-// MARK: ObjectManager
-@MainActor
-fileprivate final class SettingManager: Sendable {
-    // core
-    static var container: [Setting.ID: Setting] = [:]
-    static func register(_ object: Setting) {
-        container[object.id] = object
-    }
-    static func unregister(_ id: Setting.ID) {
-        container[id] = nil
     }
 }

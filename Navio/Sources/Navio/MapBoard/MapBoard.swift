@@ -10,49 +10,34 @@ import ToolBox
 import CoreLocation
 import GooglePlaces
 
+
+// MARK: Object
 @MainActor
 public final class MapBoard: Sendable, ObservableObject {
-    // core
-    public init(owner: Navio.ID) {
+    // MARK: core
+    public init(owner: Navio) {
         self.owner = owner
         self.editorialSummaryByName = [:]
         self.detailByName = [:]
-        MapBoardManager.register(self)
     }
-    internal func delete() { MapBoardManager.unregister(self.id) }
+    
 
-    // state
-    public nonisolated let id = ID()
-    internal nonisolated let owner: Navio.ID
+    // MARK: state
+    internal nonisolated let owner: Navio
 
     @Published public private(set) var currentLocation: Location? = nil
     @Published public private(set) var isUpdatingLocation: Bool = false
     private func setLocation(_ newLocation: Location?) { self.currentLocation = newLocation }
 
-    @Published public internal(set) var likePlaces: [LikePlace.ID] = []
-    @Published public internal(set) var recentPlaces: [RecentPlace.ID] = []
+    @Published public internal(set) var likePlaces: [LikePlace] = []
+    @Published public internal(set) var recentPlaces: [RecentPlace] = []
 
     @Published public var searchInput: String = ""
-    @Published public internal(set) var searchPlaces: [SearchPlace.ID] = []
+    @Published public internal(set) var searchPlaces: [SearchPlace] = []
     @Published public internal(set) var editorialSummaryByName: [String: String] = [:]
 
     // 상세 스냅샷(값 타입만)
     @Published public internal(set) var detailByName: [String: PlaceDetail] = [:]
-
-    public struct PlaceDetail: Sendable, Hashable {
-        public let placeID: String
-        public let name: String
-        public let lat: Double
-        public let lon: Double
-        public let address: String
-        public let phone: String
-        public let website: String?
-        public let rating: Double
-        public let priceLevelRaw: Int
-        public let types: [String]
-        public let weekdayText: [String]
-        public let editorialSummary: String?
-    }
 
     // action
     public func updateLocation() async {
@@ -64,9 +49,8 @@ public final class MapBoard: Sendable, ObservableObject {
 
     public func startUpdating() async {
         guard self.isUpdatingLocation == false else { return }
-        let navio = self.id
-        await LocationManager.shared.addHandler { newLocation in
-            Task { await navio.ref?.setLocation(newLocation) }
+        await LocationManager.shared.addHandler { [weak self] newLocation in
+            Task { await self?.setLocation(newLocation) }
         }
         await LocationManager.shared.startStreaming()
         self.isUpdatingLocation = true
@@ -77,7 +61,7 @@ public final class MapBoard: Sendable, ObservableObject {
 
     public func fetchLikePlaces() async {
         // capture ------------------------------------------------------------
-        let boardRef = self.id
+        let boardRef = self
         let oldIDs = self.likePlaces
 
         // compute ------------------------------------------------------------
@@ -92,12 +76,12 @@ public final class MapBoard: Sendable, ObservableObject {
 
         // mutate -------------------------------------------------------------
         // 1) 기존 목록에서 더 이상 UserDefaults에 존재하지 않는 항목은 메모리/스토리지에서 제거
-        for id in oldIDs {
-            guard let name = id.ref?.name else { continue } // ID가 가리키는 실제 객체의 이름 가져오기
-            if orderedNames.contains(name) == false {        // 표시 순서 배열에 없으면
-                id.ref?.delete()                             // 해당 객체 자체 삭제(스토리지 연동 시 정리)
-            }
-        }
+//        for id in oldIDs {
+//            guard let name = id.name else { continue } // ID가 가리키는 실제 객체의 이름 가져오기
+//            if orderedNames.contains(name) == false {        // 표시 순서 배열에 없으면
+//                                          // 해당 객체 자체 삭제(스토리지 연동 시 정리)
+//            }
+//        }
         // 2) 화면 바인딩 배열을 다시 구성
         self.likePlaces = []                                 // 빈 배열로 초기화
         for name in orderedNames {                           // 화면에 보여줄 순서대로 순회
@@ -106,7 +90,7 @@ public final class MapBoard: Sendable, ObservableObject {
             let address = rec["address"] ?? ""
 
             // 기존에 동일 이름을 가진 객체가 이미 있다면 그것을 재사용(아이덴티티 유지)
-            if let exist = oldIDs.first(where: { $0.ref?.name == name }) {
+            if let exist = oldIDs.first(where: { $0.name == name }) {
                 self.likePlaces.append(exist)
                 continue
             }
@@ -120,17 +104,16 @@ public final class MapBoard: Sendable, ObservableObject {
                 number: ""                                   // 전화번호는 박스에 없으므로 공백
             )
             let likeRef = LikePlace(owner: boardRef, data: data) // 소유자(boardRef) 연결하여 새 모델 생성
-            self.likePlaces.append(likeRef.id)                   // 화면 바인딩 배열에 ID 추가
+            self.likePlaces.append(likeRef)                   // 화면 바인딩 배열에 ID 추가
         }
     }
 
     /// 최근 검색어 목록 재구성(MRU → 메모리 모델)
     /// - UserDefaults("MAPBOARD_RECENT_QUERIES")에 저장된 검색어를 읽어
     ///   기존 객체 재사용/누락 삭제/신규 생성하여 `recentPlaces`를 최신 상태로 만듭니다.
-    @MainActor
     public func fetchRecentPlaces() async {
         // capture ------------------------------------------------------------
-        let boardRef = self.id                          // 새 객체가 필요할 때 소유자로 연결할 보드 식별자
+        let boardRef = self                      // 새 객체가 필요할 때 소유자로 연결할 보드 식별자
         let oldIDs = self.recentPlaces                  // 기존 화면 바인딩 배열을 캡처(재사용/삭제 판단)
 
         // compute ------------------------------------------------------------
@@ -143,17 +126,17 @@ public final class MapBoard: Sendable, ObservableObject {
 
         // mutate -------------------------------------------------------------
         // 1) 기존 항목 중, MRU 목록에 더 이상 없는 것은 삭제
-        for id in oldIDs {
-            guard let query = id.ref?.name else { continue } // ID가 가리키는 실제 객체의 "이름"을 검색어로 사용
-            if ordered.contains(query) == false {             // MRU에 없다면
-                id.ref?.delete()                              // 객체 삭제(스토리지 정합성 보존)
-            }
-        }
+//        for id in oldIDs {
+//            guard let query = id.name else { continue } // ID가 가리키는 실제 객체의 "이름"을 검색어로 사용
+//            if ordered.contains(query) == false {             // MRU에 없다면
+//                id.ref?.delete()                              // 객체 삭제(스토리지 정합성 보존)
+//            }
+//        }
 
         // 2) 화면 바인딩 배열 재구성(재사용 우선)
         self.recentPlaces = []                             // 비움
         for query in ordered {                             // MRU에서 읽어온 순서대로
-            if let exist = oldIDs.first(where: { $0.ref?.name == query }) {
+            if let exist = oldIDs.first(where: { $0.name == query }) {
                 self.recentPlaces.append(exist)            // 기존 객체 재사용(아이덴티티 유지)
                 continue
             }
@@ -166,15 +149,14 @@ public final class MapBoard: Sendable, ObservableObject {
                 number: ""
             )
             let rec = RecentPlace(owner: boardRef, data: data)// 소유자 연결하여 생성
-            self.recentPlaces.append(rec.id)               // ID를 화면 바인딩 배열에 추가
+            self.recentPlaces.append(rec)               // ID를 화면 바인딩 배열에 추가
         }
     }
 
     /// 검색 실행: 자동완성 → placeID[] → 각 placeID 상세 스냅샷 → 목록/상세 캐시 갱신
-    @MainActor
     public func fetchSearchPlaces() async {
         // capture ------------------------------------------------------------
-        let boardRef = self.id
+        let boardRef = self
         let oldIDs = self.searchPlaces
         let rawQuery = self.searchInput
             .trimmingCharacters(in: .whitespacesAndNewlines) // 앞뒤 공백 제거
@@ -315,20 +297,20 @@ public final class MapBoard: Sendable, ObservableObject {
 
         // mutate -------------------------------------------------------------
         // (E) 기존 searchPlaces 중 이번 결과에 없는 항목은 삭제
-        let newNames = Set(newDatas.map { $0.name })          // 신규 이름 집합
-        for id in oldIDs {
-            guard let name = id.ref?.name else { continue }
-            if newNames.contains(name) == false { id.ref?.delete() }
-        }
+//        let newNames = Set(newDatas.map { $0.name })          // 신규 이름 집합
+//        for id in oldIDs {
+//            guard let name = id.name else { continue }
+//            if newNames.contains(name) == false { id.delete() }
+//        }
 
         // (F) 화면 바인딩 배열 재구성: 동일 이름이 있으면 기존 ID 재사용
         self.searchPlaces = []                                // 비우고
         for (name, placeData, summary) in newDatas {          // 신규 데이터 순회
-            if let exist = oldIDs.first(where: { $0.ref?.name == name }) {
+            if let exist = oldIDs.first(where: { $0.name == name }) {
                 self.searchPlaces.append(exist)               // 기존 ID 재사용
             } else {
                 let sp = SearchPlace(owner: boardRef, data: placeData) // 새 객체 생성
-                self.searchPlaces.append(sp.id)               // ID 추가
+                self.searchPlaces.append(sp)               // ID 추가
             }
             if let summary = summary {                        // 보조 텍스트 캐시 동기화
                 self.editorialSummaryByName[name] = summary
@@ -339,19 +321,20 @@ public final class MapBoard: Sendable, ObservableObject {
         ud.set(mru, forKey: keyMRU)                           // 변경된 MRU를 UserDefaults에 반영
     }
     
-    // value
-    @MainActor
-    public struct ID: Sendable, Hashable {
-        public let value = UUID()
-        nonisolated init() { }
-        public var isExist: Bool { MapBoardManager.container[self] != nil }
-        public var ref: MapBoard? { MapBoardManager.container[self] }
+    
+    // MARK: value
+    public struct PlaceDetail: Sendable, Hashable {
+        public let placeID: String
+        public let name: String
+        public let lat: Double
+        public let lon: Double
+        public let address: String
+        public let phone: String
+        public let website: String?
+        public let rating: Double
+        public let priceLevelRaw: Int
+        public let types: [String]
+        public let weekdayText: [String]
+        public let editorialSummary: String?
     }
-}
-
-@MainActor
-fileprivate final class MapBoardManager: Sendable {
-    static var container: [MapBoard.ID: MapBoard] = [:]
-    static func register(_ object: MapBoard) { container[object.id] = object }
-    static func unregister(_ id: MapBoard.ID) { container[id] = nil }
 }

@@ -407,14 +407,14 @@ final class MapBoardTestViewController: UIViewController, UITableViewDataSource,
         if seg.selectedSegmentIndex == 0 {
             // 검색 결과
             let id = mapBoard.searchPlaces[indexPath.row]
-            cell.textLabel?.text = id.ref?.name ?? "(no name)"
+            cell.textLabel?.text = id.name
             // 주소만 표시
-            cell.detailTextLabel?.text = id.ref?.address ?? ""
+            cell.detailTextLabel?.text = id.address
             cell.accessoryType = .disclosureIndicator
         } else {
             // 최근 검색어
             let id = mapBoard.recentPlaces[indexPath.row]
-            cell.textLabel?.text = id.ref?.name ?? "(no query)"
+            cell.textLabel?.text = id.name
             cell.detailTextLabel?.text = "최근 검색어"
             cell.accessoryType = .none
         }
@@ -429,14 +429,14 @@ final class MapBoardTestViewController: UIViewController, UITableViewDataSource,
         if seg.selectedSegmentIndex == 0 {
             // 상세로 이동: 이름만 전달 → 상세 VC 내부에서 placeID/상세 조회
             let id = mapBoard.searchPlaces[indexPath.row]
-            guard let name = id.ref?.name, !name.isEmpty else { return }
-            let vc = PlaceDetailViewController(placeName: name)
+            guard !id.name.isEmpty else { return }
+            let vc = PlaceDetailViewController(placeName: id.name)
             navigationController?.pushViewController(vc, animated: true)
         } else {
             // 최근 검색어를 즉시 재검색
             let id = mapBoard.recentPlaces[indexPath.row]
-            guard let query = id.ref?.name, !query.isEmpty else { return }
-            runSearch(for: query)
+            guard !id.name.isEmpty else { return }
+            runSearch(for: id.name)
         }
     }
 }
