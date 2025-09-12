@@ -12,32 +12,43 @@ import MapKit
 import ToolBox
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
-
+    
     var window: UIWindow?
-
-
+    
+    
+    //    func scene(_ scene: UIScene,
+    //               willConnectTo session: UISceneSession,
+    //               options connectionOptions: UIScene.ConnectionOptions) {
+    //        guard let windowScene = (scene as? UIWindowScene) else { return }
+    //
+    //        self.window = UIWindow(windowScene: windowScene)
+    //        // 여기서 직접 초기 화면을 설정
+    //        let navio = Navio()
+    //
+    //        Task {
+    //            await navio.setUp()
+    //            guard let mapBoard = navio.mapBoard?.ref,
+    //                  let setting = navio.setting?.ref else { return }
+    //
+    //
+    //            let mainTabBarController = MainTabBarController(mapBoard: mapBoard, setting: setting)
+    //
+    //            self.window?.rootViewController = mainTabBarController
+    //            self.window?.makeKeyAndVisible()
+    //
+    //        }
+    //    }
+    
     func scene(_ scene: UIScene,
                willConnectTo session: UISceneSession,
                options connectionOptions: UIScene.ConnectionOptions) {
-        guard let windowScene = (scene as? UIWindowScene) else { return }
-
-        self.window = UIWindow(windowScene: windowScene)
-        // 여기서 직접 초기 화면을 설정
-        let navio = Navio()
-        
-        Task {
-            await navio.setUp()
-            guard let mapBoard = navio.mapBoard?.ref,
-                  let setting = navio.setting?.ref else { return }
-            
-            
-            let mainTabBarController = MainTabBarController(mapBoard: mapBoard, setting: setting)
-            
-            self.window?.rootViewController = mainTabBarController
-            self.window?.makeKeyAndVisible()
-            
-        }
+        guard let winScene = (scene as? UIWindowScene) else { return }
+        let window = UIWindow(windowScene: winScene)
+        window.rootViewController = UINavigationController(rootViewController: MapBoardTestViewController())
+        window.makeKeyAndVisible()
+        self.window = window
     }
+
 
     func sceneDidDisconnect(_ scene: UIScene) {
         // Called as the scene is being released by the system.
