@@ -5,21 +5,21 @@
 //  Created by EunYoung Wang, 구현모 on 9/11/25.
 //
 
-import Foundation
 import UIKit
 import Navio
 import Combine
 import MapKit
 import ToolBox
-import SwiftUI
 
 
-// MARK: - Map 뷰컨트롤러 (Map 탭+모달 교체 기능)
+// MARK: - Map 뷰컨트롤러
+// 역할: 지도 표시, ViewModel 데이터 바인딩, 검색 모달 띄우기
 class MapViewController: UIViewController {
     
     private let mapBoard: MapBoard
     private let mapView = MKMapView()
     
+    // 화면 하단에 위치한 '검색하기' 버튼 역할을 하는 커스텀 뷰
     private let searchContainerView: UIView = {
         let view = UIView()
         view.backgroundColor = .systemBackground
@@ -31,6 +31,7 @@ class MapViewController: UIViewController {
         return view
     }()
     
+    // searchContainerView 돋보기 아이콘
     private let searchIconView: UIImageView = {
         let iv = UIImageView()
         iv.image = UIImage(systemName: "magnifyingglass")
@@ -40,6 +41,7 @@ class MapViewController: UIViewController {
         return iv
     }()
     
+    // searchContainerView 내부의 "검색하기" 텍스트 레이블
     private let searchLabel: UILabel = {
         let label = UILabel()
         label.text = "검색하기"
@@ -49,6 +51,7 @@ class MapViewController: UIViewController {
         return label
     }()
     
+    // 지도 우측 하단의 현위치 추적 버튼
     private let userTrackingButton: UIButton = {
         let button = UIButton(type: .system)
         let image = UIImage(systemName: "location")
@@ -96,8 +99,13 @@ class MapViewController: UIViewController {
         searchContainerView.addSubview(searchLabel)
         
         view.addSubview(userTrackingButton)
-        userTrackingButton.addTarget(self, action: #selector(userTrackingButtonTapped), for: .touchUpInside)
         
+        // 버튼과 뷰에 액션을 연결
+        userTrackingButton.addTarget(self, action: #selector(userTrackingButtonTapped), for: .touchUpInside)
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(searchContainerTapped))
+        searchContainerView.addGestureRecognizer(tapGesture)
+        
+        // Auto Layout 설정
         mapView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             mapView.topAnchor.constraint(equalTo: view.topAnchor),
@@ -124,16 +132,18 @@ class MapViewController: UIViewController {
             userTrackingButton.widthAnchor.constraint(equalToConstant: 44),
             userTrackingButton.heightAnchor.constraint(equalToConstant: 44)
         ])
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(searchContainerTapped))
-        searchContainerView.addGestureRecognizer(tapGesture)
     }
     
+    // 검색 컨테이너 뷰 탭 액션
     @objc private func searchContainerTapped() {
+        // 모달 컨테이너 뷰 컨트롤러와 LikeModal 뷰 컨트롤러 생성
         let modalContainer = ModalContainerViewController()
         let likeModalVC = LikeModalViewController()
         
+        // LikeModal에 있는 목데이터로 핀 찍기
         updatePins(for: likeModalVC.placeData)
         
+        // 모달 컨테이너 띄우기
         if let sheet = modalContainer.sheetPresentationController {
             sheet.detents = [.medium(), .large()]
             sheet.prefersGrabberVisible = true
@@ -142,7 +152,9 @@ class MapViewController: UIViewController {
         present(modalContainer, animated: true)
     }
     
+    // 현위치 추적 버튼 액션
     @objc private func userTrackingButtonTapped() {
+        // none -> follow -> followWithHeading -> none 순환
         switch mapView.userTrackingMode {
         case .none:
             mapView.setUserTrackingMode(.follow, animated: true)
@@ -155,8 +167,9 @@ class MapViewController: UIViewController {
         }
     }
     
+    // Combine을 사용해 ViewModel의 데이터를 UI에 바인딩
     private func bindViewModel() {
-        mapBoard.$likePlaces
+        mapBoard.$likePlaces // 즐겨찾기 장소
             .sink { [weak self] placeIDs in
                 let placeObjects = placeIDs.compactMap { $0.ref }
                 self?.updatePins(for: placeObjects)
@@ -164,11 +177,13 @@ class MapViewController: UIViewController {
             .store(in: &cancellables)
     }
     
+    // 지도를 특정 좌표로 이동시키는 헬퍼 메서드
     private func moveMap(to coordinate: CLLocationCoordinate2D) {
         let region = MKCoordinateRegion(center: coordinate, latitudinalMeters: 1000, longitudinalMeters: 1000)
         mapView.setRegion(region, animated: true)
     }
     
+    // 핀 업데이트 메서드
     private func updatePins(for pinnableItems: [any Pinnable]) {
         // 기존 핀 제거
         mapView.removeAnnotations(mapView.annotations)
@@ -193,7 +208,10 @@ class MapViewController: UIViewController {
 }
 
 extension MapViewController: MKMapViewDelegate {
+    
+    // 지도의 추적 모드가 변경될 때마다 호출
     func mapView(_ mapView: MKMapView, didChange mode: MKUserTrackingMode, animated: Bool) {
+        // 추적 모드에 따라 버튼 이미지와 색상 변경
         switch mode {
         case .none:
             userTrackingButton.setImage(UIImage(systemName: "location"), for: .normal)
@@ -209,7 +227,9 @@ extension MapViewController: MKMapViewDelegate {
         }
     }
     
+    // 지도에 핀(어노테이션)을 표시할 때 호출
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+        // 사용자 위치 어노테이션은 기본 모양 사용
         guard !(annotation is MKUserLocation) else {
             return nil
         }
@@ -217,14 +237,19 @@ extension MapViewController: MKMapViewDelegate {
         let identifier = "PlaceAnnotationView"
         var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier) as? MKMarkerAnnotationView
         
+        // 재사용할 뷰가 없으면 새로 생성
         if annotationView == nil {
             annotationView = MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: identifier)
         } else {
+            // 재사용할 뷰가 있으면 데이터만 업데이트
             annotationView?.annotation = annotation
         }
+        
+        // 클러스터링 설정 및 콜아웃 설정
         annotationView?.clusteringIdentifier = "place"
         annotationView?.canShowCallout = true
         
+        // 정보창 오른쪽에 상세 정보 버튼 추가
         if annotationView?.rightCalloutAccessoryView == nil {
             let detailButton = UIButton(type: .detailDisclosure)
             annotationView?.rightCalloutAccessoryView = detailButton
@@ -232,10 +257,13 @@ extension MapViewController: MKMapViewDelegate {
         return annotationView
     }
     
+    // 클러스터 핀 터치 시 해당 클러스터에 속한 모든 핀을 보여줌
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
+        // 탭한 핀이 클러스터인지 확인
         guard let cluster = view.annotation as? MKClusterAnnotation else {
             return
         }
+        // 클러스터에 속한 모든 핀을 보여주도록 지도 조정
         mapView.showAnnotations(cluster.memberAnnotations, animated: true)
     }
     
@@ -256,29 +284,3 @@ extension MapViewController: MKMapViewDelegate {
 //        }
 //    }
 }
-        
-        
-// MARK: - SwiftUI Preview
-//#if DEBUG
-//  struct MapBaseViewTabBarController_Previews: PreviewProvider {
-//    static var previews: some View {
-//      UIViewControllerPreview {
-//        MapBaseViewTabBarController()
-//      }
-//    }
-//  }
-//  
-//  struct UIViewControllerPreview<ViewController: UIViewController>: UIViewControllerRepresentable {
-//    let viewController: ViewController
-//    
-//    init(_ builder: @escaping () -> ViewController) {
-//      viewController = builder()
-//    }
-//    
-//    func makeUIViewController(context: Context) -> ViewController {
-//      viewController
-//    }
-//    
-//    func updateUIViewController(_ uiViewController: ViewController, context: Context) {}
-//  }
-//#endif

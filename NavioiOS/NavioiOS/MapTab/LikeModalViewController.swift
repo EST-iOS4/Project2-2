@@ -11,7 +11,9 @@ import Combine
 import MapKit
 import ToolBox
 
-// MARK: - 캐러셀 데이터 모델
+// MARK: - PlaceCardData
+// 역할: 캐러셀(CollectionView)에 표시될 카드 하나의 데이터를 정의하는 모델
+// Pinnable 프로토콜 채택
 struct PlaceCardData: Pinnable {
     let imageName: String
     let title: String
@@ -25,68 +27,70 @@ struct PlaceCardData: Pinnable {
 }
 
 // MARK: - 커스텀 캐러셀 셀
+// 역할: UICollectionView 안에 들어갈 개별 카드 셀의 UI와 레이아웃을 정의
 class PlaceCardCell: UICollectionViewCell {
   
-  private let containerView: UIView = {
-    let view = UIView()
-    view.backgroundColor = .secondarySystemBackground
-    view.layer.cornerRadius = 34
-    view.layer.shadowColor = UIColor.black.cgColor
-    view.layer.shadowOpacity = 0.1
-    view.layer.shadowOffset = CGSize(width: 0, height: 2)
-    view.layer.shadowRadius = 8
-    view.translatesAutoresizingMaskIntoConstraints = false
-    return view
-  }()
+    // MARK: - UI Components
+    private let containerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .secondarySystemBackground
+        view.layer.cornerRadius = 34
+        view.layer.shadowColor = UIColor.black.cgColor
+        view.layer.shadowOpacity = 0.1
+        view.layer.shadowOffset = CGSize(width: 0, height: 2)
+        view.layer.shadowRadius = 8
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
   
-  private let placeImageView: UIImageView = {
-    let iv = UIImageView()
-    iv.contentMode = .scaleToFill
-    iv.clipsToBounds = true
-    iv.layer.cornerRadius = 34
-    iv.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
-    iv.translatesAutoresizingMaskIntoConstraints = false
-    return iv
-  }()
+    private let placeImageView: UIImageView = {
+        let iv = UIImageView()
+        iv.contentMode = .scaleToFill
+        iv.clipsToBounds = true
+        iv.layer.cornerRadius = 34
+        iv.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+        iv.translatesAutoresizingMaskIntoConstraints = false
+        return iv
+    }()
   
-  private let titleLabel: UILabel = {
-    let label = UILabel()
-    label.font = UIFont.boldSystemFont(ofSize: 20)
-    label.textColor = .label
-    label.textAlignment = .right
-    label.numberOfLines = 1
-    label.translatesAutoresizingMaskIntoConstraints = false
-    return label
-  }()
+    private let titleLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.boldSystemFont(ofSize: 20)
+        label.textColor = .label
+        label.textAlignment = .right
+        label.numberOfLines = 1
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
   
-  private let subtitleLabel: UILabel = {
-    let label = UILabel()
-    label.font = UIFont.systemFont(ofSize: 15)
-    label.textColor = .systemGray
-    label.textAlignment = .right
-    label.numberOfLines = 2
-    label.lineBreakMode = .byWordWrapping
-    label.translatesAutoresizingMaskIntoConstraints = false
-    return label
-  }()
+    private let subtitleLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.systemFont(ofSize: 15)
+        label.textColor = .systemGray
+        label.textAlignment = .right
+        label.numberOfLines = 2
+        label.lineBreakMode = .byWordWrapping
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
   
-  override init(frame: CGRect) {
-    super.init(frame: frame)
-    setupUI()
-  }
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupUI()
+    }
   
-  required init?(coder: NSCoder) {
-    fatalError("init(coder:) has not been implemented")
-  }
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
   
-  private func setupUI() {
-    contentView.addSubview(containerView)
-    containerView.addSubview(placeImageView)
-    containerView.addSubview(titleLabel)
-    containerView.addSubview(subtitleLabel)
+    private func setupUI() {
+        contentView.addSubview(containerView)
+        containerView.addSubview(placeImageView)
+        containerView.addSubview(titleLabel)
+        containerView.addSubview(subtitleLabel)
       
-      // 오토레이아웃
-      NSLayoutConstraint.activate([
+        // 오토레이아웃 설정
+        NSLayoutConstraint.activate([
             containerView.topAnchor.constraint(equalTo: contentView.topAnchor),
             containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
@@ -105,19 +109,22 @@ class PlaceCardCell: UICollectionViewCell {
             subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
             subtitleLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
             subtitleLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
-            ])
-  }
-  
-  func configure(with data: PlaceCardData) {
-    placeImageView.image = UIImage(named: data.imageName) ?? UIImage(systemName: "photo.fill")
-    titleLabel.text = data.title
-    subtitleLabel.text = data.subtitle
-  }
+        ])
+    }
+    
+    // 외부에서 데이터를 받아 셀의 UI를 업데이트하는 함수
+    func configure(with data: PlaceCardData) {
+        placeImageView.image = UIImage(named: data.imageName) ?? UIImage(systemName: "photo.fill")
+        titleLabel.text = data.title
+        subtitleLabel.text = data.subtitle
+    }
 }
 
 // MARK: - Like 모달 뷰컨트롤러
+// 역할: 'Like' 상태일 때 모달 컨테이너에 표시될 콘텐츠 ViewController
 class LikeModalViewController: UIViewController {
-    
+
+    // MARK: - Properties
     let likeLabel: UILabel = {
         let label = UILabel()
         label.text = "Like"
@@ -163,7 +170,7 @@ class LikeModalViewController: UIViewController {
         view.addSubview(likeLabel)
         view.addSubview(collectionView)
         
-        // 오토레이아웃
+        // 오토레이아웃 설정
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             likeLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: 20),
@@ -187,21 +194,22 @@ class LikeModalViewController: UIViewController {
 // MARK: - CollectionView DataSource & Delegate
 extension LikeModalViewController: UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
   
-  func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-    return placeData.count
-  }
+    // 셀 개수를 placeData 배열 크기만큼 반환
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return placeData.count
+    }
   
-  func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-    let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PlaceCardCell", for: indexPath) as! PlaceCardCell
-    cell.configure(with: placeData[indexPath.item])
-    return cell
-  }
+    // 각 셀을 PlaceCardCell로 구성하고 데이터를 설정
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PlaceCardCell", for: indexPath) as! PlaceCardCell
+        cell.configure(with: placeData[indexPath.item])
+        return cell
+    }
   
-  func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-    
-      let cellHeight = collectionView.bounds.height - 20
-      let cellWidth = cellHeight * (202.0 / 200.0)
-    
-    return CGSize(width: cellWidth, height: cellHeight)
-  }
+    // 셀 크기를 지정
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        let cellHeight = collectionView.bounds.height - 20
+        let cellWidth = cellHeight * (202.0 / 200.0)
+        return CGSize(width: cellWidth, height: cellHeight)
+    }
 }
