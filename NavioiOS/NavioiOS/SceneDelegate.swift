@@ -42,11 +42,22 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func scene(_ scene: UIScene,
                willConnectTo session: UISceneSession,
                options connectionOptions: UIScene.ConnectionOptions) {
-        guard let winScene = (scene as? UIWindowScene) else { return }
+        guard let winScene = scene as? UIWindowScene else { return }
+        
         let window = UIWindow(windowScene: winScene)
-        window.rootViewController = UINavigationController(rootViewController: MapBoardTestViewController())
-        window.makeKeyAndVisible()
+        
+        // MapBoard는 Navio 모듈의 도메인 객체
+        let mapBoard = MapBoard(owner: Navio.ID())
+        
+        // 뷰컨 생성자 시그니처에 맞게 주입
+        let root = MapBoardTestViewController(mapBoard: mapBoard)
+        
+        // 네비게이션으로 푸시할 것이므로 modalPresentationStyle 불필요
+        let nav = UINavigationController(rootViewController: root)
+        
+        window.rootViewController = nav
         self.window = window
+        window.makeKeyAndVisible()
     }
 
 
