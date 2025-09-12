@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7D6EB11E2E73B58D0013C375 /* GooglePlaces in Frameworks */ = {isa = PBXBuildFile; productRef = 7D6EB11D2E73B58D0013C375 /* GooglePlaces */; };
+		7D6EB1202E73B58D0013C375 /* GooglePlacesSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 7D6EB11F2E73B58D0013C375 /* GooglePlacesSwift */; };
 		CE4D65F12E69553B00369E21 /* Navio in Frameworks */ = {isa = PBXBuildFile; productRef = CE4D65F02E69553B00369E21 /* Navio */; };
 		CE4D65F32E69553B00369E21 /* ToolBox in Frameworks */ = {isa = PBXBuildFile; productRef = CE4D65F22E69553B00369E21 /* ToolBox */; };
 /* End PBXBuildFile section */
@@ -41,8 +43,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7D6EB11E2E73B58D0013C375 /* GooglePlaces in Frameworks */,
 				CE4D65F32E69553B00369E21 /* ToolBox in Frameworks */,
 				CE4D65F12E69553B00369E21 /* Navio in Frameworks */,
+				7D6EB1202E73B58D0013C375 /* GooglePlacesSwift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -87,6 +91,8 @@
 			packageProductDependencies = (
 				CE4D65F02E69553B00369E21 /* Navio */,
 				CE4D65F22E69553B00369E21 /* ToolBox */,
+				7D6EB11D2E73B58D0013C375 /* GooglePlaces */,
+				7D6EB11F2E73B58D0013C375 /* GooglePlacesSwift */,
 			);
 			productName = NavioiOS;
 			productReference = CE568B932E694B070081CF98 /* NavioiOS.app */;
@@ -118,6 +124,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				CE4D65EF2E69553B00369E21 /* XCLocalSwiftPackageReference "../Navio" */,
+				7D6EB11C2E73B58D0013C375 /* XCRemoteSwiftPackageReference "ios-places-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CE568B942E694B070081CF98 /* Products */;
@@ -173,7 +180,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.bud.NavioiOS;
+				PRODUCT_BUNDLE_IDENTIFIER = co.kr.whitebear.NavioiOS;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -212,7 +219,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.bud.NavioiOS;
+				PRODUCT_BUNDLE_IDENTIFIER = co.kr.whitebear.NavioiOS;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -379,7 +386,28 @@
 		};
 /* End XCLocalSwiftPackageReference section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		7D6EB11C2E73B58D0013C375 /* XCRemoteSwiftPackageReference "ios-places-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/googlemaps/ios-places-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 10.1.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
+		7D6EB11D2E73B58D0013C375 /* GooglePlaces */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7D6EB11C2E73B58D0013C375 /* XCRemoteSwiftPackageReference "ios-places-sdk" */;
+			productName = GooglePlaces;
+		};
+		7D6EB11F2E73B58D0013C375 /* GooglePlacesSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7D6EB11C2E73B58D0013C375 /* XCRemoteSwiftPackageReference "ios-places-sdk" */;
+			productName = GooglePlacesSwift;
+		};
 		CE4D65F02E69553B00369E21 /* Navio */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = Navio;
