@@ -115,7 +115,8 @@ class RecentPlaceModalViewController: UIViewController {
     let tableView: UITableView = {
         let tv = UITableView()
         tv.backgroundColor = .clear
-        tv.separatorStyle = .none
+        tv.separatorStyle = .singleLine
+        tv.separatorColor = .opaqueSeparator
         tv.translatesAutoresizingMaskIntoConstraints = false
         return tv
     }()
@@ -187,8 +188,10 @@ class RecentPlaceModalViewController: UIViewController {
         config.cornerStyle = .capsule
         config.contentInsets = NSDirectionalEdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12)
         
+        let heartImage = UIImage(systemName: "heart.fill")?.withTintColor(.systemPink, renderingMode: .alwaysOriginal)
+        config.image = heartImage
+      
         let button = UIButton(configuration: config)
-        button.tintColor = .systemPink
         return button
     }
     

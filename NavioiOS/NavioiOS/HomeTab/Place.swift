@@ -13,8 +13,8 @@ class Place: UIViewController {
   private let scrollView = UIScrollView()
   private let contentView = UIView()
   
-  private var placeName: String // Home의 places
-  private let titleLabel = UILabel()
+  private var placeName: String // Home에서 전달받은 장소명 저장 (홍대,잠실,여의도..)
+  private let titleLabel = UILabel() // 현재 장소의 핫플 제목 표시 ( 홍대 핫플)
   private let cardsStackView = UIStackView()
   
   // 카드 데이터
@@ -25,79 +25,83 @@ class Place: UIViewController {
     "KT&G 상상마당"
   ]
   
-  // MARK: - Initializer
+  // MARK: - Initializer 메서드
+  
+  // HomeViewController에서 장소명을 전달받아 초기화하는 메서드
   init(placeName: String) {
     self.placeName = placeName
     super.init(nibName: nil, bundle: nil)
   }
-  
   required init?(coder: NSCoder) {
     fatalError("init(coder:) has not been implemented")
   }
   
   override func viewDidLoad() {
     super.viewDidLoad()
-    setupNavigationBar()
-    setupUI()
-    setupConstraints()
-    setupCards()
+    setupNavigationBar() // 네비게이션바 설정
+    setupUI() // UI 초기요소 설정
+    setupConstraints() // 오토레이아웃 제약조건 설정
+    setupCards() // 관련 장소 카드들 생성 및 배치
   }
   
-  // MARK: - 네비게이션 설정
+  // MARK: - 네비게이션바 설정
   private func setupNavigationBar() {
     navigationController?.navigationBar.isHidden = false
     navigationItem.hidesBackButton = false
   }
   
-  // MARK: - Setup 메서드
+  // MARK: - UI 설정 메서드
   private func setupUI() {
     view.backgroundColor = .systemBackground
     
-    // ScrollView 설정
+    // MARK: - ScrollView, ContentView 설정
     scrollView.translatesAutoresizingMaskIntoConstraints = false
     scrollView.showsVerticalScrollIndicator = false
     contentView.translatesAutoresizingMaskIntoConstraints = false
+    // 뷰 계층구조 (Scroll -> Content)
     view.addSubview(scrollView)
     scrollView.addSubview(contentView)
     
-    // 타이틀 레이블 (ex. 홍대 핫플)
+    // MARK: - 타이틀 레이블 (ex. 홍대 핫플)
     titleLabel.translatesAutoresizingMaskIntoConstraints = false
     titleLabel.text = "\(placeName) 핫플"
     titleLabel.font = .systemFont(ofSize: 28, weight: .bold)
     titleLabel.textColor = .label
     
-    // 카드 스택뷰 설정
+    // MARK: - 카드 스택뷰 설정
     cardsStackView.translatesAutoresizingMaskIntoConstraints = false
     cardsStackView.axis = .vertical
     cardsStackView.spacing = 16
     cardsStackView.distribution = .fill
     
-    // 서브뷰 추가
+    // MARK: - 계층구조에 뷰 추가
     contentView.addSubview(titleLabel)
     contentView.addSubview(cardsStackView)
   }
   
+  
+  // 오토레이아웃 제약조건 설정 메서드
   private func setupConstraints() {
     NSLayoutConstraint.activate([
-      // ScrollView
+      // MARK: ScrollView 제약조건
       scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
       scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
       scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
       scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
       
-      // ContentView
+      // MARK: ContentView 제약조건
       contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
       contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
       contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
       contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
       contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
       
-      // Title Label
+      // MARK: 타이틀 레이블 제약조건
       titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
       titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
       titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
       
-      // Cards Stack View
+      // MARK: 카드 스택뷰 제약조건
       cardsStackView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 32),
       cardsStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
       cardsStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
@@ -105,16 +109,20 @@ class Place: UIViewController {
     ])
   }
   
+  // 카드뷰 생성 및 스택뷰 배치 메서드
   private func setupCards() {
-    // 현재 장소 제외한 관련 장소들 필터링
+    // 현재 장소 제외한 관련 장소들 필터링 (ex. 홍대에 관련된 세부 장소들)
     let filteredPlaces = relatedPlaces.filter { $0 != placeName }
     
+    // 필터링된 장소의 카드생성
     for (index, place) in filteredPlaces.enumerated() {
-      let cardView = createCardView(title: place, tag: index)
-      cardsStackView.addArrangedSubview(cardView)
+      let cardView = createCardView(title: place, tag: index) // 개별 카드뷰 생성 (장소명, 인덱스)
+      cardsStackView.addArrangedSubview(cardView) // 스택뷰에 추가
     }
   }
   
+  // 개별 관련 장소 카드를 생성하는 헬퍼 메서드
+  // tag: 카드 식별을 위함 ( 탭이벤트에서 사용)
   private func createCardView(title: String, tag: Int) -> UIView {
     let containerView = UIView()
     containerView.translatesAutoresizingMaskIntoConstraints = false
@@ -126,19 +134,19 @@ class Place: UIViewController {
     containerView.layer.shadowRadius = 8
     containerView.tag = tag
     
-    // 카드가 탭 되었을 때 실행
+    // MARK: - 카드가 탭 되었을 때 실행 (placeInfo로 이동)
     let tapGesture = UITapGestureRecognizer(target: self, action: #selector(cardTapped(_:)))
     containerView.addGestureRecognizer(tapGesture)
     containerView.isUserInteractionEnabled = true
     
-    // 타이틀 레이블
+    // MARK: - 장소명 타이틀 레이블 설정
     let titleLabel = UILabel()
     titleLabel.translatesAutoresizingMaskIntoConstraints = false
     titleLabel.text = title
     titleLabel.font = .systemFont(ofSize: 20, weight: .semibold)
     titleLabel.textColor = .label
     
-    // 하트 버튼
+    // MARK: - 하트 버튼 설정
     let heartButton = UIButton(type: .system)
     heartButton.translatesAutoresizingMaskIntoConstraints = false
     heartButton.setImage(UIImage(systemName: "heart"), for: .normal)
@@ -146,7 +154,7 @@ class Place: UIViewController {
     heartButton.tag = tag
     heartButton.addTarget(self, action: #selector(heartButtonTapped(_:)), for: .touchUpInside)
     
-    // 이미지 컨테이너
+    // MARK: - 이미지 컨테이너 설정
     let imageContainerView = UIView()
     imageContainerView.translatesAutoresizingMaskIntoConstraints = false
     imageContainerView.backgroundColor = .systemGray5
@@ -160,15 +168,15 @@ class Place: UIViewController {
     placeholderImageView.tintColor = .systemGray3
     placeholderImageView.contentMode = .scaleAspectFit
     
-    // 서브뷰 추가
+    // MARK: - 서브뷰 추가 ( 카드 - 타이틀,버튼,이미지 - 아이콘)
     containerView.addSubview(titleLabel)
     containerView.addSubview(heartButton)
     containerView.addSubview(imageContainerView)
     imageContainerView.addSubview(placeholderImageView)
     
-    // 제약조건 설정
+    // MARK: - 카드 내부 제약조건 설정
     NSLayoutConstraint.activate([
-      // Container 높이
+      // 카드 높이
       containerView.heightAnchor.constraint(equalToConstant: 280),
       
       // Title Label
@@ -198,7 +206,7 @@ class Place: UIViewController {
     return containerView
   }
   
-  // MARK: - placeholder Image
+  // MARK: - 헬퍼 메서드들 (Helper Methods)
   private func getPlaceholderImage(for place: String) -> UIImage? {
     switch place {
     case "홍익대학교":
@@ -214,16 +222,18 @@ class Place: UIViewController {
     }
   }
   
-  // MARK: - Card Tapped Actions (화면전환)
+  // MARK: - 이벤트 처리 메서드
+  
+  // MARK: - 카드가 탭 됐을 때 액션 (placeInfo로 화면전환)
   @objc private func cardTapped(_ gesture: UITapGestureRecognizer) {
     guard let tappedView = gesture.view else { return }
     let index = tappedView.tag
     let filteredPlaces = relatedPlaces.filter { $0 != placeName }
     
     if index < filteredPlaces.count {
-      let selectedPlace = filteredPlaces[index]
+      let selectedPlace = filteredPlaces[index] // 선택된 장소명 가져오기
       
-      // 애니메이션
+      // 애니메이션 효과
       UIView.animate(withDuration: 0.1, animations: {
         tappedView.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
       }) { _ in
@@ -232,7 +242,7 @@ class Place: UIViewController {
         }
       }
       
-      // PlaceInfo로 이동
+      // MARK: - PlaceInfo로 이동
       let placeInfoVC = PlaceInfo()
       placeInfoVC.configure(with: selectedPlace)  // 선택된 장소 데이터 전달
       navigationController?.pushViewController(placeInfoVC, animated: true)
