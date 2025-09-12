@@ -31,7 +31,7 @@ class SearchListCell: UITableViewCell {
   private let titleLabel: UILabel = {
     let label = UILabel()
     label.font = UIFont.systemFont(ofSize: 18, weight: .medium)
-    label.textColor = .black
+    label.textColor = .label
     label.numberOfLines = 1
       label.translatesAutoresizingMaskIntoConstraints = false
     return label
