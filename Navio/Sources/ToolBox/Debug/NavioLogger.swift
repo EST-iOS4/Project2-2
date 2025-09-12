@@ -9,7 +9,7 @@ import os
 
 
 // MARK: Logger
-public struct Reporter: Sendable {
+public struct NavioLogger: Sendable {
     private let logger: Logger
     public init(_ objectName: String) {
         self.logger = Logger(subsystem: "Bud", category: objectName)

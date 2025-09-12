@@ -8,6 +8,8 @@ import Foundation
 import Combine
 import ToolBox
 
+private let logger = NavioLogger("HomeBoard")
+
 
 // MARK: Object
 @MainActor
@@ -26,25 +28,25 @@ public final class HomeBoard: Sendable, ObservableObject {
     
     // MARK: action
     public func fetchSpots() async {
+        logger.start()
+        
         // capture
         guard spots.isEmpty else {
-            print(#file, #function, #line, "already fetched")
+            logger.failure("이미 Spot들이 존재합니다.")
             return
         }
         
-        // compute
-        let spots = LocalDB.builtInSpots
-            .map { spotData in
-                let newSpotRef = Spot(owner: self,
-                                      name: spotData.name,
-                                      imageName: spotData.imageName)
-                return newSpotRef
-            }
-        
         // mutate
-        self.spots = spots
+        self.spots = sampleSpotDatas
+            .map { Spot(owner: self, data: $0)}
     }
     
     
     // MARK: value
+    private let sampleSpotDatas: [SpotData] = [
+        .init(name: "홍대",imageName: "hongdae"),
+        .init(name: "부산", imageName: "busan"),
+        .init(name: "경주",imageName: "gyeongju"),
+        .init(name: "잠실", imageName: "jamsil")
+    ]
 }

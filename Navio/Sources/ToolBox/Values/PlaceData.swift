@@ -9,7 +9,7 @@ import Foundation
 
 // MARK: Value
 public struct PlaceData: Sendable, Hashable {
-    // core
+    // MARK: core
     public let name: String
     public let imageName: String
     public let location: Location

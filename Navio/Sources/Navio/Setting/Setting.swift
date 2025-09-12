@@ -6,6 +6,9 @@
 //
 import Foundation
 import Combine
+import ToolBox
+
+private let logger = NavioLogger("Setting")
 
 
 // MARK: Object

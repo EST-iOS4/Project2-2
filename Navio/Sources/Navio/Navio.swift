@@ -9,6 +9,8 @@ import CoreLocation
 import Combine
 import ToolBox
 
+private let logger = NavioLogger("Navio")
+
 
 // MARK: Object
 @MainActor
@@ -29,6 +31,8 @@ public final class Navio: Sendable, ObservableObject {
     
     // MARK: action
     public func setUp() async {
+        logger.start()
+        
         // capture
         guard self.homeBoard == nil, self.mapBoard == nil, self.setting == nil else {
             print(#file, #function, #line, "이미 세팅된 상태입니다.")
