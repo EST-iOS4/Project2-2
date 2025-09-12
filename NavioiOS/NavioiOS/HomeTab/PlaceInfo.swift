@@ -17,6 +17,7 @@ class PlaceInfo: UIViewController {
     private let titleLabel = UILabel()
     private let heartButton = UIButton(type: .system)
     private let subtitleLabel = UILabel()
+    private var placeName: String = ""
     
     private let mainImageView = UIImageView()
     
@@ -40,9 +41,11 @@ class PlaceInfo: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+      setupNavigationBar()
         setupUI()
         setupConstraints()
         configureData()
+      updateUI()
     }
     
     // MARK: - Setup 메서드
@@ -291,6 +294,15 @@ class PlaceInfo: UIViewController {
     private func configureData() {
         // 추후 실제 데이터로 교체할 부분
     }
+  
+  // MARK: - Data Configuration
+      func configure(with placeName: String) {
+          self.placeName = placeName
+          // viewDidLoad 후에 호출되면 즉시 업데이트
+          if isViewLoaded {
+              updateUI()
+          }
+      }
     
     // MARK: - Actions
     @objc private func heartButtonTapped() {
@@ -316,6 +328,19 @@ class PlaceInfo: UIViewController {
         // 길찾기 버튼 액션
         print("길찾기 버튼 탭됨")
     }
+  
+  private func setupNavigationBar() {
+          // 네비게이션바 보이기 + 뒤로가기 버튼
+          navigationController?.navigationBar.isHidden = false
+          navigationItem.hidesBackButton = false
+      }
+      
+      private func updateUI() {
+          titleLabel.text = placeName.isEmpty ? "홍익대학교" : placeName
+          // 다른 UI 요소들도 placeName에 따라 업데이트
+      }
+  
+  
 }
 
 
