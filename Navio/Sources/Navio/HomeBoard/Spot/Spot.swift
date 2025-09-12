@@ -38,12 +38,12 @@ public final class Spot: Sendable, ObservableObject {
         return uiImage!
     }
     
-    public internal(set) var places: [Place] = []
+    @Published public internal(set) var places: [Place] = []
     
     
     
     // MARK: action
-    public func fetchPlaces() async {
+    public func setUpSamplePlaces() async {
         logger.start()
         
         // capture
@@ -75,10 +75,6 @@ public final class Spot: Sendable, ObservableObject {
     
     
     // MARK: value
-    public enum HardCodedSpot {
-        case hong
-    }
-    
     private let hongdaeDatas: [PlaceData] = [
         .init(name: "큐브이스케이프", imageName: "cube_escape_hongdae",
               location: .init(latitude: 37.553584, longitude: 126.920718),

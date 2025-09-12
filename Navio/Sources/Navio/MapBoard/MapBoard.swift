@@ -30,6 +30,10 @@ public final class MapBoard: Sendable, ObservableObject {
     private func setLocation(_ newLocation: Location?) { self.currentLocation = newLocation }
 
     @Published public internal(set) var likePlaces: [LikePlace] = []
+    internal func removeLikePlace(name: String) {
+        self.likePlaces.removeAll {$0.name == name }
+    }
+    
     @Published public internal(set) var recentPlaces: [RecentPlace] = []
 
     @Published public var searchInput: String = ""

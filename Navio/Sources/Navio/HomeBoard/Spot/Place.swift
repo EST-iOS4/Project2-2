@@ -9,6 +9,8 @@ import Combine
 import UIKit
 import ToolBox
 
+private let logger = NavioLogger("Place")
+
 
 // MARK: Object
 @MainActor
@@ -16,6 +18,7 @@ public final class Place: Sendable, ObservableObject {
     // MARK: core
     internal init(owner: Spot, data: PlaceData) {
         self.owner = owner
+        self.placeData = data
         self.name = data.name
         self.imageName = data.imageName
         self.address = data.address
@@ -26,6 +29,8 @@ public final class Place: Sendable, ObservableObject {
     
     // MARK: state
     internal nonisolated let owner: Spot
+    private let userDefaults = UserDefaults.standard
+    private let placeData: PlaceData
     
     public internal(set) var name: String
     public internal(set) var imageName: String
@@ -41,67 +46,67 @@ public final class Place: Sendable, ObservableObject {
     public internal(set) var address: String
     public internal(set) var number: String
     public internal(set) var location: Location
-    public internal(set) var like: Bool = false
+    
+    @Published public internal(set) var isLiked = false
+    @Published public private(set) var isFecthedFromDB = true
+    
     
     // MARK: action
-    public func toggleLike() {
+    public func fetchFromDB() {
+        logger.start()
+        
         // capture
-        let spotRef = self.owner
-        let homeboardRef = spotRef.owner
-        let navioRef = homeboardRef.owner
-        let mapBoardRef = navioRef.mapBoard!
-
-        let isChangedToLike = self.like == false
-
-        // compute
-        let userDefaultBoxKey = "LIKED_PLACES"
-        let userDefaultIDsKey = "MAPBOARD_LIKEPLACE_IDS"
-        let ud = UserDefaults.standard
-        var box = (ud.dictionary(forKey: userDefaultBoxKey) as? [String: [String: String]]) ?? [:]
-        var ids = (ud.array(forKey: userDefaultIDsKey) as? [String]) ?? []
-        let placeKey = self.name // 이름 유일 전제
-
-        // 저장소에 기록할 데이터(필요 필드만)
-        let placeData = PlaceData(
-            name: self.name,
-            imageName: self.imageName,
-            location: self.location,
-            address: self.address,
-            number: self.number
-        )
-
-        // mutate
-        if isChangedToLike {
-            // 인스턴스 생성
-            let newLikePlaceRef = LikePlace(owner: mapBoardRef, data: placeData)
-            mapBoardRef.likePlaces.append(newLikePlaceRef)
-
-            // UserDefaults 추가
-            box[placeKey] = [
-                "name": self.name,
-                "imageName": self.imageName,
-                "address": self.address
-            ]
-            if ids.contains(placeKey) == false { ids.append(placeKey) }
-            ud.set(box, forKey: userDefaultBoxKey)
-            ud.set(ids, forKey: userDefaultIDsKey)
-        } else {
-            // 배열에서 인스턴스 제거
-            mapBoardRef.likePlaces.removeAll { likePlace in
-                likePlace.name == self.name
-            }
-
-            // UserDefaults 제거
-            box[placeKey] = nil
-            ids.removeAll { $0 == placeKey }
-            if box.isEmpty { ud.removeObject(forKey: userDefaultBoxKey) } else { ud.set(box, forKey: userDefaultBoxKey) }
-            if ids.isEmpty { ud.removeObject(forKey: userDefaultIDsKey) } else { ud.set(ids, forKey: userDefaultIDsKey) }
+        guard self.isFecthedFromDB == false else {
+            logger.failure("이미 DB로부터 데이터를 가져왔습니다.")
+            return
         }
-
-        self.like.toggle()
+        
+        let navioRef = self.owner.owner.owner
+        let mapBoardRef = navioRef.mapBoard!
+        
+        // compute
+        let isLikedFromDB = userDefaults.bool(forKey: "\(name).isLiked")
+        
+        // mutate
+        switch isLikedFromDB {
+        case true:
+            let liekPlaceRef = LikePlace(owner: mapBoardRef, data: placeData)
+            mapBoardRef.likePlaces.append(liekPlaceRef)
+            self.isLiked = true
+        case false:
+            mapBoardRef.removeLikePlace(name: self.name)
+            self.isLiked = false
+        }
+    }
+    public func toggleLike() {
+        logger.start()
+        
+        // capture
+        let navioRef = self.owner.owner.owner
+        let mapBoardRef = navioRef.mapBoard!
+        
+        let isMarkingToLike = (self.isLiked == false)
+        
+        // compute
+        switch isMarkingToLike {
+        case true: // false -> true
+            userDefaults.set(true, forKey: "\(name).isLiked")
+        case false: // true -> false
+            userDefaults.set(false, forKey: "\(name).isLiked")
+        }
+        
+        // mutate
+        switch isMarkingToLike {
+        case true: // false -> true
+            let liekPlaceRef = LikePlace(owner: mapBoardRef, data: placeData)
+            mapBoardRef.likePlaces.append(liekPlaceRef)
+            self.isLiked = true
+        case false: // true -> false
+            mapBoardRef.removeLikePlace(name: self.name)
+            self.isLiked = false
+        }
     }
 
-    
     
     // MARK: value
 }

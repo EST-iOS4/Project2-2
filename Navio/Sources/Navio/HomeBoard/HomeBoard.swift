@@ -23,11 +23,11 @@ public final class HomeBoard: Sendable, ObservableObject {
     // MARK: state
     internal nonisolated let owner: Navio
     
-    public internal(set) var spots: [Spot] = []
+    @Published public internal(set) var spots: [Spot] = []
     
     
     // MARK: action
-    public func fetchSpots() async {
+    public func setUpSampleSpots() async {
         logger.start()
         
         // capture
