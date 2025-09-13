@@ -1,5 +1,5 @@
 //
-//  SettingViewController.swift
+//  SettingVC.swift
 //  NavioiOS
 //
 //  Created by 구현모 on 9/10/25.
@@ -8,8 +8,8 @@ import UIKit
 import Navio
 import Combine
 
-// MARK: - SettingViewController
-final class SettingViewController: UIViewController {
+// MARK: - SettingVC
+final class SettingVC: UIViewController {
     
     // MARK: - Properties
     private let settingRef: Setting
@@ -131,7 +131,7 @@ final class SettingViewController: UIViewController {
     }
 }
 
-extension SettingViewController: UITableViewDataSource, UITableViewDelegate {
+extension SettingVC: UITableViewDataSource, UITableViewDelegate {
     
     // 섹션의 개수를 반환
     func numberOfSections(in tableView: UITableView) -> Int {

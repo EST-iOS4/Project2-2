@@ -26,12 +26,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             let navio = Navio()
     
             Task {
-                await navio.setUp()
-                guard let mapBoard = navio.mapBoard?.ref,
-                      let setting = navio.setting?.ref else { return }
-    
-    
-                let mainTabBarController = MainTabBarController(mapBoard: mapBoard, setting: setting)
+                let mainTabBarController = NavioVC()
     
                 self.window?.rootViewController = mainTabBarController
                 self.window?.makeKeyAndVisible()

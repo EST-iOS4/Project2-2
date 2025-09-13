@@ -75,7 +75,7 @@ class RecentPlaceCell: UITableViewCell {
 
 // MARK: - RecentPlaceModalViewController
 // 역할: '최근 검색' 상태일 때 모달 컨테이너에 표시될 콘텐츠 ViewController
-class RecentPlaceModalViewController: UIViewController {
+class RecentPlaceModalVC: UIViewController {
   
     // MARK: - UI Components
     private let shortcutScrollView: UIScrollView = {
@@ -237,7 +237,7 @@ class RecentPlaceModalViewController: UIViewController {
 }
 
 // MARK: - TableView DataSource & Delegate
-extension RecentPlaceModalViewController: UITableViewDataSource, UITableViewDelegate {
+extension RecentPlaceModalVC: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return recentPlaceData.count

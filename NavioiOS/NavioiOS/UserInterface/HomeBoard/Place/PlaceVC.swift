@@ -4,74 +4,88 @@
 //
 //  Created by EunYoung Wang on 9/11/25.
 //
-
 import UIKit
 import SwiftUI
+import Navio
+import MapKit
+import Combine
+import ToolBox
 
-class PlaceInfo: UIViewController {
+
+// MARK: ViewController
+class PlaceVC: UIViewController {
+    // MARK: core
+    private let placeRef: Place
+    private var cancellables = Set<AnyCancellable>()
+    init(_ placeRef: Place) {
+        self.placeRef = placeRef
+        super.init(nibName: nil, bundle: nil)
+    }
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    // MARK: body
+    private let scrollView = UIScrollView()
+    private let contentView = UIView()
   
-  // MARK: - UI 요소
-  private let scrollView = UIScrollView()
-  private let contentView = UIView()
+    // 헤더
+    private let titleLabel = UILabel() // 홍익대학교
+    private let heartButton = UIButton(type: .system)
+    private let subtitleLabel = UILabel() // 홍익대학교에 대한 간단한 설명
   
-  // 헤더
-  private let titleLabel = UILabel() // 홍익대학교
-  private let heartButton = UIButton(type: .system)
-  private let subtitleLabel = UILabel() // 홍익대학교에 대한 간단한 설명
-  private var placeName: String = "" // place에서 전달받은 장소명 저장
+    // 이미지
+    private let mainImageView = UIImageView() // 현재 임시 이미지 사용중
   
-  // 이미지
-  private let mainImageView = UIImageView() // 현재 임시 이미지 사용중
+    // 기본정보 섹션
+    private let infoContainerView = UIView()
+    private let infoTitleLabel = UILabel() // 기본정보 제목 레이블
   
-  // 기본정보 섹션
-  private let infoContainerView = UIView()
-  private let infoTitleLabel = UILabel() // 기본정보 제목 레이블
+    // 지도
+    private let mapView = MKMapView()
   
-  // 지도
-  private let mapPlaceholderView = UIView()
-  private let mapImageView = UIImageView()
+    // 주소
+    private let addressContainerView = UIView()
+    private let addressIconImageView = UIImageView() // 아이콘 이미지뷰
+    private let addressTitleLabel = UILabel() // 주소
+    private let addressLabel = UILabel() // 서울특별시 마포구 와우산로
+
+    // 전화번호
+    private let phoneContainerView = UIView()
+    private let phoneIconImageView = UIImageView() // 아이콘 이미지뷰
+    private let phoneTitleLabel = UILabel() // 전화번호
+    private let phoneLabel = UILabel() // 02-420-1114
+
+    // 길찾기 버튼
+    private let visitButton = UIButton(type: .system)
   
-  // 주소
-  private let addressContainerView = UIView()
-  private let addressIconImageView = UIImageView() // 아이콘 이미지뷰
-  private let addressTitleLabel = UILabel() // 주소
-  private let addressLabel = UILabel() // 서울특별시 마포구 와우산로
-  
-  // 전화번호
-  private let phoneContainerView = UIView()
-  private let phoneIconImageView = UIImageView() // 아이콘 이미지뷰
-  private let phoneTitleLabel = UILabel() // 전화번호
-  private let phoneLabel = UILabel() // 02-420-1114
-  
-  // 길찾기 버튼
-  private let visitButton = UIButton(type: .system)
-  
-  override func viewDidLoad() {
-    super.viewDidLoad()
-    setupNavigationBar() // 네비게이션바
-    setupUI() // UI 요소 초기설정 및 스타일
-    setupConstraints() // 오토레이아웃 제약조건
-    configureData() // 기본데이터 설정 (현재 하드코딩)
-    updateUI() // 전달받은 데이터로 UI 업데이트
-  }
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupNavigationBar() // 네비게이션바
+        setupUI() // UI 요소 초기설정 및 스타일
+        setupConstraints() // 오토레이아웃 제약조건
+        bindPlace()
+        configureData()
+        configureMap()
+    }
   
   // MARK: - UI 기본설정 메서드
   private func setupUI() {
     view.backgroundColor = .systemBackground
-    
+
     // ScrollView 설정
     scrollView.translatesAutoresizingMaskIntoConstraints = false
     contentView.translatesAutoresizingMaskIntoConstraints = false
     // 뷰 계층구조 : 메인뷰 - scroll - content
     view.addSubview(scrollView)
     scrollView.addSubview(contentView)
-    
-    // MARK: - Header 섹션 설정
-    titleLabel.translatesAutoresizingMaskIntoConstraints = false
-    titleLabel.text = "홍익대학교"
-    titleLabel.font = .systemFont(ofSize: 30, weight: .bold)
-    titleLabel.textColor = .label
-    
+
+      // MARK: - Header 섹션 설정
+      titleLabel.translatesAutoresizingMaskIntoConstraints = false
+      titleLabel.text = placeRef.name
+      titleLabel.font = .systemFont(ofSize: 30, weight: .bold)
+      titleLabel.textColor = .label
+
     // 하트버튼 설정
     heartButton.translatesAutoresizingMaskIntoConstraints = false
     let heartImage = UIImage(systemName: "heart")?.withConfiguration(
@@ -81,25 +95,24 @@ class PlaceInfo: UIViewController {
     heartButton.tintColor = .systemPink
     heartButton.contentHorizontalAlignment = .trailing
     heartButton.addTarget(self, action: #selector(heartButtonTapped), for: .touchUpInside) // 탭 이벤트 연결
-    
+
     // 서브타이틀 레이블 (장소설명)
     subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
-    subtitleLabel.text = "서울시 서대문구 홍익로2길 홍익대학교 정문이 앞에 있는 다리예요"
+    subtitleLabel.text = placeRef.address
     subtitleLabel.font = .systemFont(ofSize: 17)
     subtitleLabel.textColor = .secondaryLabel
     subtitleLabel.numberOfLines = 2
     subtitleLabel.lineBreakMode = .byWordWrapping
-    
+
     // MARK: - 메인이미지 설정
     // 메인 이미지 설정
     mainImageView.translatesAutoresizingMaskIntoConstraints = false
     mainImageView.backgroundColor = .systemGray5
-    mainImageView.contentMode = .scaleAspectFill
     mainImageView.clipsToBounds = true
     mainImageView.layer.cornerRadius = 12
-    mainImageView.image = UIImage(systemName: "building.2") // placeholder 아이콘 사용
-    mainImageView.tintColor = .systemGray3
-    
+    mainImageView.image = placeRef.image
+    mainImageView.contentMode = .scaleAspectFill
+
     // MARK: - 기본 정보 컨테이너 설정
     // 기본 정보 컨테이너 설정
     infoContainerView.translatesAutoresizingMaskIntoConstraints = false
@@ -109,70 +122,66 @@ class PlaceInfo: UIViewController {
     infoContainerView.layer.shadowOpacity = 0.1
     infoContainerView.layer.shadowOffset = CGSize(width: 0, height: 2)
     infoContainerView.layer.shadowRadius = 8
-    
+
     // 기본정보 섹션의 제목 레이블
     infoTitleLabel.translatesAutoresizingMaskIntoConstraints = false
     infoTitleLabel.text = "기본 정보"
     infoTitleLabel.font = .systemFont(ofSize: 18, weight: .semibold)
     infoTitleLabel.textColor = .label
-    
-    // MARK: - 지도 placeholder 섹션 설정
-    // 기본정보의 지도 placeholder 설정
-    mapPlaceholderView.translatesAutoresizingMaskIntoConstraints = false
-    mapPlaceholderView.backgroundColor = .secondarySystemBackground
-    mapPlaceholderView.layer.cornerRadius = 8
-    
-    // 지도 placeholder 아이콘 설정
-    mapImageView.translatesAutoresizingMaskIntoConstraints = false
-    mapImageView.image = UIImage(systemName: "map")
-    mapImageView.tintColor = .systemBlue
-    mapImageView.contentMode = .scaleAspectFit
-    
+
+    // MARK: - 지도 섹션 설정
+    // 지도 뷰 설정
+    mapView.translatesAutoresizingMaskIntoConstraints = false
+    mapView.isZoomEnabled = true
+    mapView.isScrollEnabled = true
+    mapView.layer.cornerRadius = 8
+    mapView.clipsToBounds = true
+
     // MARK: 주소 정보 섹션 설정
-    
+
     // 주소 컨테이너 설정
     addressContainerView.translatesAutoresizingMaskIntoConstraints = false
-    
+
     // 아이콘 설정
     addressIconImageView.translatesAutoresizingMaskIntoConstraints = false
     addressIconImageView.image = UIImage(systemName: "location")
     addressIconImageView.tintColor = .label
     addressIconImageView.contentMode = .scaleAspectFit
-    
+
     // "주소" 레이블 설정
     addressTitleLabel.translatesAutoresizingMaskIntoConstraints = false
     addressTitleLabel.text = "주소"
     addressTitleLabel.font = .systemFont(ofSize: 16, weight: .medium)
     addressTitleLabel.textColor = .label
-    
+
     // 실제 주소 설정
     addressLabel.translatesAutoresizingMaskIntoConstraints = false
-    addressLabel.text = "서울특별시 마포구 와우산로 94"
+    addressLabel.text = placeRef.address
     addressLabel.font = .systemFont(ofSize: 14)
     addressLabel.textColor = .secondaryLabel
-    
+
     // MARK: 전화번호 정보 섹션 설정
     // 전화번호 컨테이너 설정
     phoneContainerView.translatesAutoresizingMaskIntoConstraints = false
-    
+
     // 아이콘 설정
     phoneIconImageView.translatesAutoresizingMaskIntoConstraints = false
     phoneIconImageView.image = UIImage(systemName: "phone")
     phoneIconImageView.tintColor = .label
     phoneIconImageView.contentMode = .scaleAspectFit
-    
+
     // 전화번호 레이블 설정
     phoneTitleLabel.translatesAutoresizingMaskIntoConstraints = false
     phoneTitleLabel.text = "전화번호"
     phoneTitleLabel.font = .systemFont(ofSize: 16, weight: .medium)
     phoneTitleLabel.textColor = .label
-    
+
     // 실제 번호 레이블 설정
     phoneLabel.translatesAutoresizingMaskIntoConstraints = false
-    phoneLabel.text = "02-320-1114"
+    phoneLabel.text = placeRef.number
     phoneLabel.font = .systemFont(ofSize: 14)
     phoneLabel.textColor = .secondaryLabel
-    
+
     // MARK: - 길찾기 버튼 설정
     visitButton.translatesAutoresizingMaskIntoConstraints = false
     visitButton.setTitle("길찾기", for: .normal)
@@ -180,7 +189,7 @@ class PlaceInfo: UIViewController {
     visitButton.setTitleColor(.white, for: .normal)
     visitButton.titleLabel?.font = .systemFont(ofSize: 18, weight: .semibold)
     visitButton.layer.cornerRadius = 12
-    
+
     // MARK: - 뷰 계층구조 구성
     // 서브뷰 추가
     contentView.addSubview(titleLabel) // 메인타이틀
@@ -188,19 +197,17 @@ class PlaceInfo: UIViewController {
     contentView.addSubview(subtitleLabel)
     contentView.addSubview(mainImageView)
     contentView.addSubview(infoContainerView)
-    
+
     infoContainerView.addSubview(infoTitleLabel) // 기본정보
-    infoContainerView.addSubview(mapPlaceholderView)
+    infoContainerView.addSubview(mapView)
     infoContainerView.addSubview(addressContainerView)
     infoContainerView.addSubview(phoneContainerView)
     infoContainerView.addSubview(visitButton)
-    
-    mapPlaceholderView.addSubview(mapImageView) // placeholder안에 지도아이콘 추가
-    
+
     addressContainerView.addSubview(addressIconImageView)
     addressContainerView.addSubview(addressTitleLabel)
     addressContainerView.addSubview(addressLabel)
-    
+
     phoneContainerView.addSubview(phoneIconImageView)
     phoneContainerView.addSubview(phoneTitleLabel)
     phoneContainerView.addSubview(phoneLabel)
@@ -253,20 +260,14 @@ class PlaceInfo: UIViewController {
       infoTitleLabel.leadingAnchor.constraint(equalTo: infoContainerView.leadingAnchor, constant: 20),
       infoTitleLabel.trailingAnchor.constraint(equalTo: infoContainerView.trailingAnchor, constant: -20),
       
-      // Map Placeholder
-      mapPlaceholderView.topAnchor.constraint(equalTo: infoTitleLabel.bottomAnchor, constant: 16),
-      mapPlaceholderView.leadingAnchor.constraint(equalTo: infoContainerView.leadingAnchor, constant: 20),
-      mapPlaceholderView.trailingAnchor.constraint(equalTo: infoContainerView.trailingAnchor, constant: -20),
-      mapPlaceholderView.heightAnchor.constraint(equalToConstant: 120),
-      
-      // Map Image in Placeholder
-      mapImageView.centerXAnchor.constraint(equalTo: mapPlaceholderView.centerXAnchor),
-      mapImageView.centerYAnchor.constraint(equalTo: mapPlaceholderView.centerYAnchor),
-      mapImageView.widthAnchor.constraint(equalToConstant: 40),
-      mapImageView.heightAnchor.constraint(equalToConstant: 40),
+      // Map View
+      mapView.topAnchor.constraint(equalTo: infoTitleLabel.bottomAnchor, constant: 16),
+      mapView.leadingAnchor.constraint(equalTo: infoContainerView.leadingAnchor, constant: 20),
+      mapView.trailingAnchor.constraint(equalTo: infoContainerView.trailingAnchor, constant: -20),
+      mapView.heightAnchor.constraint(equalToConstant: 200),
       
       // Address Container
-      addressContainerView.topAnchor.constraint(equalTo: mapPlaceholderView.bottomAnchor, constant: 20),
+      addressContainerView.topAnchor.constraint(equalTo: mapView.bottomAnchor, constant: 20),
       addressContainerView.leadingAnchor.constraint(equalTo: infoContainerView.leadingAnchor, constant: 20),
       addressContainerView.trailingAnchor.constraint(equalTo: infoContainerView.trailingAnchor, constant: -20),
       addressContainerView.heightAnchor.constraint(equalToConstant: 50),
@@ -315,47 +316,71 @@ class PlaceInfo: UIViewController {
       visitButton.bottomAnchor.constraint(equalTo: infoContainerView.bottomAnchor, constant: -20)
     ])
   }
+
+  private func updateHeart(isLiked: Bool) {
+    let name = isLiked ? "heart.fill" : "heart"
+    let image = UIImage(systemName: name)?.withConfiguration(
+      UIImage.SymbolConfiguration(pointSize: 24, weight: .regular)
+    )
+    heartButton.setImage(image, for: .normal)
+  }
   
   private func configureData() {
-    // 추후 실제 데이터로 교체할 부분 (현재 하드코딩)
+    titleLabel.text = placeRef.name
+    subtitleLabel.text = placeRef.address
+    mainImageView.image = placeRef.image
+    addressLabel.text = placeRef.address
+    phoneLabel.text = placeRef.number
+    updateHeart(isLiked: placeRef.isLiked)
+  }
+
+  private func configureMap() {
+    let coord = CLLocationCoordinate2D(latitude: placeRef.location.latitude,
+                                       longitude: placeRef.location.longitude)
+    let region = MKCoordinateRegion(center: coord,
+                                    span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005))
+    mapView.setRegion(region, animated: false)
+
+    let annotation = MKPointAnnotation()
+    annotation.coordinate = coord
+    annotation.title = placeRef.name
+    mapView.addAnnotation(annotation)
+  }
+
+  private func bindPlace() {
+    placeRef.$isLiked
+      .receive(on: RunLoop.main)
+      .sink { [weak self] liked in
+        self?.updateHeart(isLiked: liked)
+      }
+      .store(in: &cancellables)
   }
   
-  // MARK: - 데이터 전달 메서드(data configuration)
-  // place 화면에서 선택된 장소 데이터를 전달받는 메서드
-  func configure(with placeName: String) { //placeName: 홍대 등...
-    self.placeName = placeName
-    
-    // viewDidLoad 후에 호출되면 즉시 업데이트
-    if isViewLoaded {
-      updateUI()
-    }
-  }
+//  // MARK: - 데이터 전달 메서드(data configuration)
+//  // place 화면에서 선택된 장소 데이터를 전달받는 메서드
+//  func configure(with placeName: String) { //placeName: 홍대 등...
+//    self.placeName = placeName
+//
+//    // viewDidLoad 후에 호출되면 즉시 업데이트
+//    if isViewLoaded {
+//      updateUI()
+//    }
+//  }
   
   // MARK: - 이벤트 핸들러
   
   @objc private func heartButtonTapped() {
-    // 하트 버튼 애니메이션
-    UIView.animate(withDuration: 0.1, animations: {
-      self.heartButton.transform = CGAffineTransform(scaleX: 1.8, y: 1.8)
-    }) { _ in
-      UIView.animate(withDuration: 0.1) {
-        self.heartButton.transform = CGAffineTransform.identity
-      }
-    }
-    
-    // 하트 상태 변경
-    let isSelected = heartButton.currentImage == UIImage(systemName: "heart.fill") // false
-    let heartImage = isSelected ? "heart" : "heart.fill"
-    let heartTabbed = UIImage(systemName: heartImage)?.withConfiguration(
-      UIImage.SymbolConfiguration(pointSize: 24, weight: .regular)
-    )
-    heartButton.setImage(heartTabbed, for: .normal)
+    placeRef.toggleLike()
   }
   
   // 길찾기 버튼이 탭 되었을때 호출되는 메서드
   @objc private func findButtonTapped() {
-    // 길찾기 버튼 액션
-    print("길찾기 버튼 탭됨")
+    let coord = CLLocationCoordinate2D(latitude: placeRef.location.latitude,
+                                       longitude: placeRef.location.longitude)
+    let placemark = MKPlacemark(coordinate: coord)
+    let item = MKMapItem(placemark: placemark)
+    item.name = placeRef.name
+    item.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving])
   }
   
   // MARK : - 네비게이션 바 설정
@@ -364,41 +389,5 @@ class PlaceInfo: UIViewController {
     // 네비게이션바 보이기 + 뒤로가기 버튼
     navigationController?.navigationBar.isHidden = false
     navigationItem.hidesBackButton = false
-  }
-  
-  // 전달받은 장소 데이터에 따라 UI 업데이트
-  private func updateUI() {
-    // 장소명이 비었으면 기본값, 있으면 전달받은 값
-    titleLabel.text = placeName.isEmpty ? "홍익대학교" : placeName
-    // 다른 UI 요소들도 placeName에 따라 업데이트
-  }
-  
-  
-}
-
-
-// SwiftUI 프리뷰 ( 필요시 삭제)
-struct PlaceInfo_Preview: PreviewProvider {
-  static var previews: some View {
-    UIViewControllerPreview {
-      PlaceInfo()
-    }
-    .previewDisplayName("HomeViewController")
-    .previewDevice("iPhone 16 Pro")
-  }
-}
-
-struct UIViewControllerPreview<ViewController: UIViewController>: UIViewControllerRepresentable {
-  let viewController: ViewController
-  
-  init(_ builder: @escaping () -> ViewController) {
-    viewController = builder()
-  }
-  
-  func makeUIViewController(context: Context) -> ViewController {
-    viewController
-  }
-  
-  func updateUIViewController(_ uiViewController: ViewController, context: Context) {
   }
 }
