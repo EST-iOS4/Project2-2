@@ -9,7 +9,7 @@ import Navio
 
 
 // MARK: View
-class HomeViewController: UIViewController {
+class HomeVC: UIViewController {
     // MARK: core
     private let homeBoardRef: HomeBoard
     init(_ homeBoardRef: HomeBoard) {
@@ -29,14 +29,6 @@ class HomeViewController: UIViewController {
   private let mainTitleLabel = UILabel() // 앱이름 표시(Navio)
   private let subtitleLabel = UILabel() // (어디로 떠나볼까요?⛱️)
   private let cardsStackView = UIStackView()
-  
-  // 카드 데이터
-//  private let places = [
-//    ("홍대", "building.2"),
-//    ("잠실", "skyscraper"),
-//    ("여의도", "building.columns"),
-//    ("성수", "cube.transparent")
-//  ]
   
   override func viewDidLoad() {
     super.viewDidLoad()
@@ -169,8 +161,23 @@ class HomeViewController: UIViewController {
     spotImageView.translatesAutoresizingMaskIntoConstraints = false
     spotImageView.image = spotImage
     spotImageView.contentMode = .scaleAspectFill
-      spotImageView.clipsToBounds = true
-      
+    spotImageView.clipsToBounds = true
+
+    // 장소명 캡슐 오버레이
+    let nameBadgeContainer = UIView()
+    nameBadgeContainer.translatesAutoresizingMaskIntoConstraints = false
+    nameBadgeContainer.backgroundColor = UIColor.black.withAlphaComponent(0.45)
+    nameBadgeContainer.layer.cornerRadius = 16
+    nameBadgeContainer.layer.cornerCurve = .continuous
+    nameBadgeContainer.clipsToBounds = true
+
+    let nameBadgeLabel = UILabel()
+    nameBadgeLabel.translatesAutoresizingMaskIntoConstraints = false
+    nameBadgeLabel.text = title
+    nameBadgeLabel.textColor = .white
+    nameBadgeLabel.font = UIFont.preferredFont(forTextStyle: .headline)
+    nameBadgeLabel.adjustsFontForContentSizeCategory = true
+    nameBadgeLabel.numberOfLines = 1
     
     // MARK: - 타이틀 레이블
     let titleLabel = UILabel()
@@ -185,6 +192,8 @@ class HomeViewController: UIViewController {
     containerView.addSubview(imageContainerView)
     // (이미지 컨테이너 -> 아이콘)
     imageContainerView.addSubview(spotImageView)
+    imageContainerView.addSubview(nameBadgeContainer)
+    nameBadgeContainer.addSubview(nameBadgeLabel)
     
     // MARK: - 카드 내부요소 제약조건 설정
     NSLayoutConstraint.activate([
@@ -206,7 +215,16 @@ class HomeViewController: UIViewController {
       spotImageView.topAnchor.constraint(equalTo: imageContainerView.topAnchor),
       spotImageView.leadingAnchor.constraint(equalTo: imageContainerView.leadingAnchor),
       spotImageView.trailingAnchor.constraint(equalTo: imageContainerView.trailingAnchor),
-      spotImageView.bottomAnchor.constraint(equalTo: imageContainerView.bottomAnchor)
+      spotImageView.bottomAnchor.constraint(equalTo: imageContainerView.bottomAnchor),
+
+      // Name badge(캡슐) 위치 및 내부 패딩
+      nameBadgeContainer.leadingAnchor.constraint(equalTo: imageContainerView.leadingAnchor, constant: 16),
+      nameBadgeContainer.bottomAnchor.constraint(equalTo: imageContainerView.bottomAnchor, constant: -16),
+
+      nameBadgeLabel.leadingAnchor.constraint(equalTo: nameBadgeContainer.leadingAnchor, constant: 12),
+      nameBadgeLabel.trailingAnchor.constraint(equalTo: nameBadgeContainer.trailingAnchor, constant: -12),
+      nameBadgeLabel.topAnchor.constraint(equalTo: nameBadgeContainer.topAnchor, constant: 8),
+      nameBadgeLabel.bottomAnchor.constraint(equalTo: nameBadgeContainer.bottomAnchor, constant: -8)
     ])
     
     return containerView
@@ -237,7 +255,7 @@ class HomeViewController: UIViewController {
   
   // place: 선택된 장소명 ("홍대", "잠실" 등)
   private func navigateToPlaceViewController(with place: String) {
-    let placeVC = Place(placeName: place) // 장소명 전달할 인스턴스 생성
+    let placeVC = PlaceVC(placeName: place) // 장소명 전달할 인스턴스 생성
     navigationController?.pushViewController(placeVC, animated: true) // 네비게이션으로 push, 화면전환
   }
 }

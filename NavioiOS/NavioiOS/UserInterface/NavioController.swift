@@ -28,7 +28,7 @@ class NavioController: UITabBarController {
         super.viewDidLoad()
         
         // HomeBoard의 UI
-        let HomeVC = HomeViewController(navioRef.homeBoard!)
+        let HomeVC = HomeVC(navioRef.homeBoard!)
         let homeNav = UINavigationController(rootViewController: HomeVC)
       
         // MapBoard의 UI

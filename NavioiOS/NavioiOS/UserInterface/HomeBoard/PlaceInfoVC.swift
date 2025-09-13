@@ -8,7 +8,7 @@
 import UIKit
 import SwiftUI
 
-class PlaceInfo: UIViewController {
+class PlaceInfoVC: UIViewController {
   
   // MARK: - UI 요소
   private let scrollView = UIScrollView()
@@ -381,9 +381,9 @@ class PlaceInfo: UIViewController {
 struct PlaceInfo_Preview: PreviewProvider {
   static var previews: some View {
     UIViewControllerPreview {
-      PlaceInfo()
+      PlaceInfoVC()
     }
-    .previewDisplayName("HomeViewController")
+    .previewDisplayName("HomeVC")
     .previewDevice("iPhone 16 Pro")
   }
 }

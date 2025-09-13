@@ -7,7 +7,7 @@
 
 import UIKit
 
-class Place: UIViewController {
+class PlaceVC: UIViewController {
   
   // MARK: - UI 요소
   private let scrollView = UIScrollView()
@@ -243,7 +243,7 @@ class Place: UIViewController {
       }
       
       // MARK: - PlaceInfo로 이동
-      let placeInfoVC = PlaceInfo()
+      let placeInfoVC = PlaceInfoVC()
       placeInfoVC.configure(with: selectedPlace)  // 선택된 장소 데이터 전달
       navigationController?.pushViewController(placeInfoVC, animated: true)
     }
@@ -272,7 +272,7 @@ import SwiftUI
 struct Place_Preview: PreviewProvider {
   static var previews: some View {
     UIViewControllerPreview {
-      let navController = UINavigationController(rootViewController: Place(placeName: "홍대"))
+      let navController = UINavigationController(rootViewController: PlaceVC(placeName: "홍대"))
       return navController
     }
     .previewDisplayName("Place")
