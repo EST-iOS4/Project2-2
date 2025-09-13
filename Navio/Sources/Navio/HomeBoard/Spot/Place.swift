@@ -79,7 +79,7 @@ public final class Place: Sendable, ObservableObject {
         }
     }
     public func toggleLike() {
-        logger.start()
+        logger.start(info: "current: \(self.isLiked)")
         
         // capture
         let navioRef = self.owner.owner.owner

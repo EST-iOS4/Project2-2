@@ -17,10 +17,11 @@ public struct NavioLogger: Sendable {
     
     public func start(_ file: String = #file,
                       _ line: Int = #line,
-                      _ routine: String = #function) {
+                      _ routine: String = #function,
+                      info: String = "") {
         let fileName = URL(fileURLWithPath: file).lastPathComponent
         
-        logger.debug("\(fileName):\(line) - \(routine) start")
+        logger.debug("\(fileName):\(line) - \(routine) start \(info)")
     }
     
     public func notice(_ description: String,

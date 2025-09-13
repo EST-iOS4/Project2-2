@@ -242,7 +242,7 @@ class HomeVC: UIViewController {
   
   // place: 선택된 장소명 ("홍대", "잠실" 등)
   private func navigateToPlaceViewController(with place: Spot) {
-    let placeVC = PlaceVC(place) // 장소명 전달할 인스턴스 생성
+    let placeVC = SpotVC(place) // 장소명 전달할 인스턴스 생성
     navigationController?.pushViewController(placeVC, animated: true) // 네비게이션으로 push, 화면전환
   }
 }
