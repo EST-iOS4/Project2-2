@@ -18,6 +18,10 @@ class SpotVC: UIViewController {
         
         spotRef.setUpSamplePlaces()
         
+        spotRef.places.forEach { placeRef in
+            placeRef.fetchFromDB()
+        }
+        
         super.init(nibName: nil, bundle: nil)
     }
     
