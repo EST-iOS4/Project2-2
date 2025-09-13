@@ -11,7 +11,7 @@ import Navio
 
 // MARK: - ModalContainerViewController
 // 역할: 모달들의 '껍데기' 역할. 내부 컨텐츠(자식 ViewController)를 관리하고 교체
-final class ModalContainerViewController: UIViewController, UISearchBarDelegate {
+final class ModalContainerVC: UIViewController, UISearchBarDelegate {
     
     private let mapBoardRef: MapBoard
     init(_ object: MapBoard) {
@@ -99,17 +99,17 @@ final class ModalContainerViewController: UIViewController, UISearchBarDelegate 
     // 검색어 변경에 따른 화면 전환 로직
     private func handleSearchQueryChanged(query: String) {
         // 사용자가 타이핑하는 동안에만 화면 전환 로직이 작동하도록 제한
-        guard currentContentVC is RecentPlaceModalViewController || currentContentVC is SearchPlaceModalViewController else { return }
+        guard currentContentVC is RecentPlaceModalVC || currentContentVC is SearchPlaceModelVC else { return }
         
         if query.isEmpty {
             // 검색어가 비었으면 -> RecentView로
-            if !(currentContentVC is RecentPlaceModalViewController) {
-                transition(to: RecentPlaceModalViewController())
+            if !(currentContentVC is RecentPlaceModalVC) {
+                transition(to: RecentPlaceModalVC())
             }
         } else {
             // 검색어가 있으면 -> SearchView로
-            if !(currentContentVC is SearchPlaceModalViewController) {
-                transition(to: SearchPlaceModalViewController())
+            if !(currentContentVC is SearchPlaceModelVC) {
+                transition(to: SearchPlaceModelVC())
                 
                 // TODO: SearchPlaceModalViewController에 검색어(query) 전달 로직 추가 필요
             }
@@ -148,7 +148,7 @@ final class ModalContainerViewController: UIViewController, UISearchBarDelegate 
     func searchBarShouldBeginEditing(_ searchBar: UISearchBar) -> Bool {
         // 현재 화면이 LikeModalViewController라면 RecentPlaceViewController로 전환
         if currentContentVC is LikeModalViewController {
-            transition(to: RecentPlaceModalViewController())
+            transition(to: RecentPlaceModalVC())
         }
         return true // 키보드가 나타나도록 허용
     }

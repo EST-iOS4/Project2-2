@@ -14,7 +14,7 @@ import ToolBox
 
 // MARK: - Map 뷰컨트롤러
 // 역할: 지도 표시, ViewModel 데이터 바인딩, 검색 모달 띄우기
-class MapViewController: UIViewController {
+class MapBoardVC: UIViewController {
     private let mapBoard: MapBoard
     private let mapView = MKMapView()
     
@@ -136,7 +136,7 @@ class MapViewController: UIViewController {
     // 검색 컨테이너 뷰 탭 액션
     @objc private func searchContainerTapped() {
         // 모달 컨테이너 뷰 컨트롤러와 LikeModal 뷰 컨트롤러 생성
-        let modalContainer = ModalContainerViewController(mapBoard)
+        let modalContainer = ModalContainerVC(mapBoard)
         
         // LikeModal에 있는 목데이터로 핀 찍기
         updatePins(for: mapBoard.likePlaces)
@@ -205,7 +205,7 @@ class MapViewController: UIViewController {
     }
 }
 
-extension MapViewController: MKMapViewDelegate {
+extension MapBoardVC: MKMapViewDelegate {
     
     // 지도의 추적 모드가 변경될 때마다 호출
     func mapView(_ mapView: MKMapView, didChange mode: MKUserTrackingMode, animated: Bool) {

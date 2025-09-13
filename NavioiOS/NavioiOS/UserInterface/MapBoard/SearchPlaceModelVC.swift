@@ -88,7 +88,7 @@ class SearchListCell: UITableViewCell {
 }
 
 // MARK: - SearchPlaceModalViewController
-class SearchPlaceModalViewController: UIViewController {
+class SearchPlaceModelVC: UIViewController {
     
     let tableView: UITableView = {
         let tv = UITableView()
@@ -134,7 +134,7 @@ class SearchPlaceModalViewController: UIViewController {
 }
 
 // MARK: - TableView DataSource & Delegate
-extension SearchPlaceModalViewController: UITableViewDataSource, UITableViewDelegate {
+extension SearchPlaceModelVC: UITableViewDataSource, UITableViewDelegate {
   
   func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
     return searchData.count
