@@ -13,34 +13,36 @@ import ToolBox
 
 // MARK: - 메인 TabBarController
 class NavioController: UITabBarController {
-    
-    private let mapBoard: MapBoard
-    private let setting: Setting
-    
-    init(mapBoard: MapBoard, setting: Setting) {
-        self.mapBoard = mapBoard
-        self.setting = setting
+    // MARK: core
+    private let navioRef: Navio = Navio()
+    init() {
+        navioRef.setUp()
+        
         super.init(nibName: nil, bundle: nil)
     }
-    
     required init?(coder: NSCoder) {
         fatalError("init(coder:)는 사용하지 않습니다.") // Storyboard 사용 안 함
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        let HomeVC = HomeViewController()
+        
+        // HomeBoard의 UI
+        let HomeVC = HomeViewController(navioRef.homeBoard!)
         let homeNav = UINavigationController(rootViewController: HomeVC)
       
-        let mapBoardVC = MapViewController(mapBoard: mapBoard)
-      
-        let settingVC = SettingViewController(settingRef: self.setting)
+        // MapBoard의 UI
+        let mapBoardVC = MapViewController(mapBoard: navioRef.mapBoard!)
+        
+        // Setting의 UI
+        let settingVC = SettingViewController(settingRef: navioRef.setting!)
         let settingNav = UINavigationController(rootViewController: settingVC)
         
+        // Navio의 UI
         homeNav.tabBarItem = UITabBarItem(title: "Home", image: UIImage(systemName: "house"), tag: 0)
         mapBoardVC.tabBarItem = UITabBarItem(title: "Map", image: UIImage(systemName: "map"), tag: 1)
         settingNav.tabBarItem = UITabBarItem(title: "Setting", image: UIImage(systemName: "gear"), tag: 2)
         
-        viewControllers = [homeNav, mapBoardVC, settingNav]
+        self.viewControllers = [homeNav, mapBoardVC, settingNav]
     }
 }

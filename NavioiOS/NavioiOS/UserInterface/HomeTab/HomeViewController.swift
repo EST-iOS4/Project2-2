@@ -4,12 +4,25 @@
 //
 //  Created by EunYoung Wang, 구현모 on 9/10/25.
 //
-
 import UIKit
+import Navio
 
+
+// MARK: View
 class HomeViewController: UIViewController {
-  
-  // MARK: - UI 요소
+    // MARK: core
+    private let homeBoardRef: HomeBoard
+    init(_ homeBoardRef: HomeBoard) {
+        self.homeBoardRef = homeBoardRef
+        
+        super.init(nibName: nil, bundle: nil)
+    }
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    
+  // MARK: body
   private let scrollView = UIScrollView()
   private let contentView = UIView()
   
@@ -18,12 +31,12 @@ class HomeViewController: UIViewController {
   private let cardsStackView = UIStackView()
   
   // 카드 데이터
-  private let places = [
-    ("홍대", "building.2"),
-    ("잠실", "skyscraper"),
-    ("여의도", "building.columns"),
-    ("성수", "cube.transparent")
-  ]
+//  private let places = [
+//    ("홍대", "building.2"),
+//    ("잠실", "skyscraper"),
+//    ("여의도", "building.columns"),
+//    ("성수", "cube.transparent")
+//  ]
   
   override func viewDidLoad() {
     super.viewDidLoad()
@@ -115,15 +128,19 @@ class HomeViewController: UIViewController {
   
   // 스택뷰에 배치 ( places 배열에 대해 카드 생성 -> 카드뷰에 데이터 전달 -> 스택뷰에 추가)
   private func setupCards() {
-    for (index, place) in places.enumerated() {
-      let cardView = createCardView(title: place.0, iconName: place.1, tag: index)
-      cardsStackView.addArrangedSubview(cardView)
-    }
+      homeBoardRef.setUpSampleSpots()
+      
+      for (index, spot) in homeBoardRef.spots.enumerated() {
+          let cardView = createCardView(title: spot.name,
+                                        spotImage: spot.image,
+                                        tag: index)
+          cardsStackView.addArrangedSubview(cardView)
+      }
   }
   
   // 개별 장소 카드를 생성하는 헬퍼 메서드
   // tag: 카드식별을 위함. (탭 이벤트에서 사용)
-  private func createCardView(title: String, iconName: String, tag: Int) -> UIView {
+  private func createCardView(title: String, spotImage: UIImage, tag: Int) -> UIView {
     let containerView = UIView()
     // MARK: - 카드 컨테이너뷰 설정
     containerView.translatesAutoresizingMaskIntoConstraints = false
@@ -148,11 +165,12 @@ class HomeViewController: UIViewController {
     imageContainerView.clipsToBounds = true
     
     // Placeholder 아이콘 (임시)
-    let placeholderIconImageView = UIImageView()
-    placeholderIconImageView.translatesAutoresizingMaskIntoConstraints = false
-    placeholderIconImageView.image = UIImage(systemName: iconName)
-    placeholderIconImageView.tintColor = .systemGray3
-    placeholderIconImageView.contentMode = .scaleAspectFit
+    let spotImageView = UIImageView()
+    spotImageView.translatesAutoresizingMaskIntoConstraints = false
+    spotImageView.image = spotImage
+    spotImageView.contentMode = .scaleAspectFill
+      spotImageView.clipsToBounds = true
+      
     
     // MARK: - 타이틀 레이블
     let titleLabel = UILabel()
@@ -166,7 +184,7 @@ class HomeViewController: UIViewController {
     containerView.addSubview(titleLabel)
     containerView.addSubview(imageContainerView)
     // (이미지 컨테이너 -> 아이콘)
-    imageContainerView.addSubview(placeholderIconImageView)
+    imageContainerView.addSubview(spotImageView)
     
     // MARK: - 카드 내부요소 제약조건 설정
     NSLayoutConstraint.activate([
@@ -185,10 +203,10 @@ class HomeViewController: UIViewController {
       imageContainerView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -20),
       
       // Placeholder Icon 위치
-      placeholderIconImageView.centerXAnchor.constraint(equalTo: imageContainerView.centerXAnchor),
-      placeholderIconImageView.centerYAnchor.constraint(equalTo: imageContainerView.centerYAnchor),
-      placeholderIconImageView.widthAnchor.constraint(equalToConstant: 40),
-      placeholderIconImageView.heightAnchor.constraint(equalToConstant: 40)
+      spotImageView.topAnchor.constraint(equalTo: imageContainerView.topAnchor),
+      spotImageView.leadingAnchor.constraint(equalTo: imageContainerView.leadingAnchor),
+      spotImageView.trailingAnchor.constraint(equalTo: imageContainerView.trailingAnchor),
+      spotImageView.bottomAnchor.constraint(equalTo: imageContainerView.bottomAnchor)
     ])
     
     return containerView
@@ -201,7 +219,8 @@ class HomeViewController: UIViewController {
   @objc private func cardTapped(_ gesture: UITapGestureRecognizer) {
     guard let tappedView = gesture.view else { return }  // tappedView: 탭된 뷰 가져오기
     let index = tappedView.tag // index: 카드의 태그(인덱스) 저장
-    let selectedPlace = places[index].0 // selectedPlace: 해당 인덱스에 해당하는 카드의 장소명 불러와 저장
+      
+      let selectedPlace = homeBoardRef.spots[index].name // selectedPlace: 해당 인덱스에 해당하는 카드의 장소명 불러와 저장
     
     // 탭 애니메이션 효과
     UIView.animate(withDuration: 0.1, animations: {
@@ -222,35 +241,3 @@ class HomeViewController: UIViewController {
     navigationController?.pushViewController(placeVC, animated: true) // 네비게이션으로 push, 화면전환
   }
 }
-
-// MARK: - SwiftUI Preview (필요시 삭제)
-import SwiftUI
-
-struct HomeViewController_Preview: PreviewProvider {
-  static var previews: some View {
-    UIViewControllerPreview {
-      let navController = UINavigationController(rootViewController: HomeViewController())
-      return navController
-    }
-    .previewDisplayName("HomeViewController")
-    .previewDevice("iPhone 16 Pro")
-  }
-}
-
-struct HomaViewControllerPreview<ViewController: UIViewController>: UIViewControllerRepresentable {
-  let viewController: ViewController
-  
-  init(_ builder: @escaping () -> ViewController) {
-    viewController = builder()
-  }
-  
-  func makeUIViewController(context: Context) -> ViewController {
-    viewController
-  }
-  
-  func updateUIViewController(_ uiViewController: ViewController, context: Context) {
-    // 업데이트 로직
-  }
-}
-
-

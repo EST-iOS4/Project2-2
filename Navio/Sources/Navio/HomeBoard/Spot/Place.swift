@@ -99,6 +99,12 @@ public final class Place: Sendable, ObservableObject {
         switch isMarkingToLike {
         case true: // false -> true
             let liekPlaceRef = LikePlace(owner: mapBoardRef, data: placeData)
+            let isLikePlaceAlreadyExist = mapBoardRef.likePlaces.contains { $0.name == self.name }
+            guard isLikePlaceAlreadyExist == false else {
+                logger.failure("이미 좋아요 목록에 포함되어 있습니다.")
+                return
+            }
+            
             mapBoardRef.likePlaces.append(liekPlaceRef)
             self.isLiked = true
         case false: // true -> false

@@ -31,12 +31,12 @@ public final class Navio: Sendable, ObservableObject {
     
     
     // MARK: action
-    public func setUp() async {
+    public func setUp() {
         logger.start()
         
         // capture
         guard self.homeBoard == nil, self.mapBoard == nil, self.setting == nil else {
-            print(#file, #function, #line, "이미 세팅된 상태입니다.")
+            logger.failure("이미 setUp되어있습니다.")
             return
         }
         

@@ -27,7 +27,7 @@ public final class HomeBoard: Sendable, ObservableObject {
     
     
     // MARK: action
-    public func setUpSampleSpots() async {
+    public func setUpSampleSpots() {
         logger.start()
         
         // capture
