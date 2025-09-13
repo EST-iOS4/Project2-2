@@ -26,7 +26,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             let navio = Navio()
     
             Task {
-                let mainTabBarController = NavioController()
+                let mainTabBarController = NavioVC()
     
                 self.window?.rootViewController = mainTabBarController
                 self.window?.makeKeyAndVisible()

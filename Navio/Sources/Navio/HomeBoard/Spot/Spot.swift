@@ -43,7 +43,7 @@ public final class Spot: Sendable, ObservableObject {
     
     
     // MARK: action
-    public func setUpSamplePlaces() async {
+    public func setUpSamplePlaces() {
         logger.start()
         
         // capture

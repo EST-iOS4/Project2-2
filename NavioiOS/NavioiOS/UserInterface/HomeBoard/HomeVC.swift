@@ -74,7 +74,7 @@ class HomeVC: UIViewController {
     // MARK: - 카드 스택뷰 설정
     cardsStackView.translatesAutoresizingMaskIntoConstraints = false
     cardsStackView.axis = .vertical
-    cardsStackView.spacing = 16
+    cardsStackView.spacing = 28
     cardsStackView.distribution = .fillEqually
     
     // MARK: - UI뷰 추가
@@ -136,12 +136,12 @@ class HomeVC: UIViewController {
     let containerView = UIView()
     // MARK: - 카드 컨테이너뷰 설정
     containerView.translatesAutoresizingMaskIntoConstraints = false
-    containerView.backgroundColor = .secondarySystemBackground
+    containerView.backgroundColor = .clear
+//    containerView.layer.shadowColor = UIColor.black.cgColor
+//    containerView.layer.shadowOpacity = 0.1
+//    containerView.layer.shadowOffset = CGSize(width: 0, height: 2)
+//    containerView.layer.shadowRadius = 8
     containerView.layer.cornerRadius = 16
-    containerView.layer.shadowColor = UIColor.black.cgColor
-    containerView.layer.shadowOpacity = 0.1
-    containerView.layer.shadowOffset = CGSize(width: 0, height: 2)
-    containerView.layer.shadowRadius = 8
     containerView.tag = tag
     
     // MARK: - 카드가 탭 되었을 때 실행
@@ -152,8 +152,8 @@ class HomeVC: UIViewController {
     // MARK: - 이미지 컨테이너 (현재는 아이콘배치)
     let imageContainerView = UIView()
     imageContainerView.translatesAutoresizingMaskIntoConstraints = false
-    imageContainerView.backgroundColor = .systemGray5
-    imageContainerView.layer.cornerRadius = 12
+    imageContainerView.backgroundColor = .clear
+    imageContainerView.layer.cornerRadius = 16
     imageContainerView.clipsToBounds = true
     
     // Placeholder 아이콘 (임시)
@@ -163,68 +163,56 @@ class HomeVC: UIViewController {
     spotImageView.contentMode = .scaleAspectFill
     spotImageView.clipsToBounds = true
 
-    // 장소명 캡슐 오버레이
-    let nameBadgeContainer = UIView()
+    // 장소명 캡슐 오버레이 — match PlaceVC style (dark blur background)
+    let nameBadgeContainer = UIVisualEffectView(effect: UIBlurEffect(style: .systemThinMaterialDark))
     nameBadgeContainer.translatesAutoresizingMaskIntoConstraints = false
-    nameBadgeContainer.backgroundColor = UIColor.black.withAlphaComponent(0.45)
     nameBadgeContainer.layer.cornerRadius = 16
     nameBadgeContainer.layer.cornerCurve = .continuous
     nameBadgeContainer.clipsToBounds = true
+    nameBadgeContainer.layer.borderColor = UIColor.white.withAlphaComponent(0.25).cgColor
+    nameBadgeContainer.layer.borderWidth = 0.5
 
     let nameBadgeLabel = UILabel()
     nameBadgeLabel.translatesAutoresizingMaskIntoConstraints = false
     nameBadgeLabel.text = title
     nameBadgeLabel.textColor = .white
-    nameBadgeLabel.font = UIFont.preferredFont(forTextStyle: .headline)
-    nameBadgeLabel.adjustsFontForContentSizeCategory = true
+    nameBadgeLabel.font = .systemFont(ofSize: 16, weight: .semibold)
     nameBadgeLabel.numberOfLines = 1
-    
-    // MARK: - 타이틀 레이블
-    let titleLabel = UILabel()
-    titleLabel.translatesAutoresizingMaskIntoConstraints = false
-    titleLabel.text = title
-    titleLabel.font = .systemFont(ofSize: 25, weight: .semibold)
-    titleLabel.textColor = .label
+
+    nameBadgeContainer.contentView.addSubview(nameBadgeLabel)
     
     // MARK: - 뷰 계층구조 구성
-    // 서브뷰 추가 (카드 - 타이틀, 이미지컨테이너)
-    containerView.addSubview(titleLabel)
+    // 서브뷰 추가 (카드 - 이미지컨테이너)
     containerView.addSubview(imageContainerView)
     // (이미지 컨테이너 -> 아이콘)
     imageContainerView.addSubview(spotImageView)
     imageContainerView.addSubview(nameBadgeContainer)
-    nameBadgeContainer.addSubview(nameBadgeLabel)
     
     // MARK: - 카드 내부요소 제약조건 설정
     NSLayoutConstraint.activate([
-      // 카드 높이
-      containerView.heightAnchor.constraint(equalToConstant: 280),
-      
-      // Title Label 위치
-      titleLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 20),
-      titleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
-      titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: containerView.trailingAnchor, constant: -20),
-      
-      // Image Container 위치
-      imageContainerView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 12),
-      imageContainerView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
-      imageContainerView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
-      imageContainerView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -20),
-      
-      // Placeholder Icon 위치
+      // Card height
+      containerView.heightAnchor.constraint(equalToConstant: 230),
+
+      // Image Container fills the card (no inner padding)
+      imageContainerView.topAnchor.constraint(equalTo: containerView.topAnchor),
+      imageContainerView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+      imageContainerView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+      imageContainerView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
+
+      // Image edges
       spotImageView.topAnchor.constraint(equalTo: imageContainerView.topAnchor),
       spotImageView.leadingAnchor.constraint(equalTo: imageContainerView.leadingAnchor),
       spotImageView.trailingAnchor.constraint(equalTo: imageContainerView.trailingAnchor),
       spotImageView.bottomAnchor.constraint(equalTo: imageContainerView.bottomAnchor),
 
-      // Name badge(캡슐) 위치 및 내부 패딩
+      // Name badge(캡슐) bottom-left with padding
       nameBadgeContainer.leadingAnchor.constraint(equalTo: imageContainerView.leadingAnchor, constant: 16),
       nameBadgeContainer.bottomAnchor.constraint(equalTo: imageContainerView.bottomAnchor, constant: -16),
 
-      nameBadgeLabel.leadingAnchor.constraint(equalTo: nameBadgeContainer.leadingAnchor, constant: 12),
-      nameBadgeLabel.trailingAnchor.constraint(equalTo: nameBadgeContainer.trailingAnchor, constant: -12),
-      nameBadgeLabel.topAnchor.constraint(equalTo: nameBadgeContainer.topAnchor, constant: 8),
-      nameBadgeLabel.bottomAnchor.constraint(equalTo: nameBadgeContainer.bottomAnchor, constant: -8)
+      nameBadgeLabel.leadingAnchor.constraint(equalTo: nameBadgeContainer.contentView.leadingAnchor, constant: 12),
+      nameBadgeLabel.trailingAnchor.constraint(equalTo: nameBadgeContainer.contentView.trailingAnchor, constant: -12),
+      nameBadgeLabel.topAnchor.constraint(equalTo: nameBadgeContainer.contentView.topAnchor, constant: 6),
+      nameBadgeLabel.bottomAnchor.constraint(equalTo: nameBadgeContainer.contentView.bottomAnchor, constant: -6)
     ])
     
     return containerView
@@ -237,8 +225,7 @@ class HomeVC: UIViewController {
   @objc private func cardTapped(_ gesture: UITapGestureRecognizer) {
     guard let tappedView = gesture.view else { return }  // tappedView: 탭된 뷰 가져오기
     let index = tappedView.tag // index: 카드의 태그(인덱스) 저장
-      
-      let selectedPlace = homeBoardRef.spots[index].name // selectedPlace: 해당 인덱스에 해당하는 카드의 장소명 불러와 저장
+    let selectedSpot = homeBoardRef.spots[index] // selectedPlace: 해당 인덱스에 해당하는 카드의 장소명 불러와 저장
     
     // 탭 애니메이션 효과
     UIView.animate(withDuration: 0.1, animations: {
@@ -250,12 +237,12 @@ class HomeVC: UIViewController {
     }
     
     // Place 화면으로 이동
-    navigateToPlaceViewController(with: selectedPlace)
+    navigateToPlaceViewController(with: selectedSpot)
   }
   
   // place: 선택된 장소명 ("홍대", "잠실" 등)
-  private func navigateToPlaceViewController(with place: String) {
-    let placeVC = PlaceVC(placeName: place) // 장소명 전달할 인스턴스 생성
+  private func navigateToPlaceViewController(with place: Spot) {
+    let placeVC = PlaceVC(place) // 장소명 전달할 인스턴스 생성
     navigationController?.pushViewController(placeVC, animated: true) // 네비게이션으로 push, 화면전환
   }
 }

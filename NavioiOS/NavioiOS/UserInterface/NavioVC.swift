@@ -11,8 +11,8 @@ import MapKit
 import ToolBox
 
 
-// MARK: - 메인 TabBarController
-class NavioController: UITabBarController {
+// MARK: ViewController
+class NavioVC: UITabBarController {
     // MARK: core
     private let navioRef: Navio = Navio()
     init() {
