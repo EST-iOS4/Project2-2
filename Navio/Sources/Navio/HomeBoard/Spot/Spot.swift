@@ -55,16 +55,16 @@ public final class Spot: Sendable, ObservableObject {
         // mutate
         switch self.name {
         case "홍대":
-            self.places = hongdaeDatas
+            self.places = Self.hongdaeDatas
                 .map { Place(owner: self, data: $0) }
         case "부산":
-            self.places = busanPlaceDatas
+            self.places = Self.busanPlaceDatas
                 .map { Place(owner: self, data: $0)}
         case "경주":
-            self.places = gyeongjuPlaceDatas
+            self.places = Self.gyeongjuPlaceDatas
                 .map { Place(owner: self, data: $0) }
         case "잠실":
-            self.places = jamsilPlaceDatas
+            self.places = Self.jamsilPlaceDatas
                 .map { Place(owner: self, data: $0) }
         default:
             logger.failure("홍대, 부산, 경주, 잠실이 아닌 \(self.name)이 처리되었습니다.")
@@ -75,7 +75,7 @@ public final class Spot: Sendable, ObservableObject {
     
     
     // MARK: value
-    private let hongdaeDatas: [PlaceData] = [
+    static let hongdaeDatas: [PlaceData] = [
         .init(name: "큐브이스케이프", imageName: "cube_escape_hongdae",
               location: .init(latitude: 37.553584, longitude: 126.920718),
               address: "서울 마포구 양화로16길 15 무광빌딩 4층", number: "02-323-5567"),
@@ -84,7 +84,7 @@ public final class Spot: Sendable, ObservableObject {
               address: "서울 마포구 홍익로3길 20 서교프라자 지하2층", number: "02-322-8177")
     ]
     
-    private let busanPlaceDatas: [PlaceData] = [
+    static let busanPlaceDatas: [PlaceData] = [
         .init(
             name: "감천문화마을",
             imageName: "gamcheon_busan",
@@ -108,7 +108,7 @@ public final class Spot: Sendable, ObservableObject {
         )
     ]
     
-    private let gyeongjuPlaceDatas: [PlaceData] = [
+    static let gyeongjuPlaceDatas: [PlaceData] = [
         .init(
             name: "첨성대",
             imageName: "cheomsungdae_gyeongju",
@@ -132,7 +132,7 @@ public final class Spot: Sendable, ObservableObject {
         )
     ]
     
-    private let jamsilPlaceDatas: [PlaceData] = [
+    static let jamsilPlaceDatas: [PlaceData] = [
         .init(
             name: "롯데월드",
             imageName: "lotteworld_jamsil",

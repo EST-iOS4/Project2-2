@@ -33,6 +33,7 @@ public final class MapBoard: Sendable, ObservableObject {
     internal func removeLikePlace(name: String) {
         self.likePlaces.removeAll {$0.name == name }
     }
+    @Published public private(set) var isLikePlaceFetched: Bool = false
     
     @Published public internal(set) var recentPlaces: [RecentPlace] = []
 
@@ -43,7 +44,7 @@ public final class MapBoard: Sendable, ObservableObject {
     // 상세 스냅샷(값 타입만)
     @Published public internal(set) var detailByName: [String: PlaceDetail] = [:]
 
-    // action
+    // MARK: action
     public func updateLocation() async {
         await LocationManager.shared.getUserAuthentication()
         await LocationManager.shared.fetchMyLocation()
@@ -61,55 +62,6 @@ public final class MapBoard: Sendable, ObservableObject {
     }
     public func stopUpdating() async {
         await LocationManager.shared.stopStreaming()
-    }
-
-    public func fetchLikePlaces() async {
-        // capture ------------------------------------------------------------
-        let boardRef = self
-        let oldIDs = self.likePlaces
-
-        // compute ------------------------------------------------------------
-        let userDefaultBoxKey = "LIKED_PLACES"          // UserDefaults에 실제 데이터(이름→필드 사전) 저장된 키
-        let userDefaultIDsKey = "MAPBOARD_LIKEPLACE_IDS"// UserDefaults에 표시 순서를 유지하기 위한 ID(=이름) 배열 키
-        let ud = UserDefaults.standard                  // 표준 UserDefaults 핸들
-
-        
-        let box = (ud.dictionary(forKey: userDefaultBoxKey) as? [String: [String: String]]) ?? [:]
-        // orderedNames: UI에 보여줄 순서(없으면 box 키들 정렬)
-        let orderedNames = (ud.array(forKey: userDefaultIDsKey) as? [String]) ?? box.keys.sorted()
-
-        // mutate -------------------------------------------------------------
-        // 1) 기존 목록에서 더 이상 UserDefaults에 존재하지 않는 항목은 메모리/스토리지에서 제거
-//        for id in oldIDs {
-//            guard let name = id.name else { continue } // ID가 가리키는 실제 객체의 이름 가져오기
-//            if orderedNames.contains(name) == false {        // 표시 순서 배열에 없으면
-//                                          // 해당 객체 자체 삭제(스토리지 연동 시 정리)
-//            }
-//        }
-        // 2) 화면 바인딩 배열을 다시 구성
-        self.likePlaces = []                                 // 빈 배열로 초기화
-        for name in orderedNames {                           // 화면에 보여줄 순서대로 순회
-            guard let rec = box[name] else { continue }      // 박스에서 해당 이름의 레코드 조회
-            let imageName = rec["imageName"] ?? ""           // 보조 정보들 파싱
-            let address = rec["address"] ?? ""
-
-            // 기존에 동일 이름을 가진 객체가 이미 있다면 그것을 재사용(아이덴티티 유지)
-            if let exist = oldIDs.first(where: { $0.name == name }) {
-                self.likePlaces.append(exist)
-                continue
-            }
-
-            // 없으면 새로 생성
-            let data = PlaceData(
-                name: name,                                  // 표시 이름
-                imageName: "",                               // (박스의 imageName을 쓰지 않는 현재 구조)
-                location: .init(latitude: 0, longitude: 0),  // 좌표는 즐겨찾기 박스에서 관리하지 않으므로 0으로 채움
-                address: address,                            // 주소는 박스에서 로드
-                number: ""                                   // 전화번호는 박스에 없으므로 공백
-            )
-            let likeRef = LikePlace(owner: boardRef, data: data) // 소유자(boardRef) 연결하여 새 모델 생성
-            self.likePlaces.append(likeRef)                   // 화면 바인딩 배열에 ID 추가
-        }
     }
 
     /// 최근 검색어 목록 재구성(MRU → 메모리 모델)

@@ -18,6 +18,15 @@ class NavioVC: UITabBarController {
     init() {
         navioRef.setUp()
         
+        navioRef.homeBoard!
+            .spots
+            .forEach {
+                $0.places
+                    .forEach {
+                        $0.fetchFromDB()
+                    }
+            }
+        
         super.init(nibName: nil, bundle: nil)
     }
     required init?(coder: NSCoder) {
@@ -32,7 +41,7 @@ class NavioVC: UITabBarController {
         let homeNav = UINavigationController(rootViewController: HomeVC)
       
         // MapBoard의 UI
-        let mapBoardVC = MapBoardVC(mapBoard: navioRef.mapBoard!)
+        let mapBoardVC = MapBoardVC(navioRef.mapBoard!)
         
         // Setting의 UI
         let settingVC = SettingVC(settingRef: navioRef.setting!)
