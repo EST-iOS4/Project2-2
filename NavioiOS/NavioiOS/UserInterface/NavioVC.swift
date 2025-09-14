@@ -18,15 +18,6 @@ class NavioVC: UITabBarController {
     init() {
         navioRef.setUp()
         
-        navioRef.homeBoard!
-            .spots
-            .forEach {
-                $0.places
-                    .forEach {
-                        $0.fetchFromDB()
-                    }
-            }
-        
         super.init(nibName: nil, bundle: nil)
     }
     required init?(coder: NSCoder) {

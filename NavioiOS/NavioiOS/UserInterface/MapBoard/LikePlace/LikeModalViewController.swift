@@ -93,10 +93,10 @@ class PlaceCardCell: UICollectionViewCell {
     }()
     
     // 외부에서 데이터를 받아 셀의 UI를 업데이트하는 함수
-    func configure(with likePlaceRef: LikePlace) {
-        placeImageView.image = likePlaceRef.image
-        titleLabel.text = likePlaceRef.name
-        subtitleLabel.text = likePlaceRef.address
+    func configure(with likePlace: LikePlace) {
+        placeImageView.image = likePlace.image
+        titleLabel.text = likePlace.name
+        subtitleLabel.text = likePlace.address
     }
 }
 
@@ -178,6 +178,12 @@ class LikeModalViewController: UIViewController, UICollectionViewDataSource, UIC
         
         cell.configure(with: mapBoardRef.likePlaces[indexPath.item])
         return cell
+    }
+  
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let likePlace = mapBoardRef.likePlaces[indexPath.item]
+        let coord = likePlace.location.toCLLocationCoordinate2D
+        NotificationCenter.default.post(name: .mapShouldMoveToCoordinate, object: nil, userInfo: ["coordinate": coord])
     }
   
     // 셀 크기를 지정

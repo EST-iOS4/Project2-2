@@ -10,6 +10,10 @@ import Combine
 import MapKit
 import ToolBox
 
+extension Notification.Name {
+    static let mapShouldMoveToCoordinate = Notification.Name("MapShouldMoveToCoordinate")
+}
+
 
 // MARK: ViewController
 // 역할: 지도 표시, ViewModel 데이터 바인딩, 검색 모달 띄우기
@@ -81,8 +85,6 @@ class MapBoardVC: UIViewController {
         mapView.delegate = self
         setupUI()
         bindViewModel()
-        
-        mapBoardRef.fetchLikePlaces()
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -176,6 +178,13 @@ class MapBoardVC: UIViewController {
             .sink { [weak self] placeIDs in
                 let placeObjects = placeIDs.compactMap { $0 }
                 self?.updatePins(for: placeObjects)
+            }
+            .store(in: &cancellables)
+        
+        NotificationCenter.default.publisher(for: .mapShouldMoveToCoordinate)
+            .compactMap { $0.userInfo?["coordinate"] as? CLLocationCoordinate2D }
+            .sink { [weak self] coordinate in
+                self?.moveMap(to: coordinate)
             }
             .store(in: &cancellables)
     }
