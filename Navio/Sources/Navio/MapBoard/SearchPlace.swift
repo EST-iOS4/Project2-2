@@ -16,6 +16,7 @@ public final class SearchPlace: Sendable, ObservableObject {
     // MARK: core
     internal init(owner: MapBoard, data: PlaceData) {
         self.owner = owner
+        self.placeData = data
         self.name = data.name
         self.imageName = data.imageName
         self.location = data.location
@@ -26,6 +27,7 @@ public final class SearchPlace: Sendable, ObservableObject {
     
     // MARK: state
     internal nonisolated let owner: MapBoard
+    public let placeData: PlaceData
     
     public nonisolated let name: String
     public nonisolated let imageName: String

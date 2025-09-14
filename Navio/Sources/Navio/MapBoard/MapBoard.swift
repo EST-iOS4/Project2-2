@@ -165,6 +165,7 @@ public final class MapBoard: Sendable, ObservableObject {
 
         // 2-1) placeID 하나에 대해 PlaceSnap 생성(필요한 필드만 요청하여 비용 절감)
         func fetchPlaceSnap(_ placeID: String) async -> PlaceSnap? {
+            // 호출할 피드
             let fields: GMSPlaceField = [                    // 필요한 것만 명시
                 .placeID, .name, .coordinate,
                 .formattedAddress, .phoneNumber, .website,
