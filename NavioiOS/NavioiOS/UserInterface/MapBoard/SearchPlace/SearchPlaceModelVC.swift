@@ -4,8 +4,10 @@
 //
 //  Created by EunYoung Wang, 구현모 on 9/10/25.
 //
-
 import UIKit
+import Navio
+import Combine
+
 
 // MARK: - SearchItemData
 // 역할: '검색 결과' 목록의 테이블 뷰에 표시될 데이터 하나의 형태를 정의
@@ -18,6 +20,15 @@ struct SearchItemData {
 
 // MARK: - SearchPlaceModalViewController
 class SearchPlaceModelVC: UIViewController {
+    // MARK: core
+    private let mapBoardRef: MapBoard
+    private var cancellables = Set<AnyCancellable>()
+    private var items: [SearchItemData] = []
+    init(_ mapBoardRef: MapBoard) {
+        self.mapBoardRef = mapBoardRef
+        super.init(nibName: nil, bundle: nil)
+    }
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
     
     let tableView: UITableView = {
         let tv = UITableView()
@@ -30,16 +41,11 @@ class SearchPlaceModelVC: UIViewController {
         return tv
     }()
     
-    let searchData = [
-        SearchItemData(imageName: "cup.and.saucer.fill", title: "스타벅스", subtitle: "영업중 • 리뷰 999+ • 크림라떼와 부드러운 에스프레소를 드립니다."),
-        SearchItemData(imageName: "mug.fill", title: "커피빈", subtitle: "영업중 • 리뷰 850+ • 스페셜 커피 음료를 제공합니다."),
-        SearchItemData(imageName: "takeoutbag.and.cup.and.straw.fill", title: "투썸플레이스", subtitle: "영업 중 • 리뷰 650+ • 디저트와 음료 전문"),
-        SearchItemData(imageName: "cup.and.saucer", title: "폴바셋", subtitle: "영업 중 • 리뷰 420+ • 프리미엄 커피 체인")
-    ]
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        setUpBindings()
     }
     
     func setupUI() {
@@ -58,7 +64,27 @@ class SearchPlaceModelVC: UIViewController {
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
-        
+    }
+    
+    func setUpBindings() {
+        // MapBoard.searchPlaces 변경을 구독하여 셀 데이터 업데이트
+        mapBoardRef.$searchPlaces
+            .combineLatest(mapBoardRef.$editorialSummaryByName)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] (places, summaryByName) in
+                guard let self = self else { return }
+                self.items = places.map { sp in
+                    let subtitle = summaryByName[sp.name].flatMap { $0.isEmpty ? nil : $0 } ?? sp.address
+                    return SearchItemData(
+                        imageName: "mappin.circle.fill",
+                        title: sp.name,
+                        subtitle: subtitle
+                    )
+                }
+                print("[SearchPlaceModelVC] list updated. count=\(self.items.count)")
+                self.tableView.reloadData()
+            }
+            .store(in: &cancellables)
     }
 }
 
@@ -66,12 +92,12 @@ class SearchPlaceModelVC: UIViewController {
 extension SearchPlaceModelVC: UITableViewDataSource, UITableViewDelegate {
   
   func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-    return searchData.count
+    return items.count
   }
   
   func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
     let cell = tableView.dequeueReusableCell(withIdentifier: "SearchListCell", for: indexPath) as! SearchListCell
-    cell.configure(with: searchData[indexPath.row])
+    cell.configure(with: items[indexPath.row])
     return cell
   }
   

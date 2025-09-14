@@ -109,7 +109,7 @@ final class ModalContainerVC: UIViewController, UISearchBarDelegate {
         } else {
             // 검색어가 있으면 -> SearchView로
             if !(currentContentVC is SearchPlaceModelVC) {
-                transition(to: SearchPlaceModelVC())
+                transition(to: SearchPlaceModelVC(mapBoardRef))
                 
                 // TODO: SearchPlaceModalViewController에 검색어(query) 전달 로직 추가 필요
             }
@@ -151,5 +151,22 @@ final class ModalContainerVC: UIViewController, UISearchBarDelegate {
             transition(to: RecentPlaceModalVC(mapBoardRef: mapBoardRef))
         }
         return true // 키보드가 나타나도록 허용
+    }
+    
+    // 사용자가 키보드에서 '검색'(Return/Enter) 버튼을 눌렀을 때 호출
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        let query = (searchBar.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        print("[ModalContainerVC] Return pressed. query='\(query)'")
+        
+        // 키보드 내리기
+        searchBar.resignFirstResponder()
+        
+        // MapBoard에 검색어 주입 후 검색 실행
+        mapBoardRef.searchInput = query
+        Task { [weak self] in
+            guard let _ = self else { return }
+            await self?.mapBoardRef.fetchSearchPlaces()
+            print("[ModalContainerVC] fetchSearchPlaces() finished")
+        }
     }
 }

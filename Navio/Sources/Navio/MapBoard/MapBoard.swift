@@ -111,6 +111,7 @@ public final class MapBoard: Sendable, ObservableObject {
 
     /// 검색 실행: 자동완성 → placeID[] → 각 placeID 상세 스냅샷 → 목록/상세 캐시 갱신
     public func fetchSearchPlaces() async {
+        print("[MapBoard] fetchSearchPlaces() called with input='\(self.searchInput)'")
         // capture ------------------------------------------------------------
         let boardRef = self
         let oldIDs = self.searchPlaces
