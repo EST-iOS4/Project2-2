@@ -23,7 +23,7 @@ public final class MapBoard: Sendable, ObservableObject {
     
 
     // MARK: state
-    internal nonisolated let owner: Navio
+    public nonisolated let owner: Navio
 
     @Published public private(set) var currentLocation: Location? = nil
     @Published public private(set) var isUpdatingLocation: Bool = false

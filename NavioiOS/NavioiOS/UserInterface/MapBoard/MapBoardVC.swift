@@ -280,19 +280,24 @@ extension MapBoardVC: MKMapViewDelegate {
     }
     
 //  핀 터치 시 상세 정보 뷰로 이동 (현재 주석 처리)
-//    func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
-//        guard let tappedTitle = view.annotation?.title, let title = tappedTitle else { return }
-//        if let place = mapBoard.likePlaces.first(where: { $0.title == title }) {
-//            let placeID = place.id
-//
-//            상세 정보 뷰 컨트롤러는 여기에 연결하시면 됩니다. placeID를 전달받도록 만들어주세요.
-//            let detailVC = PlaceDetailViewController(placeID: placeID)
-//
-//            if let navigationController = self.navigationController {
-//                navigationController.pushViewController(detailVC, animated: true)
-//            } else {
-//                self.present(detailVC, animated: true)
-//            }
-//        }
-//    }
+    func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
+        guard let tappedTitle = view.annotation?.title, let title = tappedTitle else { return }
+        
+        
+        if let likePlaceRef = mapBoardRef.likePlaces.first(where: { $0.name == title }) {
+            let placeRef = mapBoardRef.owner
+                .homeBoard!.spots
+                .flatMap { $0.places }
+                .first { $0.name == likePlaceRef.name }!
+
+            // 상세 정보 뷰 컨트롤러는 여기에 연결하시면 됩니다. placeID를 전달받도록 만들어주세요.
+            let detailVC = PlaceVC(placeRef)
+
+            if let navigationController = self.navigationController {
+                navigationController.pushViewController(detailVC, animated: true)
+            } else {
+                self.present(detailVC, animated: true)
+            }
+        }
+    }
 }

@@ -1,5 +1,5 @@
 //
-//  LikeModalViewController.swift
+//  LikeModalVC.swift
 //  NavioiOS
 //
 //  Created by EunYoung Wang, 구현모 on 9/11/25.
@@ -101,7 +101,7 @@ class PlaceCardCell: UICollectionViewCell {
 }
 
 // MARK: - Like 모달 뷰컨트롤러
-class LikeModalViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
+class LikeModalVC: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
     // MARK: core
     private let mapBoardRef: MapBoard
     

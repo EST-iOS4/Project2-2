@@ -92,7 +92,7 @@ final class ModalContainerVC: UIViewController, UISearchBarDelegate {
     
     // 모달이 처음 나타날 때 보여줄 초기 화면 설정
     private func showInitialContent() {
-        let initialVC = LikeModalViewController(mapBoardRef)
+        let initialVC = LikeModalVC(mapBoardRef)
         transition(to: initialVC, animated: false)
     }
     
@@ -147,7 +147,7 @@ final class ModalContainerVC: UIViewController, UISearchBarDelegate {
     // 사용자가 검색창을 터치해서 편집을 시작할 때 호출
     func searchBarShouldBeginEditing(_ searchBar: UISearchBar) -> Bool {
         // 현재 화면이 LikeModalViewController라면 RecentPlaceViewController로 전환
-        if currentContentVC is LikeModalViewController {
+        if currentContentVC is LikeModalVC {
             transition(to: RecentPlaceModalVC())
         }
         return true // 키보드가 나타나도록 허용
