@@ -149,11 +149,11 @@ class LikeModalViewController: UIViewController, UICollectionViewDataSource, UIC
         NSLayoutConstraint.activate([
             likeLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: 20),
             likeLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            
+        
             collectionView.topAnchor.constraint(equalTo: likeLabel.bottomAnchor, constant: 8),
             collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            collectionView.heightAnchor.constraint(equalToConstant: 220)
+            collectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -12)
         ])
         
         collectionView.backgroundColor = .clear
@@ -161,6 +161,7 @@ class LikeModalViewController: UIViewController, UICollectionViewDataSource, UIC
         collectionView.dataSource = self
         collectionView.delegate = self
         collectionView.register(PlaceCardCell.self, forCellWithReuseIdentifier: "PlaceCardCell")
+        collectionView.contentInset.bottom = 8
     }
     
     
