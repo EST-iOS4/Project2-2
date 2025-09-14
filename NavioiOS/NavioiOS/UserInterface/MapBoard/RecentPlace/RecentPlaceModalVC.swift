@@ -78,7 +78,7 @@ class RecentPlaceModalVC: UIViewController {
         return tv
     }()
   
-    let shortcutData = ["홍익대학교", "석촌호수", "오시리아관광단지"]
+//    let shortcutData = ["홍익대학교", "석촌호수", "오시리아관광단지"]
     let recentPlaceData = [
         RecentPlaceData(imageName: "clock", placeName: "Times Square"),
         RecentPlaceData(imageName: "clock", placeName: "한강")
@@ -92,8 +92,8 @@ class RecentPlaceModalVC: UIViewController {
     func setupUI() {
         view.backgroundColor = .systemBackground
     
-        for title in shortcutData {
-            let button = createShortcutButton(title: title)
+        for place in mapBoardRef.likePlaces {
+            let button = createShortcutButton(title: place.name)
             shortcutStackView.addArrangedSubview(button)
         }
         
