@@ -15,6 +15,7 @@ import ToolBox
 // MARK: - Map 뷰컨트롤러
 // 역할: 지도 표시, ViewModel 데이터 바인딩, 검색 모달 띄우기
 class MapBoardVC: UIViewController {
+    // MARK: core
     private let mapBoard: MapBoard
     private let mapView = MKMapView()
     
