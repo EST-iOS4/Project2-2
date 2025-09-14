@@ -7,14 +7,16 @@
 
 import UIKit
 
-// MARK: - 리스트 데이터 모델
+// MARK: - SearchItemData
+// 역할: '검색 결과' 목록의 테이블 뷰에 표시될 데이터 하나의 형태를 정의
 struct SearchItemData {
   let imageName: String
   let title: String
   let subtitle: String
 }
 
-// MARK: - 커스텀 리스트 셀
+// MARK: - SearchListCell
+// 역할: UITableView 안에 들어갈 개별 검색 결과 셀의 UI와 레이아웃 정의.
 class SearchListCell: UITableViewCell {
   
   private let itemImageView: UIImageView = {
@@ -85,8 +87,8 @@ class SearchListCell: UITableViewCell {
   }
 }
 
-// MARK: - 검색 모달 뷰컨트롤러
-class SearchPlaceModalViewController: UIViewController {
+// MARK: - SearchPlaceModalViewController
+class SearchPlaceModelVC: UIViewController {
     
     let tableView: UITableView = {
         let tv = UITableView()
@@ -120,6 +122,7 @@ class SearchPlaceModalViewController: UIViewController {
         
         view.addSubview(tableView)
         
+        // Auto Layout 설정
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.topAnchor, constant: 10),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -131,7 +134,7 @@ class SearchPlaceModalViewController: UIViewController {
 }
 
 // MARK: - TableView DataSource & Delegate
-extension SearchPlaceModalViewController: UITableViewDataSource, UITableViewDelegate {
+extension SearchPlaceModelVC: UITableViewDataSource, UITableViewDelegate {
   
   func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
     return searchData.count

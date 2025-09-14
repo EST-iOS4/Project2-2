@@ -9,7 +9,7 @@ import Foundation
 
 // MARK: Value
 public struct PlaceData: Sendable, Hashable {
-    // core
+    // MARK: core
     public let name: String
     public let imageName: String
     public let location: Location
@@ -22,5 +22,10 @@ public struct PlaceData: Sendable, Hashable {
         self.location = location
         self.address = address
         self.number = number
+    }
+    
+    // MARK: operator
+    package var isLikedKey: String {
+        return "\(name).isLiked"
     }
 }

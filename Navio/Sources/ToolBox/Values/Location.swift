@@ -10,13 +10,18 @@ import CoreLocation
 
 // MARK: Value
 public struct Location: Sendable, Hashable, Codable {
-    // core
+    // MARK: core
     public let latitude: Double
     public let longitude: Double
     
     public init(latitude: Double, longitude: Double) {
         self.latitude = latitude
         self.longitude = longitude
+    }
+    
+    // MARK: operator
+    public var toCLLocationCoordinate2D: CLLocationCoordinate2D {
+        return CLLocationCoordinate2D(latitude: self.latitude, longitude: self.longitude)
     }
 }
 

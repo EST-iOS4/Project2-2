@@ -1,5 +1,5 @@
 //
-//  SettingViewController.swift
+//  SettingVC.swift
 //  NavioiOS
 //
 //  Created by 구현모 on 9/10/25.
@@ -8,12 +8,16 @@ import UIKit
 import Navio
 import Combine
 
-
-final class SettingViewController: UIViewController {
+// MARK: - SettingVC
+final class SettingVC: UIViewController {
+    
+    // MARK: - Properties
     private let settingRef: Setting
     private var cancellables = Set<AnyCancellable>()
     
+    // MARK: - UI Components
     private let tableView = UITableView(frame: .zero, style: .insetGrouped)
+    // '키워드 수집' 항목의 On/Off 스위치
     private let keywordSwitch = UISwitch()
     
     init(settingRef: Setting) {
@@ -30,7 +34,7 @@ final class SettingViewController: UIViewController {
         setupUI()
         setupTableView()
         bindViewModel()
-        
+        // 화면이 로드될 때 UserDefaults에 저장된 설정값을 불러오기
         settingRef.load()
     }
     
@@ -41,6 +45,7 @@ final class SettingViewController: UIViewController {
         tableView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(tableView)
         
+        // Auto Layout 설정
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.topAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -48,6 +53,7 @@ final class SettingViewController: UIViewController {
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
         
+        // 스위치의 값이 변경될 때마다 keywordSwitchChanged 함수가 호출되도록 연결
         keywordSwitch.addTarget(self, action: #selector(keywordSwitchChanged), for: .valueChanged)
     }
     
@@ -55,15 +61,19 @@ final class SettingViewController: UIViewController {
         tableView.dataSource = self
         tableView.delegate = self
     }
-    
+
+    // Combine을 사용해 ViewModel의 데이터 변경을 UI에 자동으로 반영
     private func bindViewModel() {
+        // ViewModel의 displayMode가 바뀌면 UI를 업데이트
         settingRef.$displayMode
             .sink { [weak self] mode in
                 self?.tableView.reloadData()
+                // 앱 전체의 테마를 변경
                 self?.updateInterfaceStyle(for: mode)
             }
             .store(in: &cancellables)
         
+        // ViewModel의 collectKeyword가 바뀌면 스위치의 On/Off 상태를 업데이트
         settingRef.$collectKeyword
             .sink { [weak self] isOn in
                 self?.keywordSwitch.setOn(isOn, animated: true)
@@ -71,14 +81,19 @@ final class SettingViewController: UIViewController {
             .store(in: &cancellables)
     }
     
+    // '키워드 수집' 스위치를 탭했을 때 호출
     @objc private func keywordSwitchChanged(_ sender: UISwitch) {
+        // UI에서 발생한 이벤트를 ViewModel에 전달
         settingRef.collectKeyword = sender.isOn
+        // 변경된 내용을 UserDefaults에 저장
         settingRef.save()
     }
     
+    // '다크 모드' 셀을 탭했을 때 선택 옵션을 띄우기
     private func presentDarkModeActionSheet() {
         let alert = UIAlertController(title: "다크 모드 설정", message: nil, preferredStyle: .actionSheet)
         
+        // 각 액션을 탭하면 ViewModel의 displayMode 값을 변경하고 저장
         let systemAction = UIAlertAction(title: "시스템 설정에 따름", style: .default) { _ in
             self.settingRef.displayMode = .system
             self.settingRef.save()
@@ -101,7 +116,9 @@ final class SettingViewController: UIViewController {
         present(alert, animated: true)
     }
     
+    // 앱 창의 라이트/다크 모드를 실제로 변경하는 함수
     private func updateInterfaceStyle(for mode: Setting.DisplayMode) {
+        // 앱의 window에 접근하여 전체 스타일을 변경
         guard let window = view.window else { return }
         switch mode {
         case .system:
@@ -114,15 +131,19 @@ final class SettingViewController: UIViewController {
     }
 }
 
-extension SettingViewController: UITableViewDataSource, UITableViewDelegate {
+extension SettingVC: UITableViewDataSource, UITableViewDelegate {
+    
+    // 섹션의 개수를 반환
     func numberOfSections(in tableView: UITableView) -> Int {
         return 2
     }
     
+    // 각 섹션의 행(row) 개수를 반환
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return 1
     }
     
+    // 각 섹션의 제목을 반환
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         if section == 0 {
             return "설정"
@@ -131,6 +152,7 @@ extension SettingViewController: UITableViewDataSource, UITableViewDelegate {
         }
     }
     
+    // 각 행에 표시될 셀을 생성
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
         
@@ -154,6 +176,7 @@ extension SettingViewController: UITableViewDataSource, UITableViewDelegate {
         return cell
     }
     
+    // 특정 행을 탭했을 때의 동작을 정의
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         if indexPath.section == 0 {
