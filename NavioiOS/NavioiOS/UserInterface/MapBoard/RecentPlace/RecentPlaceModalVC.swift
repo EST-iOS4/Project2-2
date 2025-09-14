@@ -4,9 +4,10 @@
 //
 //  Created by EunYoung Wang, 구현모 on 9/10/25.
 //
-
 import Foundation
 import UIKit
+import Navio
+
 
 // MARK: - RecentPlaceData
 // 역할: '최근 검색' 목록의 테이블 뷰에 표시될 데이터 하나의 형태를 정의
@@ -76,6 +77,16 @@ class RecentPlaceCell: UITableViewCell {
 // MARK: - RecentPlaceModalViewController
 // 역할: '최근 검색' 상태일 때 모달 컨테이너에 표시될 콘텐츠 ViewController
 class RecentPlaceModalVC: UIViewController {
+    // MARK: core
+    private let mapBoardRef: MapBoard
+    init(mapBoardRef: MapBoard) {
+        self.mapBoardRef = mapBoardRef
+        
+        super.init(nibName: nil, bundle: nil)
+    }
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
   
     // MARK: - UI Components
     private let shortcutScrollView: UIScrollView = {

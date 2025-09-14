@@ -20,14 +20,14 @@ struct SearchItemData {
 class SearchListCell: UITableViewCell {
   
   private let itemImageView: UIImageView = {
-    let iv = UIImageView()
-    iv.contentMode = .scaleAspectFit
-    iv.clipsToBounds = true
-    iv.layer.cornerRadius = 25
-    iv.backgroundColor = .systemGray5
-    iv.tintColor = .systemBlue
-      iv.translatesAutoresizingMaskIntoConstraints = false
-    return iv
+    let imageView = UIImageView()
+    imageView.contentMode = .scaleAspectFit
+    imageView.clipsToBounds = true
+    imageView.layer.cornerRadius = 25
+    imageView.backgroundColor = .systemGray5
+    imageView.tintColor = .systemBlue
+      imageView.translatesAutoresizingMaskIntoConstraints = false
+    return imageView
   }()
   
   private let titleLabel: UILabel = {

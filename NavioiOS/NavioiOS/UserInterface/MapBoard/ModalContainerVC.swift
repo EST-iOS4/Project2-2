@@ -104,7 +104,7 @@ final class ModalContainerVC: UIViewController, UISearchBarDelegate {
         if query.isEmpty {
             // 검색어가 비었으면 -> RecentView로
             if !(currentContentVC is RecentPlaceModalVC) {
-                transition(to: RecentPlaceModalVC())
+                transition(to: RecentPlaceModalVC(mapBoardRef: mapBoardRef))
             }
         } else {
             // 검색어가 있으면 -> SearchView로
@@ -148,7 +148,7 @@ final class ModalContainerVC: UIViewController, UISearchBarDelegate {
     func searchBarShouldBeginEditing(_ searchBar: UISearchBar) -> Bool {
         // 현재 화면이 LikeModalViewController라면 RecentPlaceViewController로 전환
         if currentContentVC is LikeModalVC {
-            transition(to: RecentPlaceModalVC())
+            transition(to: RecentPlaceModalVC(mapBoardRef: mapBoardRef))
         }
         return true // 키보드가 나타나도록 허용
     }
