@@ -27,6 +27,7 @@ struct RecentPlaceData {
 class RecentPlaceModalVC: UIViewController {
     // MARK: core
     private let mapBoardRef: MapBoard
+    
     init(mapBoardRef: MapBoard) {
         self.mapBoardRef = mapBoardRef
         
@@ -122,6 +123,30 @@ class RecentPlaceModalVC: UIViewController {
     
         for place in mapBoardRef.likePlaces {
             let button = createShortcutButton(title: place.name)
+            // 탭 시 지도 이동 + 단일 핀 표시 + 모달 닫기
+            button.addAction(UIAction { [weak self] _ in
+                guard let self = self,
+                      let lp = self.mapBoardRef.likePlaces.first(where: { $0.name == place.name }) else { return }
+                let coord = lp.location.toCLLocationCoordinate2D
+
+                // 1) 카메라 이동
+                NotificationCenter.default.post(
+                    name: .mapShouldMoveToCoordinate,
+                    object: nil,
+                    userInfo: ["coordinate": coord]
+                )
+                // 2) 단일 핀 표시
+                NotificationCenter.default.post(
+                    name: .mapShouldFocusPlace,
+                    object: nil,
+                    userInfo: ["coordinate": coord,
+                               "title": lp.name,
+                               "subtitle": lp.address]
+                )
+                // 3) 모달 닫기
+                self.dismiss(animated: true)
+            }, for: .touchUpInside)
+
             shortcutStackView.addArrangedSubview(button)
         }
         

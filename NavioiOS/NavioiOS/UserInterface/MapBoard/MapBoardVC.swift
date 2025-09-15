@@ -12,7 +12,9 @@ import ToolBox
 
 extension Notification.Name {
     static let mapShouldMoveToCoordinate = Notification.Name("MapShouldMoveToCoordinate")
+    static let mapShouldFocusPlace       = Notification.Name("MapShouldFocusPlace")
 }
+
 
 
 // MARK: ViewController
@@ -28,6 +30,13 @@ class MapBoardVC: UIViewController {
         fatalError("init(coder:) has not been implemented")
     }
     
+    private final class PlaceAnnotation: MKPointAnnotation {
+        var key: String = ""     // 검색: googlePlaceId, 즐겨찾기: name
+        var isSearch: Bool = true
+    }
+    
+    private var annSearchIndex: [String: SearchPlace] = [:] // key = googlePlaceId
+    private var annLikeIndex:   [String: LikePlace]   = [:] // key = name
     
     // MARK: body
     private let mapView = MKMapView()
@@ -82,10 +91,10 @@ class MapBoardVC: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-            mapView.delegate = self
-            setupUI()
-            bindViewModel()
-            updatePins(for: mapBoardRef.likePlaces)
+        mapView.delegate = self
+        setupUI()
+        bindViewModel()
+        updatePins(for: mapBoardRef.likePlaces)
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -144,7 +153,7 @@ class MapBoardVC: UIViewController {
     // 검색 컨테이너 뷰 탭 액션
     @objc private func searchContainerTapped() {
         // 모달 컨테이너 뷰 컨트롤러와 LikeModal 뷰 컨트롤러 생성
-
+        
         let modalContainer = ModalContainerVC(mapBoardRef)
         
         // LikeModal에 있는 목데이터로 핀 찍기
@@ -197,6 +206,26 @@ class MapBoardVC: UIViewController {
                 self?.moveMap(to: coordinate)
             }
             .store(in: &cancellables)
+        
+        NotificationCenter.default.publisher(for: .mapShouldFocusPlace)
+            .sink { [weak self] note in
+                guard let self = self,
+                      let coord = note.userInfo?["coordinate"] as? CLLocationCoordinate2D else { return }
+                let title    = note.userInfo?["title"] as? String
+                let subtitle = note.userInfo?["subtitle"] as? String
+
+                // 기존 사용자 위치 외 어노테이션 제거 후 단일 핀 추가
+                let keepUser = self.mapView.annotations.compactMap { $0 as? MKUserLocation }
+                self.mapView.removeAnnotations(self.mapView.annotations.filter { !($0 is MKUserLocation) })
+
+                let pin = MKPointAnnotation()
+                pin.coordinate = coord
+                pin.title = title
+                pin.subtitle = subtitle
+                self.mapView.addAnnotation(pin)
+                self.mapView.selectAnnotation(pin, animated: true)
+            }
+            .store(in: &cancellables)
     }
     
     // 지도를 특정 좌표로 이동시키는 헬퍼 메서드
@@ -207,49 +236,60 @@ class MapBoardVC: UIViewController {
     
     // 핀 업데이트 메서드
     private func updatePins(for searchPlaces: [SearchPlace]) {
-        // 기존 핀 제거
         mapView.removeAnnotations(mapView.annotations)
+        annSearchIndex.removeAll()
         
-        // 전달받은 배열 변환
-        let newAnnotations = searchPlaces.map { item -> MKPointAnnotation in
-            let pin = MKPointAnnotation()
+        let newAnnotations = searchPlaces.map { sp -> PlaceAnnotation in
+            let pin = PlaceAnnotation()
+            pin.coordinate = sp.location.toCLLocationCoordinate2D
+            pin.title = sp.name
+            pin.subtitle = sp.address
+            pin.key = sp.name
+            pin.isSearch = true
+            annSearchIndex[sp.name] = sp
+            return pin
+        }
+        
+        mapView.addAnnotations(newAnnotations)
+        if !newAnnotations.isEmpty { mapView.showAnnotations(newAnnotations, animated: true) }
+    }
+
+
+    private func updatePins(for pinnableItems: [LikePlace]) {
+        mapView.removeAnnotations(mapView.annotations)
+        annLikeIndex.removeAll()
+
+        let newAnnotations = pinnableItems.compactMap { item -> MKPointAnnotation? in
+            guard item.location.latitude != 0 || item.location.longitude != 0 else { return nil }
+            let pin = PlaceAnnotation()
             pin.coordinate = item.location.toCLLocationCoordinate2D
             pin.title = item.name
             pin.subtitle = item.address
+            pin.key = item.name
+            pin.isSearch = false
+            annLikeIndex[item.name] = item
             return pin
         }
 
-        // 새로운 핀 추가
         mapView.addAnnotations(newAnnotations)
-        
-        // 추가된 핀이 있다면, 모든 핀이 보이도록 지도 조정
-        if !newAnnotations.isEmpty {
-            mapView.showAnnotations(newAnnotations, animated: true)
-        }
+        if !newAnnotations.isEmpty { mapView.showAnnotations(newAnnotations, animated: true) }
     }
-    private func updatePins(for pinnableItems: [LikePlace]) {
-        // 기존 핀 제거
-        mapView.removeAnnotations(mapView.annotations)
-        
-        // 전달받은 배열 변환
-        let newAnnotations = pinnableItems.compactMap { item -> MKPointAnnotation? in
-            guard item.location.latitude != 0 || item.location.longitude != 0 else { return nil }
-            let pin = MKPointAnnotation()
-            pin.coordinate = item.location.toCLLocationCoordinate2D
-            pin.title = item.name
-            pin.subtitle = item.address
-            return pin
-        }
-        
-        // 새로운 핀 추가
-        mapView.addAnnotations(newAnnotations)
-        
-        // 추가된 핀이 있다면, 모든 핀이 보이도록 지도 조정
-        if !newAnnotations.isEmpty {
-            mapView.showAnnotations(newAnnotations, animated: true)
+    
+    private func pushOrPresent(_ vc: UIViewController) {
+        if let nav = self.navigationController { nav.pushViewController(vc, animated: true) }
+        else { self.present(vc, animated: true) }
+    }
+
+    private func dismissModalIfNeeded(then work: @escaping () -> Void) {
+        if let presented = self.presentedViewController {
+            presented.dismiss(animated: true) { work() }
+        } else {
+            work()
         }
     }
 }
+
+
 
 extension MapBoardVC: MKMapViewDelegate {
     
@@ -311,31 +351,45 @@ extension MapBoardVC: MKMapViewDelegate {
         mapView.showAnnotations(cluster.memberAnnotations, animated: true)
     }
     
-//  핀 터치 시 상세 정보 뷰로 이동 (현재 주석 처리)
-    func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
-        guard let tappedTitle = view.annotation?.title, let title = tappedTitle else { return }
-        
-        let liekPlace = mapBoardRef.likePlaces
-            .first { $0.name == title }
-        
-        if let likeplaceRef  = liekPlace {
-            let placeRef = mapBoardRef.owner
-                .homeBoard!.spots
-                .flatMap { $0.places }
-                .first { $0.name == likeplaceRef.name }
+// 핀 터치 시 상세 정보 뷰로 이동 (현재 주석 처리)
+    func mapView(_ mapView: MKMapView,
+                 annotationView view: MKAnnotationView,
+                 calloutAccessoryControlTapped control: UIControl) {
 
-            let sampleSpot = mapBoardRef.owner
-                .homeBoard!.spots.first!
-            
-            let tempPlaceRef = Place(owner: sampleSpot, data: likeplaceRef.placeData)
-            
-            let detailVC = PlaceVC(placeRef ?? tempPlaceRef)
+        guard !(view.annotation is MKUserLocation) else { return }
+        let title = (view.annotation?.title ?? nil) ?? ""
+        let subtitle = (view.annotation?.subtitle ?? nil) ?? ""
 
-            if let navigationController = self.navigationController {
-                navigationController.pushViewController(detailVC, animated: true)
-            } else {
-                self.present(detailVC, animated: true)
+        // 1) 즐겨찾기 우선
+        if let like = mapBoardRef.likePlaces.first(where: { $0.name == title }) {
+            let makeVC: () -> UIViewController = {
+                if let hb = self.mapBoardRef.owner.homeBoard,
+                   let place = hb.spots.flatMap({ $0.places }).first(where: { $0.name == like.name }) {
+                    return PlaceVC(place)
+                } else {
+                    guard let hb = self.mapBoardRef.owner.homeBoard else { return UIViewController() }
+                    let spot = Spot(owner: hb, data: .init(name: "즐겨찾기", imageName: ""))
+                    let place = Place(owner: spot, data: like.placeData)
+                    return PlaceVC(place)
+                }
             }
+            let vc = makeVC()
+            dismissModalIfNeeded { [weak self] in self?.pushOrPresent(vc) }
+            return
         }
+
+        // 2) 검색 결과 매칭
+        if let sp = mapBoardRef.searchPlaces.first(where: { $0.name == title })
+            ?? mapBoardRef.searchPlaces.first(where: { $0.address == subtitle }) {
+
+            guard let hb = mapBoardRef.owner.homeBoard else { return }
+            let spot = Spot(owner: hb, data: .init(name: "검색", imageName: ""))
+            let place = Place(owner: spot, data: sp.placeData)
+            let vc = PlaceVC(place)
+            dismissModalIfNeeded { [weak self] in self?.pushOrPresent(vc) }
+            return
+        }
+
+        print("No matching place for annotation. title=\(title), subtitle=\(subtitle)")
     }
 }

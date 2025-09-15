@@ -140,7 +140,7 @@ extension SettingVC: UITableViewDataSource, UITableViewDelegate {
     
     // 각 섹션의 행(row) 개수를 반환
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 1
+        return (section == 0) ? 2 : 1
     }
     
     // 각 섹션의 제목을 반환
@@ -154,33 +154,42 @@ extension SettingVC: UITableViewDataSource, UITableViewDelegate {
     
     // 각 행에 표시될 셀을 생성
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
-        
         if indexPath.section == 0 {
-            cell.textLabel?.text = "테마"
-            switch settingRef.displayMode {
-                case .light:
-                    cell.detailTextLabel?.text = "라이트 모드"
-                case .dark:
-                    cell.detailTextLabel?.text = "다크 모드"
-                case .system:
-                    cell.detailTextLabel?.text = "시스템 설정"
+            // 섹션0: [테마, 지도]
+            let cell = UITableViewCell(style: .value1, reuseIdentifier: nil)
+            if indexPath.row == 0 {
+                cell.textLabel?.text = "테마"
+                switch settingRef.displayMode {
+                case .light:  cell.detailTextLabel?.text = "라이트 모드"
+                case .dark:   cell.detailTextLabel?.text = "다크 모드"
+                case .system: cell.detailTextLabel?.text = "시스템 설정"
+                }
+                cell.accessoryType = .disclosureIndicator
+            } else {
+                cell.textLabel?.text = "지도"
+                // (선택한 앱 표시를 넣고 싶으면 여기서 detailTextLabel에 현재 선택값 표시)
+                cell.accessoryType = .disclosureIndicator
             }
-            cell.accessoryType = .disclosureIndicator
+            return cell
         } else {
+            // 섹션1: [키워드 수집]
+            let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
             cell.textLabel?.text = "키워드 수집"
             cell.accessoryView = keywordSwitch
             cell.selectionStyle = .none
+            return cell
         }
-        
-        return cell
     }
     
     // 특정 행을 탭했을 때의 동작을 정의
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        if indexPath.section == 0 {
+        guard indexPath.section == 0 else { return }
+        if indexPath.row == 0 {
             presentDarkModeActionSheet()
+        } else {
+            // 지도 앱 선택 화면으로 이동 (이미 만든 MapAppPickerVC 사용)
+            navigationController?.pushViewController(MapAppPickerVC(), animated: true)
         }
     }
 }

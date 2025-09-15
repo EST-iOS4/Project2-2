@@ -14,9 +14,11 @@ import ToolBox
 
 // MARK: ViewController
 class PlaceVC: UIViewController {
+    
     // MARK: core
     private let placeRef: Place
     private var cancellables = Set<AnyCancellable>()
+    
     init(_ placeRef: Place) {
         self.placeRef = placeRef
         super.init(nibName: nil, bundle: nil)
@@ -59,6 +61,16 @@ class PlaceVC: UIViewController {
     // 길찾기 버튼
     private let visitButton = UIButton(type: .system)
   
+    private static let kPreferredMapApp = "NAVIO_PREFERRED_MAP_APP"
+
+    private enum PreferredMapApp: String {
+        case naver, kakao, google, apple
+        static func current() -> PreferredMapApp {
+            let raw = UserDefaults.standard.string(forKey: PlaceVC.kPreferredMapApp) ?? "apple"
+            return PreferredMapApp(rawValue: raw) ?? .apple
+        }
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupNavigationBar() // 네비게이션바
@@ -189,7 +201,8 @@ class PlaceVC: UIViewController {
     visitButton.setTitleColor(.white, for: .normal)
     visitButton.titleLabel?.font = .systemFont(ofSize: 18, weight: .semibold)
     visitButton.layer.cornerRadius = 12
-
+    visitButton.addTarget(self, action: #selector(findButtonTapped), for: .touchUpInside)
+      
     // MARK: - 뷰 계층구조 구성
     // 서브뷰 추가
     contentView.addSubview(titleLabel) // 메인타이틀
@@ -374,14 +387,96 @@ class PlaceVC: UIViewController {
   }
   
   // 길찾기 버튼이 탭 되었을때 호출되는 메서드
-  @objc private func findButtonTapped() {
-    let coord = CLLocationCoordinate2D(latitude: placeRef.location.latitude,
-                                       longitude: placeRef.location.longitude)
-    let placemark = MKPlacemark(coordinate: coord)
-    let item = MKMapItem(placemark: placemark)
-    item.name = placeRef.name
-    item.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving])
-  }
+    @objc private func findButtonTapped() {
+        let lat = placeRef.location.latitude
+        let lng = placeRef.location.longitude
+        let name = placeRef.name
+
+        let pref = MapPrefStore.get()
+
+        func open(_ urlString: String, fallback: (() -> Void)? = nil) {
+            guard let url = URL(string: urlString) else { fallback?(); return }
+            if UIApplication.shared.canOpenURL(url) {
+                UIApplication.shared.open(url, options: [:], completionHandler: nil)
+            } else {
+                fallback?()
+            }
+        }
+
+        switch pref {
+        case .apple:
+            // Apple 지도 (기본)
+            let coord = CLLocationCoordinate2D(latitude: lat, longitude: lng)
+            let item = MKMapItem(placemark: MKPlacemark(coordinate: coord))
+            item.name = name
+            item.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving])
+
+        case .google:
+            // Google 지도 앱 → 미설치 시 웹
+            let app = "comgooglemaps://?daddr=\(lat),\(lng)&directionsmode=driving"
+            let web = "https://maps.google.com/?daddr=\(lat),\(lng)&directionsmode=driving"
+            open(app) { open(web) }
+
+        case .naver:
+            // 네이버 지도 (차량 경로). 미설치 시 앱스토어 → 실패 시 Apple 지도
+            let dname = name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+            let app = "nmap://route/car?dlat=\(lat)&dlng=\(lng)&dname=\(dname)"
+            let store = "https://apps.apple.com/kr/app/id311867728"
+            open(app) {
+                open(store) {
+                    // 최종 폴백
+                    let coord = CLLocationCoordinate2D(latitude: lat, longitude: lng)
+                    let item = MKMapItem(placemark: MKPlacemark(coordinate: coord))
+                    item.name = name
+                    item.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving])
+                }
+            }
+
+        case .kakao:
+            // 카카오맵 (차량 경로). 미설치 시 앱스토어 → 실패 시 Apple 지도
+            // by=CAR | PUBLICTRANSIT | FOOT
+            let app = "kakaomap://route?ep=\(lat),\(lng)&by=CAR"
+            let store = "https://apps.apple.com/kr/app/id304608425"
+            open(app) {
+                open(store) {
+                    let coord = CLLocationCoordinate2D(latitude: lat, longitude: lng)
+                    let item = MKMapItem(placemark: MKPlacemark(coordinate: coord))
+                    item.name = name
+                    item.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving])
+                }
+            }
+        }
+    }
+
+
+    private func openNaver(coord: CLLocationCoordinate2D, name: String) -> Bool {
+        let appName = Bundle.main.bundleIdentifier ?? "NavioiOS"
+        let urlStr = "nmap://route/car?dlat=\(coord.latitude)&dlng=\(coord.longitude)&dname=\(name)&appname=\(appName)"
+        guard let url = URL(string: urlStr), UIApplication.shared.canOpenURL(url) else { return false }
+        UIApplication.shared.open(url)
+        return true
+    }
+
+    private func openKakao(coord: CLLocationCoordinate2D, name: String) -> Bool {
+        // 목적지 기준 길찾기
+        let urlStr = "kakaomap://route?ep=\(coord.latitude),\(coord.longitude)&by=CAR"
+        guard let url = URL(string: urlStr), UIApplication.shared.canOpenURL(url) else { return false }
+        UIApplication.shared.open(url)
+        return true
+    }
+
+    private func openGoogle(coord: CLLocationCoordinate2D, name: String) -> Bool {
+        let urlStr = "comgooglemaps://?daddr=\(coord.latitude),\(coord.longitude)&directionsmode=driving"
+        guard let url = URL(string: urlStr), UIApplication.shared.canOpenURL(url) else { return false }
+        UIApplication.shared.open(url)
+        return true
+    }
+
+    private func openApple(coord: CLLocationCoordinate2D, name: String) {
+        let item = MKMapItem(placemark: MKPlacemark(coordinate: coord))
+        item.name = name
+        item.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving])
+    }
   
   // MARK : - 네비게이션 바 설정
   
