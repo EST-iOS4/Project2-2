@@ -66,46 +66,17 @@ public final class MapBoard: Sendable, ObservableObject {
         await LocationManager.shared.stopStreaming()
     }
 
-    public func fetchRecentPlaces() async {
-        // capture ------------------------------------------------------------
-        let boardRef = self                      // 새 객체가 필요할 때 소유자로 연결할 보드 식별자
-        let oldIDs = self.recentPlaces                  // 기존 화면 바인딩 배열을 캡처(재사용/삭제 판단)
-
-        // compute ------------------------------------------------------------
-        let ud = UserDefaults.standard                  // UserDefaults 핸들
-        let keyMRU = "MAPBOARD_RECENT_QUERIES"          // MRU 저장 키
-        // 최근 검색어 배열 로드(없으면 빈 배열) → 최대 10개까지만 사용
-        let ordered: [String] = ((ud.array(forKey: keyMRU) as? [String]) ?? [])
-            .prefix(10)                                 // 상한 적용
-            .map { $0 }                                 // ArraySlice → [String]
-
-        // mutate -------------------------------------------------------------
-        // 1) 기존 항목 중, MRU 목록에 더 이상 없는 것은 삭제
-//        for id in oldIDs {
-//            guard let query = id.name else { continue } // ID가 가리키는 실제 객체의 "이름"을 검색어로 사용
-//            if ordered.contains(query) == false {             // MRU에 없다면
-//                id.ref?.delete()                              // 객체 삭제(스토리지 정합성 보존)
-//            }
-//        }
-
-        // 2) 화면 바인딩 배열 재구성(재사용 우선)
-        self.recentPlaces = []                             // 비움
-        for query in ordered {                             // MRU에서 읽어온 순서대로
-            if let exist = oldIDs.first(where: { $0.name == query }) {
-                self.recentPlaces.append(exist)            // 기존 객체 재사용(아이덴티티 유지)
-                continue
-            }
-            // 없으면 더미 데이터로 새 객체 생성(최근 검색은 좌표/주소/번호가 필요 없음)
-            let data = PlaceData(
-                name: query,                               // 셀에 표시할 텍스트
-                imageName: "",
-                location: .init(latitude: 0, longitude: 0),
-                address: "",
-                number: ""
-            )
-            let rec = RecentPlace(owner: boardRef, data: data)// 소유자 연결하여 생성
-            self.recentPlaces.append(rec)               // ID를 화면 바인딩 배열에 추가
+    public func fetchRecentPlaces() {
+        // 
+        let googlePlaces = SearchPlace.load()
+        
+        var newPlaces: [RecentPlace] = []
+        for googlePlace in googlePlaces {
+            let recentPlaceRef = RecentPlace(owner: self, name: googlePlace.name)
+            newPlaces.append(recentPlaceRef)
         }
+        
+        self.recentPlaces = newPlaces
     }
     public func fetchSearchPlaces() async {
         logger.start()
@@ -145,7 +116,7 @@ public final class MapBoard: Sendable, ObservableObject {
         }
 
         // 3) 스냅샷들을 수집하여 목록/상세 캐시 빌드
-        var newDatas: [(name: String, data: PlaceData, summary: String?, image: UIImage)] = [] // 리스트 셀 구성용 튜플 배열
+        var newDatas: [(googlePlaceId: String, data: PlaceData, image: UIImage)] = [] // 리스트 셀 구성용 튜플 배열
 
         
         
@@ -185,18 +156,18 @@ public final class MapBoard: Sendable, ObservableObject {
             self.editorialSummaryByName[snap.name] = snap.summary ?? ""
 
             // (D) 최종적으로 테이블 재구성에 쓸 튜플 축적
-            newDatas.append((snap.name, placeData, snap.summary, placeImage))
+            newDatas.append((placeID, placeData, placeImage))
         }
 
 
         // (F) 화면 바인딩 배열 재구성: 동일 이름이 있으면 기존 ID 재사용
         var newPlaces: [SearchPlace] = []
         
-        for (name, placeData, summary, placeImage) in newDatas {          // 신규 데이터 순회
-            if let exist = oldIDs.first(where: { $0.name == name }) {
+        for (googlePlaceId, placeData, placeImage) in newDatas {          // 신규 데이터 순회
+            if let exist = oldIDs.first(where: { $0.name == placeData.name }) {
                 self.searchPlaces.append(exist)               // 기존 ID 재사용
             } else {
-                let sp = SearchPlace(owner: boardRef, data: placeData) // 새 객체 생성
+                let sp = SearchPlace(owner: boardRef, data: placeData, googlePlaceId: googlePlaceId) // 새 객체 생성
                 
                 sp.image = placeImage
                 
@@ -205,6 +176,14 @@ public final class MapBoard: Sendable, ObservableObject {
         }
         
         self.searchPlaces = newPlaces
+    }
+    
+    public func removeRecentPlaces() {
+        // capture
+        let defaults = UserDefaults.standard
+        defaults.set([], forKey: SearchPlace.udKey)
+        
+        self.recentPlaces = []
     }
     
     

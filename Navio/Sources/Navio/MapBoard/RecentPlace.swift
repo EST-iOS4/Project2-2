@@ -14,13 +14,9 @@ import UIKit
 @MainActor
 public final class RecentPlace: Sendable, ObservableObject {
     // MARK: core
-    internal init(owner: MapBoard, data: PlaceData) {
+    internal init(owner: MapBoard, name: String) {
         self.owner = owner
-        self.name = data.name
-        self.imageName = data.imageName
-        self.location = data.location
-        self.address = data.address
-        self.number = data.number
+        self.name = name
     }
     
     
@@ -28,21 +24,16 @@ public final class RecentPlace: Sendable, ObservableObject {
     internal nonisolated let owner: MapBoard
     
     public nonisolated let name: String
-    public nonisolated let imageName: String
-    public var image: UIImage {
-        let imageURL = Bundle.module.url(
-            forResource: imageName,
-            withExtension: "png")!
-        let data = try? Data(contentsOf: imageURL)
-        let uiImage = UIImage(data: data!)
-        return uiImage!
-    }
     
-    public nonisolated let location: Location
-    public nonisolated let address: String
-    public nonisolated let number: String
     
     // MARK: action
+    public func apply() async {
+        let mapBoardRef = owner
+        
+        mapBoardRef.searchInput = name
+        
+        await mapBoardRef.fetchSearchPlaces()
+    }
     
     
     // MARK: value

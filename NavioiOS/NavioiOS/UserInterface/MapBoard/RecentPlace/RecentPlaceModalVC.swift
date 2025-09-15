@@ -7,6 +7,7 @@
 import Foundation
 import UIKit
 import Navio
+import Combine
 
 
 // MARK: - RecentPlaceData
@@ -78,15 +79,41 @@ class RecentPlaceModalVC: UIViewController {
         return tv
     }()
   
-//    let shortcutData = ["홍익대학교", "석촌호수", "오시리아관광단지"]
-    let recentPlaceData = [
-        RecentPlaceData(imageName: "clock", placeName: "Times Square"),
-        RecentPlaceData(imageName: "clock", placeName: "한강")
-    ]
+    // MARK: - Combine
+    private var cancellables = Set<AnyCancellable>()
   
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        bind()
+        setupBinding()
+        
+        mapBoardRef.fetchRecentPlaces()
+    }
+    
+    func setupBinding() {
+        // 최근 검색 리스트 변화에 따른 UI 상태와 테이블 갱신
+        mapBoardRef.$recentPlaces
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] places in
+                guard let self = self else { return }
+                // 비어있을 때 라벨/버튼 상태 조정
+                self.recentSearchLabel.isHidden = places.isEmpty
+                self.deleteAllButton.isEnabled = places.isEmpty == false
+                // 테이블 갱신 (bind()에서도 처리하지만, 버튼/라벨 상태는 여기서 함께 관리)
+                self.tableView.reloadData()
+            }
+            .store(in: &cancellables)
+
+        // 전체 삭제 버튼 탭 처리
+        deleteAllButton.addTarget(self, action: #selector(didTapDeleteAll), for: .touchUpInside)
+    }
+    
+    @objc private func didTapDeleteAll() {
+        // MRU(UserDefaults) 초기화 후, 보드의 최근목록 재빌드
+        Task { 
+            mapBoardRef.removeRecentPlaces()
+        }
     }
   
     func setupUI() {
@@ -132,6 +159,21 @@ class RecentPlaceModalVC: UIViewController {
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
+    }
+  
+    private func bind() {
+        // MapBoard.recentPlaces가 변경될 때마다 테이블뷰 갱신
+        mapBoardRef.$recentPlaces
+            // 같은 구성으로 연속 방출 시 불필요한 reload 최소화(이름 배열 기준)
+            .removeDuplicates { lhs, rhs in
+                lhs.map { $0.name } == rhs.map { $0.name }
+            }
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                guard let self = self else { return }
+                self.tableView.reloadData()
+            }
+            .store(in: &cancellables)
     }
   
     // 즐겨찾기 버튼 생성 헬퍼 메서드
@@ -197,12 +239,13 @@ class RecentPlaceModalVC: UIViewController {
 extension RecentPlaceModalVC: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return recentPlaceData.count
+        return mapBoardRef.recentPlaces.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        
         let cell = tableView.dequeueReusableCell(withIdentifier: "RecentPlaceCell", for: indexPath) as! RecentPlaceCell
-        cell.configure(with: recentPlaceData[indexPath.row])
+        cell.configure(with: mapBoardRef.recentPlaces[indexPath.row])
         return cell
     }
     

@@ -109,6 +109,8 @@ extension SearchPlaceModelVC: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         // 탭된 아이템 가져오기
         let selectedPlace = items[indexPath.row]
+        selectedPlace.save()
+        
         let placeData = selectedPlace.placeData
         
         let homeBoardRef = mapBoardRef.owner.homeBoard!
