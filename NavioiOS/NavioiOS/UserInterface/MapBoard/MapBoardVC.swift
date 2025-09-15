@@ -82,9 +82,10 @@ class MapBoardVC: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        mapView.delegate = self
-        setupUI()
-        bindViewModel()
+            mapView.delegate = self
+            setupUI()
+            bindViewModel()
+            updatePins(for: mapBoardRef.likePlaces)
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -175,22 +176,23 @@ class MapBoardVC: UIViewController {
     
     // Combine을 사용해 ViewModel의 데이터를 UI에 바인딩
     private func bindViewModel() {
-        mapBoardRef.$likePlaces // 즐겨찾기 장소
-            .sink { [weak self] placeIDs in
-                let placeObjects = placeIDs.compactMap { $0 }
-                self?.updatePins(for: placeObjects)
+        mapBoardRef.$likePlaces
+            .receive(on: RunLoop.main)                    // ← 추가
+            .sink { [weak self] places in
+                self?.updatePins(for: places)
             }
             .store(in: &cancellables)
-        
+
         mapBoardRef.$searchPlaces
+            .receive(on: RunLoop.main)                    // ← 가능하면 이 줄도 추가
             .sink { [weak self] searchPlaces in
-                let placeObjects = searchPlaces.compactMap { $0 }
-                self?.updatePins(for: placeObjects)
+                self?.updatePins(for: searchPlaces)
             }
             .store(in: &cancellables)
-        
+
         NotificationCenter.default.publisher(for: .mapShouldMoveToCoordinate)
             .compactMap { $0.userInfo?["coordinate"] as? CLLocationCoordinate2D }
+            .receive(on: RunLoop.main)                    // ← 추가
             .sink { [weak self] coordinate in
                 self?.moveMap(to: coordinate)
             }
@@ -230,7 +232,8 @@ class MapBoardVC: UIViewController {
         mapView.removeAnnotations(mapView.annotations)
         
         // 전달받은 배열 변환
-        let newAnnotations = pinnableItems.map { item -> MKPointAnnotation in
+        let newAnnotations = pinnableItems.compactMap { item -> MKPointAnnotation? in
+            guard item.location.latitude != 0 || item.location.longitude != 0 else { return nil }
             let pin = MKPointAnnotation()
             pin.coordinate = item.location.toCLLocationCoordinate2D
             pin.title = item.name
