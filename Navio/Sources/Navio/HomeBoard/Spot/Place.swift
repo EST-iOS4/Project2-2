@@ -148,6 +148,7 @@ public final class Place: Sendable, ObservableObject {
         if willLike {
             if mapBoardRef.likePlaces.contains(where: { $0.name == self.name }) == false {
                 let likePlaceRef = LikePlace(owner: mapBoardRef, data: placeData)
+                likePlaceRef.customImage = self.customImage
                 mapBoardRef.likePlaces.append(likePlaceRef)
             }
         } else {
