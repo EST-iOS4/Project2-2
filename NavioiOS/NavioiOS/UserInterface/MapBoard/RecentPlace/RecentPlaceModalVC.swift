@@ -4,9 +4,11 @@
 //
 //  Created by EunYoung Wang, 구현모 on 9/10/25.
 //
-
 import Foundation
 import UIKit
+import Navio
+import Combine
+
 
 // MARK: - RecentPlaceData
 // 역할: '최근 검색' 목록의 테이블 뷰에 표시될 데이터 하나의 형태를 정의
@@ -17,65 +19,21 @@ struct RecentPlaceData {
 
 // MARK: - RecentPlaceCell
 // 역할: UITableView 안에 들어갈 개별 셀의 UI와 레이아웃을 정의
-class RecentPlaceCell: UITableViewCell {
-  
-    private let placeImageView: UIImageView = {
-        let iv = UIImageView()
-        iv.contentMode = .scaleAspectFit
-        iv.clipsToBounds = true
-        iv.layer.cornerRadius = 20
-        iv.backgroundColor = .systemGray5
-        iv.tintColor = .systemGray
-        iv.translatesAutoresizingMaskIntoConstraints = false
-        return iv
-    }()
-  
-    private let placeNameLabel: UILabel = {
-        let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        label.textColor = .label
-        label.numberOfLines = 1
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
-    }()
-  
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
-        setupUI()
-    }
-  
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-  
-    private func setupUI() {
-        contentView.addSubview(placeImageView)
-        contentView.addSubview(placeNameLabel)
-        selectionStyle = .none
-      
-        // Auto Layout 정의
-        NSLayoutConstraint.activate([
-            placeImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            placeImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            placeImageView.widthAnchor.constraint(equalToConstant: 40),
-            placeImageView.heightAnchor.constraint(equalToConstant: 40),
-        
-            placeNameLabel.leadingAnchor.constraint(equalTo: placeImageView.trailingAnchor, constant: 15),
-            placeNameLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            placeNameLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-        ])
-    }
-  
-    // 외부에서 데이터를 받아 셀의 UI를 업데이트하는 메서드
-    func configure(with data: RecentPlaceData) {
-        placeImageView.image = UIImage(systemName: data.imageName)
-        placeNameLabel.text = data.placeName
-    }
-}
+
 
 // MARK: - RecentPlaceModalViewController
 // 역할: '최근 검색' 상태일 때 모달 컨테이너에 표시될 콘텐츠 ViewController
-class RecentPlaceModalViewController: UIViewController {
+class RecentPlaceModalVC: UIViewController {
+    // MARK: core
+    private let mapBoardRef: MapBoard
+    init(mapBoardRef: MapBoard) {
+        self.mapBoardRef = mapBoardRef
+        
+        super.init(nibName: nil, bundle: nil)
+    }
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
   
     // MARK: - UI Components
     private let shortcutScrollView: UIScrollView = {
@@ -105,7 +63,7 @@ class RecentPlaceModalViewController: UIViewController {
     
     let deleteAllButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("삭제", for: .normal)
+        button.setTitle("모두 삭제", for: .normal)
         button.titleLabel?.font = UIFont.systemFont(ofSize: 16)
         button.setTitleColor(.systemRed, for: .normal)
         button.translatesAutoresizingMaskIntoConstraints = false
@@ -115,27 +73,54 @@ class RecentPlaceModalViewController: UIViewController {
     let tableView: UITableView = {
         let tv = UITableView()
         tv.backgroundColor = .clear
-        tv.separatorStyle = .none
+        tv.separatorStyle = .singleLine
+        tv.separatorColor = .opaqueSeparator
         tv.translatesAutoresizingMaskIntoConstraints = false
         return tv
     }()
   
-    let shortcutData = ["홍익대학교", "석촌호수", "오시리아관광단지"]
-    let recentPlaceData = [
-        RecentPlaceData(imageName: "clock", placeName: "Times Square"),
-        RecentPlaceData(imageName: "clock", placeName: "한강")
-    ]
+    // MARK: - Combine
+    private var cancellables = Set<AnyCancellable>()
   
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        bind()
+        setupBinding()
+        
+        mapBoardRef.fetchRecentPlaces()
+    }
+    
+    func setupBinding() {
+        // 최근 검색 리스트 변화에 따른 UI 상태와 테이블 갱신
+        mapBoardRef.$recentPlaces
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] places in
+                guard let self = self else { return }
+                // 비어있을 때 라벨/버튼 상태 조정
+                self.recentSearchLabel.isHidden = places.isEmpty
+                self.deleteAllButton.isEnabled = places.isEmpty == false
+                // 테이블 갱신 (bind()에서도 처리하지만, 버튼/라벨 상태는 여기서 함께 관리)
+                self.tableView.reloadData()
+            }
+            .store(in: &cancellables)
+
+        // 전체 삭제 버튼 탭 처리
+        deleteAllButton.addTarget(self, action: #selector(didTapDeleteAll), for: .touchUpInside)
+    }
+    
+    @objc private func didTapDeleteAll() {
+        // MRU(UserDefaults) 초기화 후, 보드의 최근목록 재빌드
+        Task {
+            mapBoardRef.removeRecentPlaces()
+        }
     }
   
     func setupUI() {
         view.backgroundColor = .systemBackground
     
-        for title in shortcutData {
-            let button = createShortcutButton(title: title)
+        for place in mapBoardRef.likePlaces {
+            let button = createShortcutButton(title: place.name)
             shortcutStackView.addArrangedSubview(button)
         }
         
@@ -176,6 +161,21 @@ class RecentPlaceModalViewController: UIViewController {
         ])
     }
   
+    private func bind() {
+        // MapBoard.recentPlaces가 변경될 때마다 테이블뷰 갱신
+        mapBoardRef.$recentPlaces
+            // 같은 구성으로 연속 방출 시 불필요한 reload 최소화(이름 배열 기준)
+            .removeDuplicates { lhs, rhs in
+                lhs.map { $0.name } == rhs.map { $0.name }
+            }
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                guard let self = self else { return }
+                self.tableView.reloadData()
+            }
+            .store(in: &cancellables)
+    }
+  
     // 즐겨찾기 버튼 생성 헬퍼 메서드
     private func createShortcutButton(title: String) -> UIButton {
         var config = UIButton.Configuration.filled()
@@ -187,8 +187,10 @@ class RecentPlaceModalViewController: UIViewController {
         config.cornerStyle = .capsule
         config.contentInsets = NSDirectionalEdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12)
         
+        let heartImage = UIImage(systemName: "heart.fill")?.withTintColor(.systemPink, renderingMode: .alwaysOriginal)
+        config.image = heartImage
+      
         let button = UIButton(configuration: config)
-        button.tintColor = .systemPink
         return button
     }
     
@@ -234,15 +236,16 @@ class RecentPlaceModalViewController: UIViewController {
 }
 
 // MARK: - TableView DataSource & Delegate
-extension RecentPlaceModalViewController: UITableViewDataSource, UITableViewDelegate {
+extension RecentPlaceModalVC: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return recentPlaceData.count
+        return mapBoardRef.recentPlaces.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        
         let cell = tableView.dequeueReusableCell(withIdentifier: "RecentPlaceCell", for: indexPath) as! RecentPlaceCell
-        cell.configure(with: recentPlaceData[indexPath.row])
+        cell.configure(with: mapBoardRef.recentPlaces[indexPath.row])
         return cell
     }
     

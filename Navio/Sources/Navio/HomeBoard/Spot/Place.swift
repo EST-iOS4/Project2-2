@@ -9,133 +9,156 @@ import Combine
 import UIKit
 import ToolBox
 
+private let logger = NavioLogger("Place")
+
 
 // MARK: Object
 @MainActor
 public final class Place: Sendable, ObservableObject {
     // MARK: core
-    internal init(owner: Spot.ID, data: PlaceData) {
+    public init(owner: Spot, data: PlaceData) {
         self.owner = owner
+        self.placeData = data
         self.name = data.name
         self.imageName = data.imageName
         self.address = data.address
         self.number = data.number
         self.location = data.location
-        
-        PlaceManager.register(self)
     }
     
     
     // MARK: state
-    public nonisolated let id = ID()
-    internal nonisolated let owner: Spot.ID
+    internal nonisolated let owner: Spot
+    private let userDefaults = UserDefaults.standard
+    private let placeData: PlaceData
     
     public internal(set) var name: String
     public internal(set) var imageName: String
     public var image: UIImage {
-        let imageURL = Bundle.module.url(
-            forResource: imageName,
-            withExtension: "png")!
-        let data = try? Data(contentsOf: imageURL)
-        let uiImage = UIImage(data: data!)
-        return uiImage!
+        if let customImage = self.customImage {
+            return customImage
+        } else {
+            let imageURL = Bundle.module.url(
+                forResource: imageName,
+                withExtension: "png")!
+            let data = try? Data(contentsOf: imageURL)
+            let uiImage = UIImage(data: data!)
+            return uiImage!
+        }
     }
+    
+    public var customImage: UIImage? = nil
     
     public internal(set) var address: String
     public internal(set) var number: String
     public internal(set) var location: Location
-    public internal(set) var like: Bool = false
+    
+    @Published public internal(set) var isLiked = false
+    @Published public private(set) var isFetchedFromDB = false
+    
     
     // MARK: action
+    public func fetchFromDB() {
+        logger.start()
+
+        // 중복 실행 방지
+        guard self.isFetchedFromDB == false else {
+            logger.failure("이미 DB로부터 데이터를 가져왔습니다.")
+            return
+        }
+
+        let navioRef = self.owner.owner.owner
+        let mapBoardRef = navioRef.mapBoard!
+
+        // UserDefaults 저장 구조
+        let userDefaultBoxKey = "LIKED_PLACES"              // 이름→필드 사전
+        let userDefaultIDsKey = "MAPBOARD_LIKEPLACE_IDS"    // 표시 순서 배열
+        let ud = UserDefaults.standard
+
+        // 박스에서 현재 Place가 존재하는지로 isLiked 판단
+        let box = (ud.dictionary(forKey: userDefaultBoxKey) as? [String: [String: String]]) ?? [:]
+        let existsInBox = box[self.name] != nil
+
+        if existsInBox {
+            // likePlaces에 동일 이름이 없으면 추가
+            if mapBoardRef.likePlaces.contains(where: { $0.name == self.name }) == false {
+                let likePlaceRef = LikePlace(owner: mapBoardRef, data: self.placeData)
+                mapBoardRef.likePlaces.append(likePlaceRef)
+            }
+            self.isLiked = true
+        } else {
+            // 저장된 것이 없으면 false로 간주하고 목록에서도 제거
+            mapBoardRef.removeLikePlace(name: self.name)
+            self.isLiked = false
+        }
+
+        // IDs 배열에 현재 항목이 존재하지만 박스에 없다면 정합성 회복(옵셔널)
+        var ids = (ud.array(forKey: userDefaultIDsKey) as? [String]) ?? []
+        if existsInBox {
+            if ids.contains(self.name) == false {
+                ids.insert(self.name, at: 0)
+                ud.set(ids, forKey: userDefaultIDsKey)
+            }
+        } else {
+            if ids.contains(self.name) {
+                ids.removeAll { $0 == self.name }
+                ud.set(ids, forKey: userDefaultIDsKey)
+            }
+        }
+
+        self.isFetchedFromDB = true
+    }
     public func toggleLike() {
-        // capture
-        let spotRef = self.owner.ref!
-        let homeboardRef = spotRef.owner.ref!
-        let navioRef = homeboardRef.owner.ref!
-        let mapBoardRef = navioRef.mapBoard!.ref!
+        logger.start(info: "current: \(self.isLiked)")
 
-        let isChangedToLike = self.like == false
+        let navioRef = self.owner.owner.owner
+        let mapBoardRef = navioRef.mapBoard!
 
-        // compute
+        // 토글 후 상태
+        let willLike = (self.isLiked == false)
+
+        // UserDefaults 저장 키들(박스 + 표시순서)
         let userDefaultBoxKey = "LIKED_PLACES"
         let userDefaultIDsKey = "MAPBOARD_LIKEPLACE_IDS"
         let ud = UserDefaults.standard
+
+        // 0) 과거 호환: 단일 불리언 키도 계속 써서 뒤로호환 유지
+        ud.set(willLike, forKey: placeData.isLikedKey)
+
+        // 1) 박스 갱신(이름 → 필드 사전)
         var box = (ud.dictionary(forKey: userDefaultBoxKey) as? [String: [String: String]]) ?? [:]
-        var ids = (ud.array(forKey: userDefaultIDsKey) as? [String]) ?? []
-        let placeKey = self.name // 이름 유일 전제
-
-        // 저장소에 기록할 데이터(필요 필드만)
-        let placeData = PlaceData(
-            name: self.name,
-            imageName: self.imageName,
-            location: self.location,
-            address: self.address,
-            number: self.number
-        )
-
-        // mutate
-        if isChangedToLike {
-            // 인스턴스 생성
-            let newLikePlaceRef = LikePlace(owner: mapBoardRef.id, data: placeData)
-            mapBoardRef.likePlaces.append(newLikePlaceRef.id)
-
-            // UserDefaults 추가
-            box[placeKey] = [
-                "name": self.name,
+        if willLike {
+            box[self.name] = [
                 "imageName": self.imageName,
-                "address": self.address
+                "address": self.address,
+                "number": self.number
             ]
-            if ids.contains(placeKey) == false { ids.append(placeKey) }
-            ud.set(box, forKey: userDefaultBoxKey)
-            ud.set(ids, forKey: userDefaultIDsKey)
         } else {
-            // 인스턴스 삭제
-            mapBoardRef.likePlaces
-                .first { $0.ref?.name == self.name }?
-                .ref?.delete()
+            box.removeValue(forKey: self.name)
+        }
+        ud.set(box, forKey: userDefaultBoxKey)
 
-            // 배열에서 ID 제거
-            mapBoardRef.likePlaces.removeAll { likePlace in
-                likePlace.ref?.name == self.name
+        // 2) 표시 순서 배열 갱신(MRU 스타일: 앞쪽 삽입)
+        var ids = (ud.array(forKey: userDefaultIDsKey) as? [String]) ?? []
+        ids.removeAll { $0 == self.name }
+        if willLike { ids.insert(self.name, at: 0) }
+        ud.set(ids, forKey: userDefaultIDsKey)
+
+        // 3) in-memory likePlaces 동기화
+        if willLike {
+            if mapBoardRef.likePlaces.contains(where: { $0.name == self.name }) == false {
+                let likePlaceRef = LikePlace(owner: mapBoardRef, data: placeData)
+                likePlaceRef.customImage = self.customImage
+                mapBoardRef.likePlaces.append(likePlaceRef)
             }
-
-            // UserDefaults 제거
-            box[placeKey] = nil
-            ids.removeAll { $0 == placeKey }
-            if box.isEmpty { ud.removeObject(forKey: userDefaultBoxKey) } else { ud.set(box, forKey: userDefaultBoxKey) }
-            if ids.isEmpty { ud.removeObject(forKey: userDefaultIDsKey) } else { ud.set(ids, forKey: userDefaultIDsKey) }
+        } else {
+            mapBoardRef.removeLikePlace(name: self.name)
         }
 
-        self.like.toggle()
+        // 4) 상태 변경 (Combine로 UI 반영)
+        self.isLiked = willLike
     }
 
-    
     
     // MARK: value
-    @MainActor
-    public struct ID: Sendable, Hashable {
-        public let value = UUID()
-        nonisolated init() { }
-        
-        public var isExist: Bool {
-            PlaceManager.container[self] != nil
-        }
-        public var ref: Place? {
-            PlaceManager.container[self]
-        }
-    }
-}
-
-
-// MARK: ObjectManager
-@MainActor
-fileprivate final class PlaceManager: Sendable {
-    // MARK: core
-    static var container: [Place.ID: Place] = [:]
-    static func register(_ object: Place) {
-        container[object.id] = object
-    }
-    static func unregister(_ id: Place.ID) {
-        container[id] = nil
-    }
 }

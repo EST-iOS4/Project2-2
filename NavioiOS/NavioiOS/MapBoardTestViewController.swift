@@ -335,12 +335,14 @@ final class MapBoardTestViewController: UIViewController, UITableViewDataSource,
         ?? UITableViewCell(style: .subtitle, reuseIdentifier: "Cell")
         if seg.selectedSegmentIndex == 0 {
             let id = mapBoard.searchPlaces[indexPath.row]
-            cell.textLabel?.text = id.ref?.name ?? "(no name)"
-            cell.detailTextLabel?.text = id.ref?.address ?? ""
+            cell.textLabel?.text = id.name
+            // 주소만 표시
+            cell.detailTextLabel?.text = id.address
+
             cell.accessoryType = .disclosureIndicator
         } else {
             let id = mapBoard.recentPlaces[indexPath.row]
-            cell.textLabel?.text = id.ref?.name ?? "(no query)"
+            cell.textLabel?.text = id.name
             cell.detailTextLabel?.text = "최근 검색어"
             cell.accessoryType = .none
         }
@@ -353,13 +355,13 @@ final class MapBoardTestViewController: UIViewController, UITableViewDataSource,
         tableView.deselectRow(at: indexPath, animated: true)
         if seg.selectedSegmentIndex == 0 {
             let id = mapBoard.searchPlaces[indexPath.row]
-            guard let name = id.ref?.name, !name.isEmpty else { return }
-            let vc = PlaceDetailViewController(placeName: name)
+            guard !id.name.isEmpty else { return }
+            let vc = PlaceDetailViewController(placeName: id.name)
             navigationController?.pushViewController(vc, animated: true)
         } else {
             let id = mapBoard.recentPlaces[indexPath.row]
-            guard let query = id.ref?.name, !query.isEmpty else { return }
-            runSearch(for: query)
+            guard !id.name.isEmpty else { return }
+            runSearch(for: id.name)
         }
     }
 }

@@ -7,77 +7,49 @@ import CoreLocation
 // MARK: Object
 @MainActor
 public final class LikePlace: Sendable, ObservableObject {
-    // core
-    internal init(owner: MapBoard.ID, data: PlaceData) {
+    // MARK: core
+    internal init(owner: MapBoard, data: PlaceData) {
         self.owner = owner
+        self.placeData = data
         self.name = data.name
         self.imageName = data.imageName
         self.location = data.location
         self.address = data.address
         self.number = data.number
-        
-        LikedSpotManager.register(self)
-    }
-    internal func delete() {
-        LikedSpotManager.unregister(self.id)
     }
     
     
-    // state
-    public nonisolated let id = ID()
-    internal nonisolated let owner: MapBoard.ID
+    // MARK: state
+    internal nonisolated let owner: MapBoard
+    private let userDefaults = UserDefaults.standard
+    public let placeData: PlaceData
     
     public nonisolated let name: String
     public nonisolated let imageName: String
     public var image: UIImage {
-        let imageURL = Bundle.module.url(
-            forResource: imageName,
-            withExtension: "png")!
-        let data = try? Data(contentsOf: imageURL)
-        let uiImage = UIImage(data: data!)
-        return uiImage!
+        if let customImage {
+            return customImage
+        } else {
+            let imageURL = Bundle.module.url(
+                forResource: imageName,
+                withExtension: "png")!
+            let data = try? Data(contentsOf: imageURL)
+            let uiImage = UIImage(data: data!)
+            return uiImage!
+        }
     }
+    public var customImage: UIImage? = nil
     
     public nonisolated let location: Location
     public nonisolated let address: String
     public nonisolated let number: String
     
-    // action
     
     
-    // value
-    @MainActor
-    public struct ID: Sendable, Hashable {
-        public let value = UUID()
-        nonisolated init() { }
-        
-        public var isExist: Bool {
-            LikedSpotManager.container[self] != nil
-        }
-        public var ref: LikePlace? {
-            LikedSpotManager.container[self]
-        }
+    // MARK: action
+    public func cancelLike() {
+        fatalError("구현 예정")
+        // UserDefaults에서 isLikedKey에 해당하는 값을 false로 변경
+        // MapBoard에서 LikePlace 제거
     }
-}
-
-
-// MARK: ObjectManager
-@MainActor
-fileprivate final class LikedSpotManager: Sendable {
-    // core
-    static var container: [LikePlace.ID: LikePlace] = [:]
-    static func register(_ object: LikePlace) {
-        container[object.id] = object
-    }
-    static func unregister(_ id: LikePlace.ID) {
-        container[id] = nil
-    }
-}
-
-extension LikePlace: Pinnable {
-    public nonisolated var coordinate: CLLocationCoordinate2D {
-        return .init(latitude: self.location.latitude, longitude: self.location.longitude)
-    }
-    public nonisolated var title: String { self.name }
-    public nonisolated var subtitle: String? { self.address }
 }
