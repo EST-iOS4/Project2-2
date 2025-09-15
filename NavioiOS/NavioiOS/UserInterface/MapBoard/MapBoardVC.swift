@@ -311,15 +311,21 @@ extension MapBoardVC: MKMapViewDelegate {
     func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
         guard let tappedTitle = view.annotation?.title, let title = tappedTitle else { return }
         
+        let liekPlace = mapBoardRef.likePlaces
+            .first { $0.name == title }
         
-        if let likePlaceRef = mapBoardRef.likePlaces.first(where: { $0.name == title }) {
+        if let likeplaceRef  = liekPlace {
             let placeRef = mapBoardRef.owner
                 .homeBoard!.spots
                 .flatMap { $0.places }
-                .first { $0.name == likePlaceRef.name }!
+                .first { $0.name == likeplaceRef.name }
 
-            // 상세 정보 뷰 컨트롤러는 여기에 연결하시면 됩니다. placeID를 전달받도록 만들어주세요.
-            let detailVC = PlaceVC(placeRef)
+            let sampleSpot = mapBoardRef.owner
+                .homeBoard!.spots.first!
+            
+            let tempPlaceRef = Place(owner: sampleSpot, data: likeplaceRef.placeData)
+            
+            let detailVC = PlaceVC(placeRef ?? tempPlaceRef)
 
             if let navigationController = self.navigationController {
                 navigationController.pushViewController(detailVC, animated: true)

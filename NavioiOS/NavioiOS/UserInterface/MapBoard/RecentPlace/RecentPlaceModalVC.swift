@@ -63,7 +63,7 @@ class RecentPlaceModalVC: UIViewController {
     
     let deleteAllButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("삭제", for: .normal)
+        button.setTitle("모두 삭제", for: .normal)
         button.titleLabel?.font = UIFont.systemFont(ofSize: 16)
         button.setTitleColor(.systemRed, for: .normal)
         button.translatesAutoresizingMaskIntoConstraints = false
@@ -111,7 +111,7 @@ class RecentPlaceModalVC: UIViewController {
     
     @objc private func didTapDeleteAll() {
         // MRU(UserDefaults) 초기화 후, 보드의 최근목록 재빌드
-        Task { 
+        Task {
             mapBoardRef.removeRecentPlaces()
         }
     }
