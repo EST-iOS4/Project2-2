@@ -7,6 +7,7 @@
 import UIKit
 import Navio
 import Combine
+import ToolBox
 
 
 // MARK: - SearchItemData
@@ -23,7 +24,8 @@ class SearchPlaceModelVC: UIViewController {
     // MARK: core
     private let mapBoardRef: MapBoard
     private var cancellables = Set<AnyCancellable>()
-    private var items: [SearchItemData] = []
+    private var items: [SearchPlace] = []
+    
     init(_ mapBoardRef: MapBoard) {
         self.mapBoardRef = mapBoardRef
         super.init(nibName: nil, bundle: nil)
@@ -73,14 +75,7 @@ class SearchPlaceModelVC: UIViewController {
             .receive(on: RunLoop.main)
             .sink { [weak self] (places, summaryByName) in
                 guard let self = self else { return }
-                self.items = places.map { sp in
-                    let subtitle = summaryByName[sp.name].flatMap { $0.isEmpty ? nil : $0 } ?? sp.address
-                    return SearchItemData(
-                        imageName: "mappin.circle.fill",
-                        title: sp.name,
-                        subtitle: subtitle
-                    )
-                }
+                self.items = places
                 print("[SearchPlaceModelVC] list updated. count=\(self.items.count)")
                 self.tableView.reloadData()
             }
@@ -104,4 +99,28 @@ extension SearchPlaceModelVC: UITableViewDataSource, UITableViewDelegate {
   func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
     return 70
   }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        // 탭된 아이템 가져오기
+        let selectedPlace = items[indexPath.row]
+        let placeData = selectedPlace.placeData
+        
+        let homeBoardRef = mapBoardRef.owner.homeBoard!
+        let sampleSpotRef = Spot(owner: homeBoardRef, data: .init(name: "", imageName: ""))
+        
+        let placeRef = Place(owner: sampleSpotRef, data: placeData)
+        
+        
+        // 이동할 VC 생성 (예: PlaceDetailViewController)
+        let detailVC = PlaceVC(placeRef)
+        
+        // 네비게이션 컨트롤러가 있다면 push
+        if let navigationController = self.navigationController {
+            navigationController.pushViewController(detailVC, animated: true)
+        } else {
+            // 네비게이션 컨트롤러가 없다면 modal present
+            detailVC.modalPresentationStyle = .automatic
+            self.present(detailVC, animated: true, completion: nil)
+        }
+    }
 }

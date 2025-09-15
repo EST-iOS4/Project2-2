@@ -10,6 +10,8 @@ import ToolBox
 import CoreLocation
 import GooglePlaces
 
+private let logger = NavioLogger("MapBoard")
+
 
 // MARK: Object
 @MainActor
@@ -208,7 +210,7 @@ public final class MapBoard: Sendable, ObservableObject {
         }
 
         // 3) 스냅샷들을 수집하여 목록/상세 캐시 빌드 --------------------------
-        var newDatas: [(name: String, data: PlaceData, summary: String?)] = [] // 리스트 셀 구성용 튜플 배열
+        var newDatas: [(name: String, data: PlaceData, summary: String?, image: UIImage)] = [] // 리스트 셀 구성용 튜플 배열
 
         for placeID in placeIDs {                              // 자동완성으로 얻은 placeID들을 순회
             guard let snap = await fetchPlaceSnap(placeID) else { continue } // 개별 실패 무시하고 다음
@@ -221,6 +223,10 @@ public final class MapBoard: Sendable, ObservableObject {
                 address: snap.address,
                 number: snap.phone
             )
+            
+            let placeImage = await fetchPlaceImage(placeID: placeID,
+                                                   client: client,
+                                                   token: token)
 
             // (B) 상세화면용 값 캐시 갱신: 빠른 표시 위해 MapBoard가 보유
             let detail = PlaceDetail(
@@ -242,7 +248,7 @@ public final class MapBoard: Sendable, ObservableObject {
             self.editorialSummaryByName[snap.name] = snap.summary ?? ""
 
             // (D) 최종적으로 테이블 재구성에 쓸 튜플 축적
-            newDatas.append((snap.name, placeData, snap.summary))
+            newDatas.append((snap.name, placeData, snap.summary, placeImage))
         }
 
         // 4) MRU 업데이트(중복 제거 → 앞 삽입 → 10개 제한) --------------------
@@ -263,11 +269,14 @@ public final class MapBoard: Sendable, ObservableObject {
 
         // (F) 화면 바인딩 배열 재구성: 동일 이름이 있으면 기존 ID 재사용
         self.searchPlaces = []                                // 비우고
-        for (name, placeData, summary) in newDatas {          // 신규 데이터 순회
+        for (name, placeData, summary, placeImage) in newDatas {          // 신규 데이터 순회
             if let exist = oldIDs.first(where: { $0.name == name }) {
                 self.searchPlaces.append(exist)               // 기존 ID 재사용
             } else {
                 let sp = SearchPlace(owner: boardRef, data: placeData) // 새 객체 생성
+                
+                sp.image = placeImage
+                
                 self.searchPlaces.append(sp)               // ID 추가
             }
             if let summary = summary {                        // 보조 텍스트 캐시 동기화
@@ -276,7 +285,42 @@ public final class MapBoard: Sendable, ObservableObject {
         }
 
         // (G) MRU 저장
-        ud.set(mru, forKey: keyMRU)                           // 변경된 MRU를 UserDefaults에 반영
+//        ud.set(mru, forKey: keyMRU)                           // 변경된 MRU를 UserDefaults에 반영
+    }
+    
+    
+    private func fetchPlaceImage(placeID: String, client: GMSPlacesClient, token: GMSAutocompleteSessionToken) async -> UIImage {
+        // 요청할 정보
+        let fields: GMSPlaceField = [
+            .placeID, .name, .coordinate, .viewport,
+            .formattedAddress, .addressComponents,
+            .phoneNumber, .website,
+            .openingHours, .rating, .userRatingsTotal, .priceLevel, .types,
+            .editorialSummary, .photos
+        ]
+        
+        return await withCheckedContinuation { continuation in
+            // GoogleClient로 실제 요청
+            client.fetchPlace(fromPlaceID: placeID, placeFields: fields, sessionToken: token) { [weak self] place, error in
+                if let error = error { print("fetchPlace error:", error) }
+                guard let self, let place = place else { return }
+
+                // 사진 로드(있을 경우)
+                if let meta = place.photos?.first {
+                    client.loadPlacePhoto(meta, constrainedTo: CGSize(width: 800, height: 600), scale: UIScreen.main.scale) { [weak self] image, err in
+                        if let err = err { print("loadPhoto error:", err) }
+                        
+                        let sampleImage = UIImage(systemName: "heart.fill")!
+                        continuation.resume(returning: image ?? sampleImage)
+                    }
+                } else {
+                    logger.failure("사진이 없습니다!!")
+                    
+                    // 사진이 없을 경우 SFSymbol로 대체
+                    continuation.resume(returning: UIImage(systemName: "person.circle")!)
+                }
+            }
+        }
     }
     
     
@@ -294,5 +338,9 @@ public final class MapBoard: Sendable, ObservableObject {
         public let types: [String]
         public let weekdayText: [String]
         public let editorialSummary: String?
+    }
+    
+    public struct GooglePlaceData: Sendable, Hashable {
+        
     }
 }

@@ -16,7 +16,7 @@ private let logger = NavioLogger("Spot")
 @MainActor
 public final class Spot: Sendable, ObservableObject {
     // MARK: core
-    internal init(owner: HomeBoard, data: SpotData) {
+    public init(owner: HomeBoard, data: SpotData) {
         self.owner = owner
         self.name = data.name
         self.imageName = data.imageName

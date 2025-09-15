@@ -31,20 +31,12 @@ public final class SearchPlace: Sendable, ObservableObject {
     
     public nonisolated let name: String
     public nonisolated let imageName: String
-    public var image: UIImage {
-        let imageURL = Bundle.module.url(
-            forResource: imageName,
-            withExtension: "png")!
-        let data = try? Data(contentsOf: imageURL)
-        let uiImage = UIImage(data: data!)
-        return uiImage!
-    }
+    public var image: UIImage?
     
     public nonisolated let location: Location
     public nonisolated let address: String
     public nonisolated let number: String
-    
-    
+
     
     // MARK: value
 }

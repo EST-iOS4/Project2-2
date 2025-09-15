@@ -5,6 +5,7 @@
 //  Created by 김민우 on 9/15/25.
 //
 import UIKit
+import Navio
 
 
 // MARK: - SearchListCell
@@ -72,9 +73,9 @@ class SearchListCell: UITableViewCell {
         ])
   }
   
-  func configure(with data: SearchItemData) {
+  func configure(with data: SearchPlace) {
     itemImageView.image = UIImage(systemName: data.imageName)
-    titleLabel.text = data.title
-    subtitleLabel.text = data.subtitle
+      titleLabel.text = data.name
+      subtitleLabel.text = data.address
   }
 }
