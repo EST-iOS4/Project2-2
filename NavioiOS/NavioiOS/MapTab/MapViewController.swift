@@ -138,6 +138,7 @@ class MapViewController: UIViewController {
     @objc private func searchContainerTapped() {
         // 모달 컨테이너 뷰 컨트롤러와 LikeModal 뷰 컨트롤러 생성
         let modalContainer = ModalContainerViewController()
+//        modalContainer.board = mapBoard
         let likeModalVC = LikeModalViewController()
         
         // LikeModal에 있는 목데이터로 핀 찍기
