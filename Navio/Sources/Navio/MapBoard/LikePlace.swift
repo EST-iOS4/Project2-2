@@ -27,13 +27,18 @@ public final class LikePlace: Sendable, ObservableObject {
     public nonisolated let name: String
     public nonisolated let imageName: String
     public var image: UIImage {
-        let imageURL = Bundle.module.url(
-            forResource: imageName,
-            withExtension: "png")!
-        let data = try? Data(contentsOf: imageURL)
-        let uiImage = UIImage(data: data!)
-        return uiImage!
+        if let customImage {
+            return customImage
+        } else {
+            let imageURL = Bundle.module.url(
+                forResource: imageName,
+                withExtension: "png")!
+            let data = try? Data(contentsOf: imageURL)
+            let uiImage = UIImage(data: data!)
+            return uiImage!
+        }
     }
+    public var customImage: UIImage? = nil
     
     public nonisolated let location: Location
     public nonisolated let address: String
