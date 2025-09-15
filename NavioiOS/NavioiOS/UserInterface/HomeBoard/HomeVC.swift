@@ -36,6 +36,14 @@ class HomeVC: UIViewController {
     setupUI() // UI 요소 초기설정
     setupConstraints() // 오토레이아웃 제약조건 설정
     setupCards() // 장소 카드 생성 및 배치
+      
+      
+      homeBoardRef.spots
+          .flatMap {
+              $0.setUpSamplePlaces()
+              return $0.places
+          }
+          .forEach { $0.fetchFromDB() }
   }
   
   // MARK: - Setup 메서드

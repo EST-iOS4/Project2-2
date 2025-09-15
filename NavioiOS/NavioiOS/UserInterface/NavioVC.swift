@@ -32,7 +32,7 @@ class NavioVC: UITabBarController {
         let homeNav = UINavigationController(rootViewController: HomeVC)
       
         // MapBoard의 UI
-        let mapBoardVC = MapBoardVC(mapBoard: navioRef.mapBoard!)
+        let mapBoardVC = MapBoardVC(navioRef.mapBoard!)
         
         // Setting의 UI
         let settingVC = SettingVC(settingRef: navioRef.setting!)

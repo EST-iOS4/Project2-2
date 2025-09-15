@@ -22,7 +22,7 @@ public final class LikePlace: Sendable, ObservableObject {
     // MARK: state
     internal nonisolated let owner: MapBoard
     private let userDefaults = UserDefaults.standard
-    private let placeData: PlaceData
+    public let placeData: PlaceData
     
     public nonisolated let name: String
     public nonisolated let imageName: String

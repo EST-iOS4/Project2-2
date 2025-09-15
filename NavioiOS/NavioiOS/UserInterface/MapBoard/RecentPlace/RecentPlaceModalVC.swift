@@ -4,9 +4,10 @@
 //
 //  Created by EunYoung Wang, 구현모 on 9/10/25.
 //
-
 import Foundation
 import UIKit
+import Navio
+
 
 // MARK: - RecentPlaceData
 // 역할: '최근 검색' 목록의 테이블 뷰에 표시될 데이터 하나의 형태를 정의
@@ -17,65 +18,21 @@ struct RecentPlaceData {
 
 // MARK: - RecentPlaceCell
 // 역할: UITableView 안에 들어갈 개별 셀의 UI와 레이아웃을 정의
-class RecentPlaceCell: UITableViewCell {
-  
-    private let placeImageView: UIImageView = {
-        let iv = UIImageView()
-        iv.contentMode = .scaleAspectFit
-        iv.clipsToBounds = true
-        iv.layer.cornerRadius = 20
-        iv.backgroundColor = .systemGray5
-        iv.tintColor = .systemGray
-        iv.translatesAutoresizingMaskIntoConstraints = false
-        return iv
-    }()
-  
-    private let placeNameLabel: UILabel = {
-        let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        label.textColor = .label
-        label.numberOfLines = 1
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
-    }()
-  
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
-        setupUI()
-    }
-  
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-  
-    private func setupUI() {
-        contentView.addSubview(placeImageView)
-        contentView.addSubview(placeNameLabel)
-        selectionStyle = .none
-      
-        // Auto Layout 정의
-        NSLayoutConstraint.activate([
-            placeImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            placeImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            placeImageView.widthAnchor.constraint(equalToConstant: 40),
-            placeImageView.heightAnchor.constraint(equalToConstant: 40),
-        
-            placeNameLabel.leadingAnchor.constraint(equalTo: placeImageView.trailingAnchor, constant: 15),
-            placeNameLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            placeNameLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-        ])
-    }
-  
-    // 외부에서 데이터를 받아 셀의 UI를 업데이트하는 메서드
-    func configure(with data: RecentPlaceData) {
-        placeImageView.image = UIImage(systemName: data.imageName)
-        placeNameLabel.text = data.placeName
-    }
-}
+
 
 // MARK: - RecentPlaceModalViewController
 // 역할: '최근 검색' 상태일 때 모달 컨테이너에 표시될 콘텐츠 ViewController
 class RecentPlaceModalVC: UIViewController {
+    // MARK: core
+    private let mapBoardRef: MapBoard
+    init(mapBoardRef: MapBoard) {
+        self.mapBoardRef = mapBoardRef
+        
+        super.init(nibName: nil, bundle: nil)
+    }
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
   
     // MARK: - UI Components
     private let shortcutScrollView: UIScrollView = {
@@ -121,7 +78,7 @@ class RecentPlaceModalVC: UIViewController {
         return tv
     }()
   
-    let shortcutData = ["홍익대학교", "석촌호수", "오시리아관광단지"]
+//    let shortcutData = ["홍익대학교", "석촌호수", "오시리아관광단지"]
     let recentPlaceData = [
         RecentPlaceData(imageName: "clock", placeName: "Times Square"),
         RecentPlaceData(imageName: "clock", placeName: "한강")
@@ -135,8 +92,8 @@ class RecentPlaceModalVC: UIViewController {
     func setupUI() {
         view.backgroundColor = .systemBackground
     
-        for title in shortcutData {
-            let button = createShortcutButton(title: title)
+        for place in mapBoardRef.likePlaces {
+            let button = createShortcutButton(title: place.name)
             shortcutStackView.addArrangedSubview(button)
         }
         
