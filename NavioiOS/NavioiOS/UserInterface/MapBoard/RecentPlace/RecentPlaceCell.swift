@@ -60,8 +60,8 @@ class RecentPlaceCell: UITableViewCell {
     }
   
     // 외부에서 데이터를 받아 셀의 UI를 업데이트하는 메서드
-    func configure(with data: RecentPlaceData) {
-        placeImageView.image = UIImage(systemName: data.imageName)
-        placeNameLabel.text = data.placeName
+    func configure(with data: RecentPlace) {
+        placeImageView.image = UIImage(systemName: "clock")
+        placeNameLabel.text = data.name
     }
 }
