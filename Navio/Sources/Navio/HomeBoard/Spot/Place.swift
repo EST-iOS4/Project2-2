@@ -35,13 +35,19 @@ public final class Place: Sendable, ObservableObject {
     public internal(set) var name: String
     public internal(set) var imageName: String
     public var image: UIImage {
-        let imageURL = Bundle.module.url(
-            forResource: imageName,
-            withExtension: "png")!
-        let data = try? Data(contentsOf: imageURL)
-        let uiImage = UIImage(data: data!)
-        return uiImage!
+        if let customImage = self.customImage {
+            return customImage
+        } else {
+            let imageURL = Bundle.module.url(
+                forResource: imageName,
+                withExtension: "png")!
+            let data = try? Data(contentsOf: imageURL)
+            let uiImage = UIImage(data: data!)
+            return uiImage!
+        }
     }
+    
+    public var customImage: UIImage? = nil
     
     public internal(set) var address: String
     public internal(set) var number: String

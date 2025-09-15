@@ -93,6 +93,13 @@ extension SearchPlaceModelVC: UITableViewDataSource, UITableViewDelegate {
   func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
     let cell = tableView.dequeueReusableCell(withIdentifier: "SearchListCell", for: indexPath) as! SearchListCell
     cell.configure(with: items[indexPath.row])
+      if let img = items[indexPath.row].image {
+            let iv = cell.contentView.subviews.compactMap { $0 as? UIImageView }.first ?? cell.imageView
+            iv?.image = img
+            iv?.contentMode = .scaleAspectFill
+            iv?.clipsToBounds = true
+            cell.setNeedsLayout()
+        }
     return cell
   }
   
@@ -109,7 +116,7 @@ extension SearchPlaceModelVC: UITableViewDataSource, UITableViewDelegate {
         let sampleSpotRef = Spot(owner: homeBoardRef, data: .init(name: "", imageName: ""))
         
         let placeRef = Place(owner: sampleSpotRef, data: placeData)
-        
+        placeRef.customImage = selectedPlace.image
         
         // 이동할 VC 생성 (예: PlaceDetailViewController)
         let detailVC = PlaceVC(placeRef)
