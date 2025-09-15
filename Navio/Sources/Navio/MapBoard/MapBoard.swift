@@ -10,6 +10,8 @@ import ToolBox
 import CoreLocation
 import GooglePlaces
 
+private let logger = NavioLogger("MapBoard")
+
 
 // MARK: Object
 @MainActor
@@ -23,7 +25,7 @@ public final class MapBoard: Sendable, ObservableObject {
     
 
     // MARK: state
-    internal nonisolated let owner: Navio
+    public nonisolated let owner: Navio
 
     @Published public private(set) var currentLocation: Location? = nil
     @Published public private(set) var isUpdatingLocation: Bool = false
@@ -33,6 +35,7 @@ public final class MapBoard: Sendable, ObservableObject {
     internal func removeLikePlace(name: String) {
         self.likePlaces.removeAll {$0.name == name }
     }
+    @Published public private(set) var isLikePlaceFetched: Bool = false
     
     @Published public internal(set) var recentPlaces: [RecentPlace] = []
 
@@ -43,7 +46,7 @@ public final class MapBoard: Sendable, ObservableObject {
     // 상세 스냅샷(값 타입만)
     @Published public internal(set) var detailByName: [String: PlaceDetail] = [:]
 
-    // action
+    // MARK: action
     public func updateLocation() async {
         await LocationManager.shared.getUserAuthentication()
         await LocationManager.shared.fetchMyLocation()
@@ -61,55 +64,6 @@ public final class MapBoard: Sendable, ObservableObject {
     }
     public func stopUpdating() async {
         await LocationManager.shared.stopStreaming()
-    }
-
-    public func fetchLikePlaces() async {
-        // capture ------------------------------------------------------------
-        let boardRef = self
-        let oldIDs = self.likePlaces
-
-        // compute ------------------------------------------------------------
-        let userDefaultBoxKey = "LIKED_PLACES"          // UserDefaults에 실제 데이터(이름→필드 사전) 저장된 키
-        let userDefaultIDsKey = "MAPBOARD_LIKEPLACE_IDS"// UserDefaults에 표시 순서를 유지하기 위한 ID(=이름) 배열 키
-        let ud = UserDefaults.standard                  // 표준 UserDefaults 핸들
-
-        
-        let box = (ud.dictionary(forKey: userDefaultBoxKey) as? [String: [String: String]]) ?? [:]
-        // orderedNames: UI에 보여줄 순서(없으면 box 키들 정렬)
-        let orderedNames = (ud.array(forKey: userDefaultIDsKey) as? [String]) ?? box.keys.sorted()
-
-        // mutate -------------------------------------------------------------
-        // 1) 기존 목록에서 더 이상 UserDefaults에 존재하지 않는 항목은 메모리/스토리지에서 제거
-//        for id in oldIDs {
-//            guard let name = id.name else { continue } // ID가 가리키는 실제 객체의 이름 가져오기
-//            if orderedNames.contains(name) == false {        // 표시 순서 배열에 없으면
-//                                          // 해당 객체 자체 삭제(스토리지 연동 시 정리)
-//            }
-//        }
-        // 2) 화면 바인딩 배열을 다시 구성
-        self.likePlaces = []                                 // 빈 배열로 초기화
-        for name in orderedNames {                           // 화면에 보여줄 순서대로 순회
-            guard let rec = box[name] else { continue }      // 박스에서 해당 이름의 레코드 조회
-            let imageName = rec["imageName"] ?? ""           // 보조 정보들 파싱
-            let address = rec["address"] ?? ""
-
-            // 기존에 동일 이름을 가진 객체가 이미 있다면 그것을 재사용(아이덴티티 유지)
-            if let exist = oldIDs.first(where: { $0.name == name }) {
-                self.likePlaces.append(exist)
-                continue
-            }
-
-            // 없으면 새로 생성
-            let data = PlaceData(
-                name: name,                                  // 표시 이름
-                imageName: "",                               // (박스의 imageName을 쓰지 않는 현재 구조)
-                location: .init(latitude: 0, longitude: 0),  // 좌표는 즐겨찾기 박스에서 관리하지 않으므로 0으로 채움
-                address: address,                            // 주소는 박스에서 로드
-                number: ""                                   // 전화번호는 박스에 없으므로 공백
-            )
-            let likeRef = LikePlace(owner: boardRef, data: data) // 소유자(boardRef) 연결하여 새 모델 생성
-            self.likePlaces.append(likeRef)                   // 화면 바인딩 배열에 ID 추가
-        }
     }
 
     /// 최근 검색어 목록 재구성(MRU → 메모리 모델)
@@ -159,6 +113,7 @@ public final class MapBoard: Sendable, ObservableObject {
 
     /// 검색 실행: 자동완성 → placeID[] → 각 placeID 상세 스냅샷 → 목록/상세 캐시 갱신
     public func fetchSearchPlaces() async {
+        print("[MapBoard] fetchSearchPlaces() called with input='\(self.searchInput)'")
         // capture ------------------------------------------------------------
         let boardRef = self
         let oldIDs = self.searchPlaces
@@ -213,6 +168,7 @@ public final class MapBoard: Sendable, ObservableObject {
 
         // 2-1) placeID 하나에 대해 PlaceSnap 생성(필요한 필드만 요청하여 비용 절감)
         func fetchPlaceSnap(_ placeID: String) async -> PlaceSnap? {
+            // 호출할 피드
             let fields: GMSPlaceField = [                    // 필요한 것만 명시
                 .placeID, .name, .coordinate,
                 .formattedAddress, .phoneNumber, .website,
@@ -254,7 +210,7 @@ public final class MapBoard: Sendable, ObservableObject {
         }
 
         // 3) 스냅샷들을 수집하여 목록/상세 캐시 빌드 --------------------------
-        var newDatas: [(name: String, data: PlaceData, summary: String?)] = [] // 리스트 셀 구성용 튜플 배열
+        var newDatas: [(name: String, data: PlaceData, summary: String?, image: UIImage)] = [] // 리스트 셀 구성용 튜플 배열
 
         for placeID in placeIDs {                              // 자동완성으로 얻은 placeID들을 순회
             guard let snap = await fetchPlaceSnap(placeID) else { continue } // 개별 실패 무시하고 다음
@@ -267,6 +223,10 @@ public final class MapBoard: Sendable, ObservableObject {
                 address: snap.address,
                 number: snap.phone
             )
+            
+            let placeImage = await fetchPlaceImage(placeID: placeID,
+                                                   client: client,
+                                                   token: token)
 
             // (B) 상세화면용 값 캐시 갱신: 빠른 표시 위해 MapBoard가 보유
             let detail = PlaceDetail(
@@ -288,7 +248,7 @@ public final class MapBoard: Sendable, ObservableObject {
             self.editorialSummaryByName[snap.name] = snap.summary ?? ""
 
             // (D) 최종적으로 테이블 재구성에 쓸 튜플 축적
-            newDatas.append((snap.name, placeData, snap.summary))
+            newDatas.append((snap.name, placeData, snap.summary, placeImage))
         }
 
         // 4) MRU 업데이트(중복 제거 → 앞 삽입 → 10개 제한) --------------------
@@ -309,11 +269,14 @@ public final class MapBoard: Sendable, ObservableObject {
 
         // (F) 화면 바인딩 배열 재구성: 동일 이름이 있으면 기존 ID 재사용
         self.searchPlaces = []                                // 비우고
-        for (name, placeData, summary) in newDatas {          // 신규 데이터 순회
+        for (name, placeData, summary, placeImage) in newDatas {          // 신규 데이터 순회
             if let exist = oldIDs.first(where: { $0.name == name }) {
                 self.searchPlaces.append(exist)               // 기존 ID 재사용
             } else {
                 let sp = SearchPlace(owner: boardRef, data: placeData) // 새 객체 생성
+                
+                sp.image = placeImage
+                
                 self.searchPlaces.append(sp)               // ID 추가
             }
             if let summary = summary {                        // 보조 텍스트 캐시 동기화
@@ -322,7 +285,42 @@ public final class MapBoard: Sendable, ObservableObject {
         }
 
         // (G) MRU 저장
-        ud.set(mru, forKey: keyMRU)                           // 변경된 MRU를 UserDefaults에 반영
+//        ud.set(mru, forKey: keyMRU)                           // 변경된 MRU를 UserDefaults에 반영
+    }
+    
+    
+    private func fetchPlaceImage(placeID: String, client: GMSPlacesClient, token: GMSAutocompleteSessionToken) async -> UIImage {
+        // 요청할 정보
+        let fields: GMSPlaceField = [
+            .placeID, .name, .coordinate, .viewport,
+            .formattedAddress, .addressComponents,
+            .phoneNumber, .website,
+            .openingHours, .rating, .userRatingsTotal, .priceLevel, .types,
+            .editorialSummary, .photos
+        ]
+        
+        return await withCheckedContinuation { continuation in
+            // GoogleClient로 실제 요청
+            client.fetchPlace(fromPlaceID: placeID, placeFields: fields, sessionToken: token) { [weak self] place, error in
+                if let error = error { print("fetchPlace error:", error) }
+                guard let self, let place = place else { return }
+
+                // 사진 로드(있을 경우)
+                if let meta = place.photos?.first {
+                    client.loadPlacePhoto(meta, constrainedTo: CGSize(width: 800, height: 600), scale: UIScreen.main.scale) { [weak self] image, err in
+                        if let err = err { print("loadPhoto error:", err) }
+                        
+                        let sampleImage = UIImage(systemName: "heart.fill")!
+                        continuation.resume(returning: image ?? sampleImage)
+                    }
+                } else {
+                    logger.failure("사진이 없습니다!!")
+                    
+                    // 사진이 없을 경우 SFSymbol로 대체
+                    continuation.resume(returning: UIImage(systemName: "person.circle")!)
+                }
+            }
+        }
     }
     
     
@@ -340,5 +338,9 @@ public final class MapBoard: Sendable, ObservableObject {
         public let types: [String]
         public let weekdayText: [String]
         public let editorialSummary: String?
+    }
+    
+    public struct GooglePlaceData: Sendable, Hashable {
+        
     }
 }

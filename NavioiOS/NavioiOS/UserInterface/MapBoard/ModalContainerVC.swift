@@ -92,7 +92,7 @@ final class ModalContainerVC: UIViewController, UISearchBarDelegate {
     
     // 모달이 처음 나타날 때 보여줄 초기 화면 설정
     private func showInitialContent() {
-        let initialVC = LikeModalViewController(mapBoardRef)
+        let initialVC = LikeModalVC(mapBoardRef)
         transition(to: initialVC, animated: false)
     }
     
@@ -104,12 +104,12 @@ final class ModalContainerVC: UIViewController, UISearchBarDelegate {
         if query.isEmpty {
             // 검색어가 비었으면 -> RecentView로
             if !(currentContentVC is RecentPlaceModalVC) {
-                transition(to: RecentPlaceModalVC())
+                transition(to: RecentPlaceModalVC(mapBoardRef: mapBoardRef))
             }
         } else {
             // 검색어가 있으면 -> SearchView로
             if !(currentContentVC is SearchPlaceModelVC) {
-                transition(to: SearchPlaceModelVC())
+                transition(to: SearchPlaceModelVC(mapBoardRef))
                 
                 // TODO: SearchPlaceModalViewController에 검색어(query) 전달 로직 추가 필요
             }
@@ -147,9 +147,26 @@ final class ModalContainerVC: UIViewController, UISearchBarDelegate {
     // 사용자가 검색창을 터치해서 편집을 시작할 때 호출
     func searchBarShouldBeginEditing(_ searchBar: UISearchBar) -> Bool {
         // 현재 화면이 LikeModalViewController라면 RecentPlaceViewController로 전환
-        if currentContentVC is LikeModalViewController {
-            transition(to: RecentPlaceModalVC())
+        if currentContentVC is LikeModalVC {
+            transition(to: RecentPlaceModalVC(mapBoardRef: mapBoardRef))
         }
         return true // 키보드가 나타나도록 허용
+    }
+    
+    // 사용자가 키보드에서 '검색'(Return/Enter) 버튼을 눌렀을 때 호출
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        let query = (searchBar.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        print("[ModalContainerVC] Return pressed. query='\(query)'")
+        
+        // 키보드 내리기
+        searchBar.resignFirstResponder()
+        
+        // MapBoard에 검색어 주입 후 검색 실행
+        mapBoardRef.searchInput = query
+        Task { [weak self] in
+            guard let _ = self else { return }
+            await self?.mapBoardRef.fetchSearchPlaces()
+            print("[ModalContainerVC] fetchSearchPlaces() finished")
+        }
     }
 }

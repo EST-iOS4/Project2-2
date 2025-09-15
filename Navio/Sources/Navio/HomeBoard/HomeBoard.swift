@@ -37,13 +37,13 @@ public final class HomeBoard: Sendable, ObservableObject {
         }
         
         // mutate
-        self.spots = sampleSpotDatas
+        self.spots = Self.sampleSpotDatas
             .map { Spot(owner: self, data: $0)}
     }
     
     
     // MARK: value
-    private let sampleSpotDatas: [SpotData] = [
+    static let sampleSpotDatas: [SpotData] = [
         .init(name: "홍대",imageName: "hongdae"),
         .init(name: "부산", imageName: "busan"),
         .init(name: "경주",imageName: "gyeongju"),

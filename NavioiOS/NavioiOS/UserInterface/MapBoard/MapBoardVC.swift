@@ -4,18 +4,32 @@
 //
 //  Created by EunYoung Wang, 구현모 on 9/11/25.
 //
-
 import UIKit
 import Navio
 import Combine
 import MapKit
 import ToolBox
 
+extension Notification.Name {
+    static let mapShouldMoveToCoordinate = Notification.Name("MapShouldMoveToCoordinate")
+}
 
-// MARK: - Map 뷰컨트롤러
+
+// MARK: ViewController
 // 역할: 지도 표시, ViewModel 데이터 바인딩, 검색 모달 띄우기
 class MapBoardVC: UIViewController {
-    private let mapBoard: MapBoard
+    // MARK: core
+    private let mapBoardRef: MapBoard
+    init(_ mapBoardRef: MapBoard) {
+        self.mapBoardRef = mapBoardRef
+        super.init(nibName: nil, bundle: nil)
+    }
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    
+    // MARK: body
     private let mapView = MKMapView()
     
     // 화면 하단에 위치한 '검색하기' 버튼 역할을 하는 커스텀 뷰
@@ -64,14 +78,7 @@ class MapBoardVC: UIViewController {
     
     private var cancellables = Set<AnyCancellable>()
     
-    init(mapBoard: MapBoard) {
-        self.mapBoard = mapBoard
-        super.init(nibName: nil, bundle: nil)
-    }
     
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -83,7 +90,7 @@ class MapBoardVC: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         Task {
-            await mapBoard.startUpdating()
+            await mapBoardRef.startUpdating()
         }
     }
     
@@ -136,10 +143,10 @@ class MapBoardVC: UIViewController {
     // 검색 컨테이너 뷰 탭 액션
     @objc private func searchContainerTapped() {
         // 모달 컨테이너 뷰 컨트롤러와 LikeModal 뷰 컨트롤러 생성
-        let modalContainer = ModalContainerVC(mapBoard)
+        let modalContainer = ModalContainerVC(mapBoardRef)
         
         // LikeModal에 있는 목데이터로 핀 찍기
-        updatePins(for: mapBoard.likePlaces)
+        updatePins(for: mapBoardRef.likePlaces)
         
         // 모달 컨테이너 띄우기
         if let sheet = modalContainer.sheetPresentationController {
@@ -167,10 +174,17 @@ class MapBoardVC: UIViewController {
     
     // Combine을 사용해 ViewModel의 데이터를 UI에 바인딩
     private func bindViewModel() {
-        mapBoard.$likePlaces // 즐겨찾기 장소
+        mapBoardRef.$likePlaces // 즐겨찾기 장소
             .sink { [weak self] placeIDs in
                 let placeObjects = placeIDs.compactMap { $0 }
                 self?.updatePins(for: placeObjects)
+            }
+            .store(in: &cancellables)
+        
+        NotificationCenter.default.publisher(for: .mapShouldMoveToCoordinate)
+            .compactMap { $0.userInfo?["coordinate"] as? CLLocationCoordinate2D }
+            .sink { [weak self] coordinate in
+                self?.moveMap(to: coordinate)
             }
             .store(in: &cancellables)
     }
@@ -266,19 +280,24 @@ extension MapBoardVC: MKMapViewDelegate {
     }
     
 //  핀 터치 시 상세 정보 뷰로 이동 (현재 주석 처리)
-//    func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
-//        guard let tappedTitle = view.annotation?.title, let title = tappedTitle else { return }
-//        if let place = mapBoard.likePlaces.first(where: { $0.title == title }) {
-//            let placeID = place.id
-//
-//            상세 정보 뷰 컨트롤러는 여기에 연결하시면 됩니다. placeID를 전달받도록 만들어주세요.
-//            let detailVC = PlaceDetailViewController(placeID: placeID)
-//
-//            if let navigationController = self.navigationController {
-//                navigationController.pushViewController(detailVC, animated: true)
-//            } else {
-//                self.present(detailVC, animated: true)
-//            }
-//        }
-//    }
+    func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
+        guard let tappedTitle = view.annotation?.title, let title = tappedTitle else { return }
+        
+        
+        if let likePlaceRef = mapBoardRef.likePlaces.first(where: { $0.name == title }) {
+            let placeRef = mapBoardRef.owner
+                .homeBoard!.spots
+                .flatMap { $0.places }
+                .first { $0.name == likePlaceRef.name }!
+
+            // 상세 정보 뷰 컨트롤러는 여기에 연결하시면 됩니다. placeID를 전달받도록 만들어주세요.
+            let detailVC = PlaceVC(placeRef)
+
+            if let navigationController = self.navigationController {
+                navigationController.pushViewController(detailVC, animated: true)
+            } else {
+                self.present(detailVC, animated: true)
+            }
+        }
+    }
 }
