@@ -181,6 +181,13 @@ class MapBoardVC: UIViewController {
             }
             .store(in: &cancellables)
         
+        mapBoardRef.$searchPlaces
+            .sink { [weak self] searchPlaces in
+                let placeObjects = searchPlaces.compactMap { $0 }
+                self?.updatePins(for: placeObjects)
+            }
+            .store(in: &cancellables)
+        
         NotificationCenter.default.publisher(for: .mapShouldMoveToCoordinate)
             .compactMap { $0.userInfo?["coordinate"] as? CLLocationCoordinate2D }
             .sink { [weak self] coordinate in
@@ -196,6 +203,27 @@ class MapBoardVC: UIViewController {
     }
     
     // 핀 업데이트 메서드
+    private func updatePins(for searchPlaces: [SearchPlace]) {
+        // 기존 핀 제거
+        mapView.removeAnnotations(mapView.annotations)
+        
+        // 전달받은 배열 변환
+        let newAnnotations = searchPlaces.map { item -> MKPointAnnotation in
+            let pin = MKPointAnnotation()
+            pin.coordinate = item.location.toCLLocationCoordinate2D
+            pin.title = item.name
+            pin.subtitle = item.address
+            return pin
+        }
+
+        // 새로운 핀 추가
+        mapView.addAnnotations(newAnnotations)
+        
+        // 추가된 핀이 있다면, 모든 핀이 보이도록 지도 조정
+        if !newAnnotations.isEmpty {
+            mapView.showAnnotations(newAnnotations, animated: true)
+        }
+    }
     private func updatePins(for pinnableItems: [LikePlace]) {
         // 기존 핀 제거
         mapView.removeAnnotations(mapView.annotations)
