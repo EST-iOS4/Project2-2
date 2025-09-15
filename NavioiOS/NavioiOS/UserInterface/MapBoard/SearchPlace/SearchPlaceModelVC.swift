@@ -71,9 +71,8 @@ class SearchPlaceModelVC: UIViewController {
     func setUpBindings() {
         // MapBoard.searchPlaces 변경을 구독하여 셀 데이터 업데이트
         mapBoardRef.$searchPlaces
-            .combineLatest(mapBoardRef.$editorialSummaryByName)
-            .receive(on: RunLoop.main)
-            .sink { [weak self] (places, summaryByName) in
+            .throttle(for: 0.3, scheduler: RunLoop.main, latest: true)
+            .sink { [weak self] places in
                 guard let self = self else { return }
                 self.items = places
                 print("[SearchPlaceModelVC] list updated. count=\(self.items.count)")
