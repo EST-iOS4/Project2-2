@@ -7,7 +7,6 @@
 import Foundation
 import Combine
 import ToolBox
-import UIKit
 
 private let logger = NavioLogger("Spot")
 

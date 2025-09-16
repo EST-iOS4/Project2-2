@@ -19,11 +19,18 @@ let package = Package(
             targets: ["ToolBox"]
         )
     ],
+    dependencies: [
+        // Google Places SDK for iOS
+        .package(url: "https://github.com/googlemaps/ios-places-sdk", from: Version(9, 2, 0))
+    ],
     targets: [
         // Navio
         .target(
             name: "Navio",
-            dependencies: ["ToolBox"],
+            dependencies: [
+                "ToolBox",
+                .product(name: "GooglePlaces", package: "ios-places-sdk")
+            ],
             resources: [
               .process("HomeBoard/Spot/images")
             ]

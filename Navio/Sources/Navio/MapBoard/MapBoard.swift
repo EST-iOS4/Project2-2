@@ -17,15 +17,21 @@ private let logger = NavioLogger("MapBoard")
 @MainActor
 public final class MapBoard: Sendable, ObservableObject {
     // MARK: core
-    public init(owner: Navio) {
+    internal init(owner: Navio.ID) {
         self.owner = owner
         self.editorialSummaryByName = [:]
         self.detailByName = [:]
+        
+        MapBoardManager.register(self)
+    }
+    internal func delete() {
+        MapBoardManager.unregister(self.id)
     }
     
 
     // MARK: state
-    public nonisolated let owner: Navio
+    internal nonisolated let id = ID()
+    internal nonisolated let owner: Navio.ID
 
     @Published public private(set) var currentLocation: Location? = nil
     @Published public private(set) var isUpdatingLocation: Bool = false
@@ -265,6 +271,19 @@ public final class MapBoard: Sendable, ObservableObject {
     
     
     // MARK: value
+    @MainActor
+    public struct ID: Sendable, Hashable {
+        public let rawValue = UUID()
+        nonisolated init() { }
+        
+        public var isExist: Bool {
+            MapBoardManager.container[self] != nil
+        }
+        public var ref: MapBoard? {
+            MapBoardManager.container[self]
+        }
+    }
+    
     public struct PlaceDetail: Sendable, Hashable {
         public let placeID: String
         public let name: String
@@ -293,5 +312,19 @@ public final class MapBoard: Sendable, ObservableObject {
         let types: [String]          // 타입들
         let weekdayText: [String]    // 영업시간 요약 문자열(영문)
         let summary: String?         // 편집자 요약(editorialSummary)
+    }
+}
+
+
+// MARK: ObjectManager
+@MainActor
+fileprivate final class MapBoardManager: Sendable {
+    // MARK: core
+    static var container: [MapBoard.ID: MapBoard] = [:]
+    static func register(_ object: MapBoard) {
+        container[object.id] = object
+    }
+    static func unregister(_ id: MapBoard.ID) {
+        container[id] = nil
     }
 }

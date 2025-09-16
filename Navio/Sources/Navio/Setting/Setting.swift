@@ -15,13 +15,19 @@ private let logger = NavioLogger("Setting")
 @MainActor
 public final class Setting: Sendable, ObservableObject {
     // MARK: core
-    internal init(owner: Navio) {
+    internal init(owner: Navio.ID) {
         self.owner = owner
+        
+        SettingManager.register(self)
+    }
+    internal func delete() {
+        SettingManager.unregister(self.id)
     }
     
     
     // MARK: state
-    internal nonisolated let owner: Navio
+    internal nonisolated let id = ID()
+    internal nonisolated let owner: Navio.ID
     
     @Published public var displayMode: DisplayMode = .system
     @Published public var collectKeyword: Bool = true
@@ -54,9 +60,36 @@ public final class Setting: Sendable, ObservableObject {
     
     
     // MARK: value
+    @MainActor
+    public struct ID: Sendable, Hashable {
+        public let rawValue = UUID()
+        nonisolated init() { }
+        
+        public var isExist: Bool {
+            SettingManager.container[self] != nil
+        }
+        public var ref: Setting? {
+            SettingManager.container[self]
+        }
+    }
+    
     public enum DisplayMode: String, Sendable, Hashable {
         case light
         case dark
         case system
+    }
+}
+
+
+// MARK: ObjectManager
+@MainActor
+fileprivate final class SettingManager: Sendable {
+    // MARK: core
+    static var container: [Setting.ID: Setting] = [:]
+    static func register(_ object: Setting) {
+        container[object.id] = object
+    }
+    static func unregister(_ id: Setting.ID) {
+        container[id] = nil
     }
 }

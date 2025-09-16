@@ -15,13 +15,19 @@ private let logger = NavioLogger("HomeBoard")
 @MainActor
 public final class HomeBoard: Sendable, ObservableObject {
     // MARK: core
-    internal init(owner: Navio) {
+    internal init(owner: Navio.ID) {
         self.owner = owner
+        
+        HomeBoardManager.register(self)
+    }
+    internal func delete() {
+        HomeBoardManager.unregister(self.id)
     }
     
     
     // MARK: state
-    internal nonisolated let owner: Navio
+    internal nonisolated let id = ID()
+    internal nonisolated let owner: Navio.ID
     
     @Published public internal(set) var spots: [Spot] = []
     
@@ -43,10 +49,37 @@ public final class HomeBoard: Sendable, ObservableObject {
     
     
     // MARK: value
+    @MainActor
+    public struct ID: Sendable, Hashable {
+        public let rawValue = UUID()
+        nonisolated init() { }
+        
+        public var isExist: Bool {
+            HomeBoardManager.container[self] != nil
+        }
+        public var ref: HomeBoard? {
+            HomeBoardManager.container[self]
+        }
+    }
+    
     static let sampleSpotDatas: [SpotData] = [
         .init(name: "홍대",imageName: "hongdae"),
         .init(name: "부산", imageName: "busan"),
         .init(name: "경주",imageName: "gyeongju"),
         .init(name: "잠실", imageName: "jamsil")
     ]
+}
+
+
+// MARK: ObjectManager
+@MainActor
+fileprivate final class HomeBoardManager: Sendable {
+    // MARK: core
+    static var container: [HomeBoard.ID: HomeBoard] = [:]
+    static func register(_ object: HomeBoard) {
+        container[object.id] = object
+    }
+    static func unregister(_ id: HomeBoard.ID) {
+        container[id] = nil
+    }
 }

@@ -6,7 +6,6 @@
 //
 import Foundation
 import Combine
-import UIKit
 import ToolBox
 
 private let logger = NavioLogger("Place")
@@ -34,20 +33,13 @@ public final class Place: Sendable, ObservableObject {
     
     public internal(set) var name: String
     public internal(set) var imageName: String
-    public var image: UIImage {
-        if let customImage = self.customImage {
-            return customImage
-        } else {
-            let imageURL = Bundle.module.url(
-                forResource: imageName,
-                withExtension: "png")!
-            let data = try? Data(contentsOf: imageURL)
-            let uiImage = UIImage(data: data!)
-            return uiImage!
-        }
+    public var imageData: Data? {
+        let imageURL = Bundle.module.url(
+            forResource: imageName,
+            withExtension: "png")!
+        let data = try? Data(contentsOf: imageURL)
+        return data
     }
-    
-    public var customImage: UIImage? = nil
     
     public internal(set) var address: String
     public internal(set) var number: String

@@ -1,7 +1,6 @@
 import Foundation
 import Combine
 import ToolBox
-import UIKit
 import CoreLocation
 
 // MARK: Object
