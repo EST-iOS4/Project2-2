@@ -273,6 +273,32 @@ extension RecentPlaceModalVC: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 60
     }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+
+        // 1) 선택한 최근 검색어
+        let query = mapBoardRef.recentPlaces[indexPath.row].name
+
+        // 2) 재검색 트리거
+        mapBoardRef.searchInput = query
+        Task { @MainActor in
+            await mapBoardRef.fetchSearchPlaces()
+
+            // 3) 첫 결과 위치로 지도 이동(옵션)
+            if let first = mapBoardRef.searchPlaces.first {
+                NotificationCenter.default.post(
+                    name: .mapShouldMoveToCoordinate,
+                    object: nil,
+                    userInfo: ["coordinate": first.location.toCLLocationCoordinate2D]
+                )
+            }
+
+            // 4) 모달 닫기
+            self.dismiss(animated: true)
+        }
+    }
+    
 }
 
 // MARK: - Notification Extensions

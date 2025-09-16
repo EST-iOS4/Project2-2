@@ -59,6 +59,9 @@ class SearchPlaceModelVC: UIViewController {
         
         view.addSubview(tableView)
         
+        tableView.rowHeight = 70
+        tableView.estimatedRowHeight = 70
+        
         // Auto Layout 설정
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.topAnchor, constant: 10),
