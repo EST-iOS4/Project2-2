@@ -2,7 +2,7 @@
 //  ModalContainerViewController.swift
 //  NavioiOS
 //
-//  Created by 구현모 on 9/11/25.
+//  Created by 구현모, EunYoung Wang on 9/11/25.
 //
 import UIKit
 import Combine
@@ -86,7 +86,20 @@ final class ModalContainerVC: UIViewController, UISearchBarDelegate {
                 self?.handleSearchQueryChanged(query: text) // 텍스트가 바뀔 때마다 처리
             }
             .store(in: &cancellables)
+      
+      
+      // 즐겨찾기 버튼 액션 추가
+      NotificationCenter.default.addObserver(
+              self,
+              selector: #selector(switchToLikeModal),
+              name: .shouldSwitchToLikeModal,
+              object: nil
+          )
     }
+  @objc private func switchToLikeModal() {
+      let likeModalVC = LikeModalVC(mapBoardRef)
+      transition(to: likeModalVC)
+  }
 
     // MARK: - Content Transition & Logic
     
@@ -169,4 +182,5 @@ final class ModalContainerVC: UIViewController, UISearchBarDelegate {
             print("[ModalContainerVC] fetchSearchPlaces() finished")
         }
     }
+  
 }

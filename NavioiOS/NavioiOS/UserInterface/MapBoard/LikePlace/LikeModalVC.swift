@@ -39,7 +39,7 @@ class LikeModalVC: UIViewController, UICollectionViewDataSource, UICollectionVie
     let collectionView: UICollectionView
     let likeLabel: UILabel = {
         let label = UILabel()
-        label.text = "Like"
+        label.text = "✨ Like"
         label.font = UIFont.systemFont(ofSize: 35, weight: .heavy)
         label.textColor = .label
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -96,6 +96,7 @@ class LikeModalVC: UIViewController, UICollectionViewDataSource, UICollectionVie
         return cell
     }
   
+  // 지도이동 로직
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let likePlace = mapBoardRef.likePlaces[indexPath.item]
         let coord = likePlace.location.toCLLocationCoordinate2D

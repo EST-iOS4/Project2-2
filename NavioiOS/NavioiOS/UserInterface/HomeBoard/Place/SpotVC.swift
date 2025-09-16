@@ -180,6 +180,14 @@ class SpotVC: UIViewController {
         pillLabel.textColor = .white
         pillLabel.font = .systemFont(ofSize: 16, weight: .semibold)
         pillLabel.numberOfLines = 1
+      
+        // 장소 아이콘
+        let locationIcon = UIImageView()
+        locationIcon.translatesAutoresizingMaskIntoConstraints = false
+        locationIcon.backgroundColor = .clear
+        locationIcon.contentMode = .scaleAspectFill
+        locationIcon.clipsToBounds = true
+        locationIcon.image = UIImage(named: "location_pin")
 
         // Heart button (top-right)
         let heartButton = UIButton(type: .system)
@@ -200,7 +208,7 @@ class SpotVC: UIViewController {
         heartBG.layer.borderWidth = 0.5
 
         // Stronger symbol size/weight
-        let symConfig = UIImage.SymbolConfiguration(pointSize: 26, weight: .bold)
+        let symConfig = UIImage.SymbolConfiguration(pointSize: 26, weight: .regular)
         heartButton.setPreferredSymbolConfiguration(symConfig, forImageIn: .normal)
         heartButton.tintColor = .systemRed
         heartButton.contentEdgeInsets = UIEdgeInsets(top: 2, left: 2, bottom: 2, right: 2)
@@ -211,6 +219,7 @@ class SpotVC: UIViewController {
         containerView.addSubview(gradientView)
         containerView.addSubview(pillBG)
         pillBG.contentView.addSubview(pillLabel)
+        pillBG.contentView.addSubview(locationIcon)
         containerView.addSubview(heartBG)
         containerView.addSubview(heartButton)
 
@@ -234,8 +243,14 @@ class SpotVC: UIViewController {
             // Pill label bottom-left (blur capsule + label insets)
             pillBG.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             pillBG.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -16),
-
-            pillLabel.leadingAnchor.constraint(equalTo: pillBG.leadingAnchor, constant: 12),
+            
+            // Location icon 제약조건
+            locationIcon.leadingAnchor.constraint(equalTo: pillBG.contentView.leadingAnchor, constant: 8),
+            locationIcon.centerYAnchor.constraint(equalTo: pillBG.contentView.centerYAnchor),
+            locationIcon.widthAnchor.constraint(equalToConstant: 16),
+            locationIcon.heightAnchor.constraint(equalToConstant: 16),
+            
+            pillLabel.leadingAnchor.constraint(equalTo: locationIcon.trailingAnchor, constant: 4),
             pillLabel.trailingAnchor.constraint(equalTo: pillBG.trailingAnchor, constant: -12),
             pillLabel.topAnchor.constraint(equalTo: pillBG.topAnchor, constant: 6),
             pillLabel.bottomAnchor.constraint(equalTo: pillBG.bottomAnchor, constant: -6),
@@ -276,7 +291,7 @@ class SpotVC: UIViewController {
         guard let button = heartButtons[index] else { return }
         let imageName = liked ? "heart.fill" : "heart"
         button.setImage(UIImage(systemName: imageName), for: .normal)
-        button.tintColor = .systemRed
+      button.tintColor = liked ? .systemRed : .white
         button.accessibilityValue = liked ? "선택됨" : "선택 안 됨"
     }
 
