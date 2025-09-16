@@ -15,35 +15,34 @@ private let logger = NavioLogger("Place")
 @MainActor
 public final class Place: Sendable, ObservableObject {
     // MARK: core
-    public init(owner: Spot, data: PlaceData) {
+    internal init(owner: Spot.ID, data: LocalDataManager.Place) {
         self.owner = owner
-        self.placeData = data
+        
         self.name = data.name
-        self.imageName = data.imageName
+        self.imageURL = data.imageURL
         self.address = data.address
         self.number = data.number
         self.location = data.location
+        
+        PlaceManager.register(self)
+    }
+    internal func delete() {
+        PlaceManager.unregister(self.id)
     }
     
     
     // MARK: state
-    internal nonisolated let owner: Spot
+    internal nonisolated let id = ID()
+    internal nonisolated let owner: Spot.ID
+    
     private let userDefaults = UserDefaults.standard
-    private let placeData: PlaceData
     
-    public internal(set) var name: String
-    public internal(set) var imageName: String
-    public var imageData: Data? {
-        let imageURL = Bundle.module.url(
-            forResource: imageName,
-            withExtension: "png")!
-        let data = try? Data(contentsOf: imageURL)
-        return data
-    }
+    public nonisolated let name: String
+    public nonisolated let imageURL: URL
     
-    public internal(set) var address: String
-    public internal(set) var number: String
-    public internal(set) var location: Location
+    public nonisolated let address: String
+    public nonisolated let number: String
+    public nonisolated let location: Location
     
     @Published public internal(set) var isLiked = false
     @Published public private(set) var isFetchedFromDB = false
@@ -63,4 +62,30 @@ public final class Place: Sendable, ObservableObject {
 
     
     // MARK: value
+    @MainActor
+    public struct ID: Sendable, Hashable {
+        public let rawValue = UUID()
+        nonisolated init() { }
+        
+        public var isExist: Bool {
+            PlaceManager.container[self] != nil
+        }
+        public var ref: Place? {
+            PlaceManager.container[self]
+        }
+    }
+}
+
+
+// MARK: ObjectManager
+@MainActor
+fileprivate final class PlaceManager: Sendable {
+    // MARK: core
+    static var container: [Place.ID: Place] = [:]
+    static func register(_ object: Place) {
+        container[object.id] = object
+    }
+    static func unregister(_ id: Place.ID) {
+        container[id] = nil
+    }
 }

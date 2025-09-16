@@ -46,10 +46,8 @@ public final class HomeBoard: Sendable, ObservableObject {
         let localSpots = await LocalDataManager.shared.spots
         
         // mutate
-        let spots = localSpots
+        self.spots = localSpots
             .map { Spot(owner: self.id, data: $0) }
-        self.spots = Self.sampleSpots
-            .map { Spot(owner: self, data: $0)}
     }
     
     
