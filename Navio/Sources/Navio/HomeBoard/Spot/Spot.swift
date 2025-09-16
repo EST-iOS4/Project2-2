@@ -34,8 +34,7 @@ public final class Spot: Sendable, ObservableObject {
     public nonisolated let name: String
     public nonisolated let imageURL: URL
     
-    @Published public internal(set) var places: [Place] = []
-    
+    @Published public internal(set) var places: [Place.ID] = []
     
     
     // MARK: action
@@ -59,9 +58,11 @@ public final class Spot: Sendable, ObservableObject {
         }
         
         // mutate
-        let places = localSpot.places
-        
-        fatalError()
+        self.places = localSpot
+            .places
+            .map {
+                Place(owner: self.id, data: $0).id
+            }
     }
     
     

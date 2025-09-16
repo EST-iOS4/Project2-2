@@ -29,7 +29,7 @@ public final class HomeBoard: Sendable, ObservableObject {
     internal nonisolated let id = ID()
     internal nonisolated let owner: Navio.ID
     
-    @Published public internal(set) var spots: [Spot] = []
+    @Published public internal(set) var spots: [Spot.ID] = []
     
     
     // MARK: action
@@ -48,6 +48,7 @@ public final class HomeBoard: Sendable, ObservableObject {
         // mutate
         self.spots = localSpots
             .map { Spot(owner: self.id, data: $0) }
+            .map { $0.id }
     }
     
     

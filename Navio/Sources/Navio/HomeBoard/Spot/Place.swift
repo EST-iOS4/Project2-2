@@ -35,8 +35,6 @@ public final class Place: Sendable, ObservableObject {
     internal nonisolated let id = ID()
     internal nonisolated let owner: Spot.ID
     
-    private let userDefaults = UserDefaults.standard
-    
     public nonisolated let name: String
     public nonisolated let imageURL: URL
     
@@ -45,21 +43,41 @@ public final class Place: Sendable, ObservableObject {
     public nonisolated let location: Location
     
     @Published public internal(set) var isLiked = false
-    @Published public private(set) var isFetchedFromDB = false
     
     
     // MARK: action
-    public func fetchFromDB() {
+    public func fetchIsLiked() async {
         logger.start()
 
-        logger.failure("미구현")
+        // compute
+        let isLikedFromCache = await LocalDataManager.shared
+            .placeLiked[self.name]
+        
+        // mutate
+        if let isLikedFromCache {
+            self.isLiked = isLikedFromCache
+        } else {
+            self.isLiked = false
+        }
+        
+        
     }
-    public func toggleLike() {
-        logger.start(info: "current: \(self.isLiked)")
-
-        logger.failure("미구현")
+    public func toggleLike() async {
+        logger.start()
+        
+        // capture
+        let currentValue = self.isLiked
+        
+        // compute
+        let newValue = currentValue ? false : true
+        
+        await LocalDataManager.shared.setIsLiked(self.name, value: newValue)
+        
+        // mutate
+        self.isLiked = newValue
     }
 
+    
     
     // MARK: value
     @MainActor

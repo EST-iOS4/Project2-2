@@ -108,6 +108,10 @@ package actor LocalDataManager: Sendable {
         return [hongdae, busan, gyeongju, jamsil]
     }()
     
+    package private(set) var placeLiked: [String: Bool] = [:] // 장소 이름에 대한 저장
+    package func setIsLiked(_ placeName: String, value: Bool) {
+        placeLiked[placeName] = value
+    }
     
     // MARK: action
     
