@@ -8,6 +8,39 @@ import UIKit
 import Navio
 import Combine
 
+
+// ===== 지도 앱 선택 전역 정의
+enum PreferredMapApp: String, CaseIterable {
+    case apple, naver, kakao, google
+    var title: String {
+        switch self {
+        case .apple:  return "Apple 지도"
+        case .naver:  return "네이버 지도"
+        case .kakao:  return "카카오맵"
+        case .google: return "Google 지도"
+        }
+    }
+}
+
+enum MapPrefStore {
+    static let key = "NAVIO_PREFERRED_MAP_APP"
+    static func get() -> PreferredMapApp {
+        let raw = UserDefaults.standard.string(forKey: key) ?? "apple"
+        return PreferredMapApp(rawValue: raw) ?? .apple
+    }
+    static func set(_ v: PreferredMapApp) {
+        UserDefaults.standard.set(v.rawValue, forKey: key)
+        NotificationCenter.default.post(name: .preferredMapAppDidChange,
+                                        object: nil,
+                                        userInfo: ["value": v.rawValue])
+    }
+}
+
+extension Notification.Name {
+    static let preferredMapAppDidChange = Notification.Name("PreferredMapAppDidChange")
+}
+
+
 // MARK: - SettingVC
 final class SettingVC: UIViewController {
     
@@ -81,6 +114,29 @@ final class SettingVC: UIViewController {
             .store(in: &cancellables)
     }
     
+    private func currentMapAppDisplay() -> String {
+        switch MapPrefStore.get() {
+        case .apple:  return "Apple 지도"
+        case .naver:  return "네이버 지도"
+        case .kakao:  return "카카오맵"
+        case .google: return "Google 지도"
+        }
+    }
+    
+    private func presentMapAppPicker() {
+        let current = MapPrefStore.get()
+        let sheet = UIAlertController(title: "지도", message: nil, preferredStyle: .actionSheet)
+        PreferredMapApp.allCases.forEach { opt in
+            let title = opt.title + (opt == current ? " ✓" : "")
+            sheet.addAction(UIAlertAction(title: title, style: .default) { _ in
+                MapPrefStore.set(opt)
+                self.tableView.reloadRows(at: [IndexPath(row: 1, section: 0)], with: .none)
+            })
+        }
+        sheet.addAction(UIAlertAction(title: "취소", style: .cancel))
+        present(sheet, animated: true)
+    }
+    
     // '키워드 수집' 스위치를 탭했을 때 호출
     @objc private func keywordSwitchChanged(_ sender: UISwitch) {
         // UI에서 발생한 이벤트를 ViewModel에 전달
@@ -129,6 +185,16 @@ final class SettingVC: UIViewController {
             window.overrideUserInterfaceStyle = .dark
         }
     }
+    
+    override func viewWillAppear(_ animated: Bool) {
+            super.viewWillAppear(animated)
+            // 섹션0,row1 == "지도" 셀만 갱신 (없으면 전체 리로드)
+            if tableView.numberOfSections > 0 && tableView.numberOfRows(inSection: 0) > 1 {
+                tableView.reloadRows(at: [IndexPath(row: 1, section: 0)], with: .none)
+            } else {
+                tableView.reloadData()
+            }
+        }
 }
 
 extension SettingVC: UITableViewDataSource, UITableViewDelegate {
@@ -140,7 +206,7 @@ extension SettingVC: UITableViewDataSource, UITableViewDelegate {
     
     // 각 섹션의 행(row) 개수를 반환
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 1
+        return (section == 0) ? 2 : 1
     }
     
     // 각 섹션의 제목을 반환
@@ -154,34 +220,42 @@ extension SettingVC: UITableViewDataSource, UITableViewDelegate {
     
     // 각 행에 표시될 셀을 생성
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
-        
         if indexPath.section == 0 {
-            cell.textLabel?.text = "테마"
-            switch settingRef.displayMode {
-                case .light:
-                    cell.detailTextLabel?.text = "라이트 모드"
-                case .dark:
-                    cell.detailTextLabel?.text = "다크 모드"
-                case .system:
-                    cell.detailTextLabel?.text = "시스템 설정"
+            let cell = UITableViewCell(style: .value1, reuseIdentifier: nil)
+            if indexPath.row == 0 {
+                cell.textLabel?.text = "테마"
+                switch settingRef.displayMode {
+                case .light:  cell.detailTextLabel?.text = "라이트 모드"
+                case .dark:   cell.detailTextLabel?.text = "다크 모드"
+                case .system: cell.detailTextLabel?.text = "시스템 설정"
+                }
+            } else {
+                cell.textLabel?.text = "지도"      // ← 여기서 지도 셀 표시
+                cell.detailTextLabel?.text = currentMapAppDisplay()
             }
             cell.accessoryType = .disclosureIndicator
-        } else {
-            cell.textLabel?.text = "키워드 수집"
-            cell.accessoryView = keywordSwitch
-            cell.selectionStyle = .none
+            return cell
         }
-        
+
+        let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
+        cell.textLabel?.text = "키워드 수집"
+        cell.accessoryView = keywordSwitch
+        cell.selectionStyle = .none
         return cell
     }
+
     
     // 특정 행을 탭했을 때의 동작을 정의
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         if indexPath.section == 0 {
-            presentDarkModeActionSheet()
+            if indexPath.row == 0 {
+                presentDarkModeActionSheet()
+            } else {
+                presentMapAppPicker()
+            }
         }
     }
+
 }
             
