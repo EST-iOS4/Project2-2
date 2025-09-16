@@ -46,7 +46,7 @@ class HomeVC: UIViewController {
           .forEach { $0.fetchFromDB() }
   }
   
-  // MARK: - Setup 메서드
+  // MARK: - UI 설정 메서드
   
   // 네비게이션 바 숨김
   private func setupNavigationBar() {
@@ -69,7 +69,7 @@ class HomeVC: UIViewController {
     mainTitleLabel.translatesAutoresizingMaskIntoConstraints = false
     mainTitleLabel.text = "Navio"
     mainTitleLabel.font = .italicSystemFont(ofSize: 22)
-    mainTitleLabel.textColor = .label
+    mainTitleLabel.textColor = .systemCyan
     
     
     // MARK: - 서브타이틀
@@ -172,22 +172,32 @@ class HomeVC: UIViewController {
     spotImageView.clipsToBounds = true
 
     // 장소명 캡슐 오버레이 — match PlaceVC style (dark blur background)
-    let nameBadgeContainer = UIVisualEffectView(effect: UIBlurEffect(style: .systemThinMaterialDark))
+    let nameBadgeContainer = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
     nameBadgeContainer.translatesAutoresizingMaskIntoConstraints = false
     nameBadgeContainer.layer.cornerRadius = 16
     nameBadgeContainer.layer.cornerCurve = .continuous
     nameBadgeContainer.clipsToBounds = true
     nameBadgeContainer.layer.borderColor = UIColor.white.withAlphaComponent(0.25).cgColor
     nameBadgeContainer.layer.borderWidth = 0.5
-
+    
     let nameBadgeLabel = UILabel()
     nameBadgeLabel.translatesAutoresizingMaskIntoConstraints = false
     nameBadgeLabel.text = title
     nameBadgeLabel.textColor = .white
     nameBadgeLabel.font = .systemFont(ofSize: 16, weight: .semibold)
     nameBadgeLabel.numberOfLines = 1
+    
+    // 장소 아이콘
+    let locationIcon = UIImageView()
+    locationIcon.translatesAutoresizingMaskIntoConstraints = false
+    locationIcon.backgroundColor = .clear
+    locationIcon.contentMode = .scaleAspectFill
+    locationIcon.clipsToBounds = true
+    locationIcon.image = UIImage(named: "location_pin")
+    
 
     nameBadgeContainer.contentView.addSubview(nameBadgeLabel)
+    nameBadgeContainer.contentView.addSubview(locationIcon)
     
     // MARK: - 뷰 계층구조 구성
     // 서브뷰 추가 (카드 - 이미지컨테이너)
@@ -208,20 +218,27 @@ class HomeVC: UIViewController {
       imageContainerView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
 
       // Image edges
-      spotImageView.topAnchor.constraint(equalTo: imageContainerView.topAnchor),
-      spotImageView.leadingAnchor.constraint(equalTo: imageContainerView.leadingAnchor),
-      spotImageView.trailingAnchor.constraint(equalTo: imageContainerView.trailingAnchor),
-      spotImageView.bottomAnchor.constraint(equalTo: imageContainerView.bottomAnchor),
-
-      // Name badge(캡슐) bottom-left with padding
-      nameBadgeContainer.leadingAnchor.constraint(equalTo: imageContainerView.leadingAnchor, constant: 16),
-      nameBadgeContainer.bottomAnchor.constraint(equalTo: imageContainerView.bottomAnchor, constant: -16),
-
-      nameBadgeLabel.leadingAnchor.constraint(equalTo: nameBadgeContainer.contentView.leadingAnchor, constant: 12),
-      nameBadgeLabel.trailingAnchor.constraint(equalTo: nameBadgeContainer.contentView.trailingAnchor, constant: -12),
-      nameBadgeLabel.topAnchor.constraint(equalTo: nameBadgeContainer.contentView.topAnchor, constant: 6),
-      nameBadgeLabel.bottomAnchor.constraint(equalTo: nameBadgeContainer.contentView.bottomAnchor, constant: -6)
-    ])
+          spotImageView.topAnchor.constraint(equalTo: imageContainerView.topAnchor),
+          spotImageView.leadingAnchor.constraint(equalTo: imageContainerView.leadingAnchor),
+          spotImageView.trailingAnchor.constraint(equalTo: imageContainerView.trailingAnchor),
+          spotImageView.bottomAnchor.constraint(equalTo: imageContainerView.bottomAnchor),
+          
+          // Name badge(캡슐) bottom-left with padding
+          nameBadgeContainer.leadingAnchor.constraint(equalTo: imageContainerView.leadingAnchor, constant: 16),
+          nameBadgeContainer.bottomAnchor.constraint(equalTo: imageContainerView.bottomAnchor, constant: -12),
+          
+          // Location icon 제약조건
+          locationIcon.leadingAnchor.constraint(equalTo: nameBadgeContainer.contentView.leadingAnchor, constant: 8),
+          locationIcon.centerYAnchor.constraint(equalTo: nameBadgeContainer.contentView.centerYAnchor),
+          locationIcon.widthAnchor.constraint(equalToConstant: 16),
+          locationIcon.heightAnchor.constraint(equalToConstant: 16),
+          
+          // Name badge label
+          nameBadgeLabel.leadingAnchor.constraint(equalTo: locationIcon.trailingAnchor, constant: 4),
+          nameBadgeLabel.trailingAnchor.constraint(equalTo: nameBadgeContainer.contentView.trailingAnchor, constant: -12),
+          nameBadgeLabel.topAnchor.constraint(equalTo: nameBadgeContainer.contentView.topAnchor, constant: 6),
+          nameBadgeLabel.bottomAnchor.constraint(equalTo: nameBadgeContainer.contentView.bottomAnchor, constant: -6)
+      ])
     
     return containerView
   }

@@ -192,7 +192,10 @@ class RecentPlaceModalVC: UIViewController {
         config.image = heartImage
       
         let button = UIButton(configuration: config)
-        return button
+      // 버튼 액션
+      button.addTarget(self, action: #selector(shortcutButtonTapped(_:)), for: .touchUpInside)
+      button.accessibilityLabel = title
+      return button
     }
     
     // 좋아요 버튼 생성 헬퍼 메서드
@@ -234,6 +237,23 @@ class RecentPlaceModalVC: UIViewController {
     
         return button
     }
+  // ✅ 즐겨찾기 버튼 탭 액션 메서드 추가
+  @objc private func shortcutButtonTapped(_ sender: UIButton) {
+      guard let placeName = sender.accessibilityLabel,
+            let likePlace = mapBoardRef.likePlaces.first(where: { $0.name == placeName }) else {
+          print("해당 장소를 찾을 수 없습니다: \(sender.accessibilityLabel ?? "unknown")")
+          return
+      }
+      
+      // 1. 지도 이동
+      let coord = likePlace.location.toCLLocationCoordinate2D
+      NotificationCenter.default.post(name: .mapShouldMoveToCoordinate, object: nil, userInfo: ["coordinate": coord])
+      
+      // 2. LikeModalVC로 전환
+      NotificationCenter.default.post(name: .shouldSwitchToLikeModal, object: nil)
+  }
+  
+  
 }
 
 // MARK: - TableView DataSource & Delegate
@@ -281,3 +301,7 @@ extension RecentPlaceModalVC: UITableViewDataSource, UITableViewDelegate {
     
 }
 
+// MARK: - Notification Extensions
+extension Notification.Name {
+    static let shouldSwitchToLikeModal = Notification.Name("shouldSwitchToLikeModal")
+}

@@ -85,9 +85,9 @@ public final class MapBoard: Sendable, ObservableObject {
     }
     
     public func fetchSearchPlaces() async {
-        let t0 = CFAbsoluteTimeGetCurrent()
-        self.searchGen &+= 1
-        let myGen = self.searchGen
+        logger.start()
+        
+        print("[MapBoard] fetchSearchPlaces() called with input='\(self.searchInput)'")
 
         let oldIDs = self.searchPlaces
         let rawQuery = self.searchInput.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -95,85 +95,155 @@ public final class MapBoard: Sendable, ObservableObject {
             self.searchPlaces = []
             return
         }
+        
+        let client = GMSPlacesClient.shared()                // Places SDK 클라이언트
+        let token = GMSAutocompleteSessionToken()            // 자동완성/상세 호출 묶기 위한 세션 토큰(비용 최적화)
+        let util = GooglePlaceUtil(client: client, token: token)
+        
+        let t0 = CFAbsoluteTimeGetCurrent()
+        self.searchGen &+= 1
+        let myGen = self.searchGen
 
-        let client = GMSPlacesClient.shared()
-        let token  = GMSAutocompleteSessionToken()
-
-        // 1) 자동완성
-        let placeIDs: [String] = await withCheckedContinuation { (cont: CheckedContinuation<[String], Never>) in
-            let filter = GMSAutocompleteFilter()
-            filter.types = ["establishment"]
+        // compute
+        async let placeIDsTask: [String] = await withCheckedContinuation { (cont: CheckedContinuation<[String], Never>) in
+            let filter = GMSAutocompleteFilter()             // 자동완성 필터
+            filter.types = ["establishment"]                 // 업장 유형만 제한
             filter.countries = ["KR"]
-            client.findAutocompletePredictions(fromQuery: rawQuery, filter: filter, sessionToken: token) { preds, err in
+            
+            util.client.findAutocompletePredictions(fromQuery: rawQuery, filter: filter, sessionToken: token) { preds, err in
                 if let err = err { print("autocomplete error:", err); cont.resume(returning: []); return }
                 let ids = (preds ?? []).prefix(6).compactMap { $0.placeID } // 6개로 제한
                 cont.resume(returning: Array(ids))
             }
         }
-        print("T/auto", CFAbsoluteTimeGetCurrent() - t0)
-
-        // 2) 스냅샷+사진 병렬 수집
-        let tuples: [(idx: Int, snap: PlaceSnap, image: UIImage)] = await Task.detached(priority: .userInitiated) { () -> [(Int, PlaceSnap, UIImage)] in
-            await withTaskGroup(of: (Int, PlaceSnap, UIImage)?.self) { group in
-                for (idx, pid) in placeIDs.enumerated() {
-                    group.addTask {
-                        guard let snap = await self.fetchPlaceSnap(pid, client: client, token: token) else { return nil } // ← 인자 넘김
-                        let img = await self.fetchPlaceImage(placeID: pid, client: client, token: token)
-                        return (idx, snap, img)
-                    }
-                }
-                var acc: [(Int, PlaceSnap, UIImage)] = []
-                for await r in group { if let r = r { acc.append(r) } }
-                return acc.sorted { $0.0 < $1.0 }
-            }
-        }.value
 
         // 최신 입력만 반영
         guard myGen == self.searchGen else { return }
         print("T/snaps+photos", CFAbsoluteTimeGetCurrent() - t0)
 
         // 3) 목록/캐시 빌드
-        var assembled: [(placeID: String, name: String, data: PlaceData, summary: String?, image: UIImage)] = []
-        assembled.reserveCapacity(tuples.count)
+//        var assembled: [(placeID: String, name: String, data: PlaceData, summary: String?, image: UIImage)] = []
+//        assembled.reserveCapacity(tuples.count)
 
-        for item in tuples {
-            let s = item.snap
-            let data = PlaceData(
-                name: s.name,
-                imageName: "",
-                location: .init(latitude: s.lat, longitude: s.lon),
-                address: s.address,
-                number: s.phone
-            )
-            // 상세 캐시
-            self.detailByName[s.name] = .init(
-                placeID: s.placeID,
-                name: s.name,
-                lat: s.lat, lon: s.lon,
-                address: s.address,
-                phone: s.phone,
-                website: s.website,
-                rating: s.rating,
-                priceLevelRaw: s.priceLevelRaw,
-                types: s.types,
-                weekdayText: s.weekdayText,
-                editorialSummary: s.summary
-            )
-            self.editorialSummaryByName[s.name] = s.summary ?? ""
-            assembled.append((s.placeID, s.name, data, s.summary, item.image))
+//        for item in tuples {
+//            let s = item.snap
+//            let data = PlaceData(
+//                name: s.name,
+//                imageName: "",
+//                location: .init(latitude: s.lat, longitude: s.lon),
+//                address: s.address,
+//                number: s.phone
+//            )
+//            // 상세 캐시
+//            self.detailByName[s.name] = .init(
+//                placeID: s.placeID,
+//                name: s.name,
+//                lat: s.lat, lon: s.lon,
+//                address: s.address,
+//                phone: s.phone,
+//                website: s.website,
+//                rating: s.rating,
+//                priceLevelRaw: s.priceLevelRaw,
+//                types: s.types,
+//                weekdayText: s.weekdayText,
+//                editorialSummary: s.summary
+//            )
+//            self.editorialSummaryByName[s.name] = s.summary ?? ""
+//            assembled.append((s.placeID, s.name, data, s.summary, item.image))
+//        }
+
+
+        // 3) 스냅샷들을 수집하여 목록/상세 캐시 빌드
+        let placeIDs = await placeIDsTask
+        var newDatas: [PlaceTuple] = [] // 리스트 셀 구성용 튜플 배열
+
+        newDatas = await withTaskGroup(of: PlaceTuple?.self) { group in
+            for placeID in placeIDs {
+                group.addTask { [weak self] in
+                    guard let self else { return nil }
+                    
+                    async let snapTask = self.fetchPlaceSnap(placeID, client: util.client, token: util.token)
+                    async let imageTask = self.fetchPlaceImage(placeID: placeID, client: util.client, token: util.token)
+                    
+                    guard let snap = await snapTask else { return nil }
+                    
+                    let placeData = PlaceData(
+                        name: snap.name,
+                        imageName: "",                                 // 사진은 상세에서 SDK로 별도 로드
+                        location: .init(latitude: snap.lat, longitude: snap.lon),
+                        address: snap.address,
+                        number: snap.phone
+                    )
+                    
+                    let image = await imageTask
+                    
+                    return PlaceTuple(id: placeID, data: placeData, image: image)
+                }
+            }
+            
+            var collected: [PlaceTuple] = []
+            for await item in group {
+                if let item {
+                    collected.append(item)
+                }
+            }
+            
+            return collected
+            
         }
+        
+//        for placeID in placeIDs {
+//            guard let snap = await fetchPlaceSnap(placeID, client: client, token: token) else { continue } // 개별 실패 무시하고 다음
+//
+//            // (A) 목록 셀 최소 모델(PlaceData) 구성: 이름/좌표/주소/전화만
+//            let placeData = PlaceData(
+//                name: snap.name,
+//                imageName: "",                                 // 사진은 상세에서 SDK로 별도 로드
+//                location: .init(latitude: snap.lat, longitude: snap.lon),
+//                address: snap.address,
+//                number: snap.phone
+//            )
+//            
+//            let placeImage = await fetchPlaceImage(placeID: placeID,
+//                                                   client: client,
+//                                                   token: token)
+//
+//            // (B) 상세화면용 값 캐시 갱신: 빠른 표시 위해 MapBoard가 보유
+//            let detail = PlaceDetail(
+//                placeID: snap.placeID,
+//                name: snap.name,
+//                lat: snap.lat, lon: snap.lon,
+//                address: snap.address,
+//                phone: snap.phone,
+//                website: snap.website,
+//                rating: snap.rating,
+//                priceLevelRaw: snap.priceLevelRaw,
+//                types: snap.types,
+//                weekdayText: snap.weekdayText,
+//                editorialSummary: snap.summary
+//            )
+//            self.detailByName[snap.name] = detail             // 키: 이름
+//
+//            // (C) 리스트 보조 텍스트(요약) 캐시도 갱신
+//            self.editorialSummaryByName[snap.name] = snap.summary ?? ""
+//
+//            // (D) 최종적으로 테이블 재구성에 쓸 튜플 축적
+//            newDatas.append(.init(id: placeID, data: placeData, image: placeImage))
+//        }
 
-        // 4) 화면 배열 재구성(기존 재사용)
+
+        // (F) 화면 바인딩 배열 재구성: 동일 이름이 있으면 기존 ID 재사용
         var newPlaces: [SearchPlace] = []
-        newPlaces.reserveCapacity(assembled.count)
-
-        for (placeID, name, data, _, image) in assembled {
-            if let exist = oldIDs.first(where: { $0.name == name }) {
-                newPlaces.append(exist)
+        
+        for data in newDatas {          // 신규 데이터 순회
+            if let exist = oldIDs.first(where: { $0.name == data.data.name }) {
+                self.searchPlaces.append(exist)               // 기존 ID 재사용
             } else {
-                let sp = SearchPlace(owner: self, data: data, googlePlaceId: placeID)
-                sp.image = image
-                newPlaces.append(sp)
+                let sp = SearchPlace(owner: self, data: data.data, googlePlaceId: data.id) // 새 객체 생성
+                
+                sp.image = data.image
+                
+                 newPlaces.append(sp)               // ID 추가
             }
         }
         self.searchPlaces = newPlaces
@@ -283,5 +353,16 @@ public final class MapBoard: Sendable, ObservableObject {
         let types: [String]          // 타입들
         let weekdayText: [String]    // 영업시간 요약 문자열(영문)
         let summary: String?         // 편집자 요약(editorialSummary)
+    }
+    
+    public struct PlaceTuple: Sendable, Hashable {
+        let id: String
+        let data: PlaceData
+        let image: UIImage
+    }
+    
+    internal struct GooglePlaceUtil: @unchecked Sendable {
+        let client: GMSPlacesClient
+        let token: GMSAutocompleteSessionToken
     }
 }

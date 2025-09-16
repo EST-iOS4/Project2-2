@@ -189,6 +189,7 @@ class PlaceVC: UIViewController {
     visitButton.setTitleColor(.white, for: .normal)
     visitButton.titleLabel?.font = .systemFont(ofSize: 18, weight: .semibold)
     visitButton.layer.cornerRadius = 12
+    visitButton.addTarget(self, action: #selector(openInPreferredMaps), for: .touchUpInside)
 
     // MARK: - 뷰 계층구조 구성
     // 서브뷰 추가
@@ -314,6 +315,7 @@ class PlaceVC: UIViewController {
       visitButton.trailingAnchor.constraint(equalTo: infoContainerView.trailingAnchor, constant: -20),
       visitButton.heightAnchor.constraint(equalToConstant: 50),
       visitButton.bottomAnchor.constraint(equalTo: infoContainerView.bottomAnchor, constant: -20)
+      
     ])
   }
 
@@ -368,20 +370,39 @@ class PlaceVC: UIViewController {
 //  }
   
   // MARK: - 이벤트 핸들러
-  
   @objc private func heartButtonTapped() {
     placeRef.toggleLike()
   }
   
   // 길찾기 버튼이 탭 되었을때 호출되는 메서드
-  @objc private func findButtonTapped() {
-    let coord = CLLocationCoordinate2D(latitude: placeRef.location.latitude,
-                                       longitude: placeRef.location.longitude)
-    let placemark = MKPlacemark(coordinate: coord)
-    let item = MKMapItem(placemark: placemark)
-    item.name = placeRef.name
-    item.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving])
-  }
+    @objc private func openInPreferredMaps() {
+        let lat = placeRef.location.latitude
+        let lon = placeRef.location.longitude
+        let name = placeRef.name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "Destination"
+        let app = UIApplication.shared
+
+        switch MapPrefStore.get() {          // ← 여기!
+        case .apple:
+            let item = MKMapItem(placemark: MKPlacemark(coordinate: .init(latitude: lat, longitude: lon)))
+            item.name = placeRef.name
+            item.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving])
+
+        case .google:
+            if let url = URL(string: "comgooglemaps://?daddr=\(lat),\(lon)&directionsmode=driving&q=\(name)"),
+               app.canOpenURL(url) { app.open(url) }
+            else if let web = URL(string: "https://maps.google.com/?daddr=\(lat),\(lon)&q=\(name)") {
+                app.open(web)
+            }
+
+        case .naver:
+            if let url = URL(string: "nmap://route/car?dlat=\(lat)&dlng=\(lon)&dname=\(name)"),
+               app.canOpenURL(url) { app.open(url) }
+
+        case .kakao:
+            if let url = URL(string: "kakaomap://route?ep=\(lat),\(lon)&by=CAR"),
+               app.canOpenURL(url) { app.open(url) }
+        }
+    }
   
   // MARK : - 네비게이션 바 설정
   
