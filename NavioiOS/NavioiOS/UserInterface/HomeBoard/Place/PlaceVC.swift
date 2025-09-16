@@ -370,7 +370,6 @@ class PlaceVC: UIViewController {
 //  }
   
   // MARK: - 이벤트 핸들러
-  
   @objc private func heartButtonTapped() {
     placeRef.toggleLike()
   }
