@@ -33,7 +33,7 @@ public final class HomeBoard: Sendable, ObservableObject {
     
     
     // MARK: action
-    public func setUpSampleSpots() {
+    public func setUpSpots() async {
         logger.start()
         
         // capture
@@ -42,8 +42,13 @@ public final class HomeBoard: Sendable, ObservableObject {
             return
         }
         
+        // compute
+        let localSpots = await LocalDataManager.shared.spots
+        
         // mutate
-        self.spots = Self.sampleSpotDatas
+        let spots = localSpots
+            .map { Spot(owner: self.id, data: $0) }
+        self.spots = Self.sampleSpots
             .map { Spot(owner: self, data: $0)}
     }
     
@@ -61,13 +66,6 @@ public final class HomeBoard: Sendable, ObservableObject {
             HomeBoardManager.container[self]
         }
     }
-    
-    static let sampleSpotDatas: [SpotData] = [
-        .init(name: "홍대",imageName: "hongdae"),
-        .init(name: "부산", imageName: "busan"),
-        .init(name: "경주",imageName: "gyeongju"),
-        .init(name: "잠실", imageName: "jamsil")
-    ]
 }
 
 

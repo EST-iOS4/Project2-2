@@ -15,27 +15,19 @@ private let logger = NavioLogger("Spot")
 @MainActor
 public final class Spot: Sendable, ObservableObject {
     // MARK: core
-    public init(owner: HomeBoard, data: SpotData) {
+    internal init(owner: HomeBoard.ID, data: LocalDataManager.Spot) {
         self.owner = owner
         self.name = data.name
-        self.imageName = data.imageName
+        self.imageURL = data.imageURL
     }
     
     
     // MARK: state
-    internal nonisolated let owner: HomeBoard
+    internal nonisolated let id = ID()
+    internal nonisolated let owner: HomeBoard.ID
     
     public nonisolated let name: String
-    public nonisolated let imageName: String
-    
-    public var image: UIImage {
-        let imageURL = Bundle.module.url(
-            forResource: imageName,
-            withExtension: "png")!
-        let data = try? Data(contentsOf: imageURL)
-        let uiImage = UIImage(data: data!)
-        return uiImage!
-    }
+    public nonisolated let imageURL: URL
     
     @Published public internal(set) var places: [Place] = []
     
@@ -74,6 +66,15 @@ public final class Spot: Sendable, ObservableObject {
     
     
     // MARK: value
+    @MainActor
+    public struct ID: Sendable, Hashable {
+        public let rawValue = UUID()
+        nonisolated init() { }
+        
+        public var isExist: Bool { fatalError() }
+        public var ref: Spot? { fatalError() }
+    }
+    
     static let hongdaeDatas: [PlaceData] = [
         .init(name: "큐브이스케이프", imageName: "cube_escape_hongdae",
               location: .init(latitude: 37.553584, longitude: 126.920718),
@@ -154,4 +155,18 @@ public final class Spot: Sendable, ObservableObject {
             number: "02-2240-8800"
         )
     ]
+}
+
+
+// MARK: ObjectManager
+@MainActor
+fileprivate final class SpotManager: Sendable {
+    // MARK: core
+    static var container: [Spot.ID: Spot] = [:]
+    static func register(_ object: Spot) {
+        container[object.id] = object
+    }
+    static func unregister(_ id: Spot.ID) {
+        container[id] = nil
+    }
 }

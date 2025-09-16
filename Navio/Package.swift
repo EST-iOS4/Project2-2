@@ -43,7 +43,10 @@ let package = Package(
         
         // ToolBox
         .target(
-            name: "ToolBox"
+            name: "ToolBox",
+            resources: [
+              .process("LocalDataManager/images")
+            ]
         )
     ]
 )
