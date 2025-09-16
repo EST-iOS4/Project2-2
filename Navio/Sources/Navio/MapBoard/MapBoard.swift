@@ -8,7 +8,8 @@ import Foundation
 import Combine
 import ToolBox
 import CoreLocation
-import GooglePlaces
+@preconcurrency import GooglePlaces
+import UIKit
 
 private let logger = NavioLogger("MapBoard")
 
@@ -26,6 +27,10 @@ public final class MapBoard: Sendable, ObservableObject {
 
     // MARK: state
     public nonisolated let owner: Navio
+    
+    private let photoCache = NSCache<NSString, UIImage>()   // 썸네일 캐시
+    private var searchGen: UInt = 0
+    
 
     @Published public private(set) var currentLocation: Location? = nil
     @Published public private(set) var isUpdatingLocation: Bool = false
@@ -67,7 +72,7 @@ public final class MapBoard: Sendable, ObservableObject {
     }
 
     public func fetchRecentPlaces() {
-        // 
+        //
         let googlePlaces = SearchPlace.load()
         
         var newPlaces: [RecentPlace] = []
@@ -78,23 +83,26 @@ public final class MapBoard: Sendable, ObservableObject {
         
         self.recentPlaces = newPlaces
     }
+    
     public func fetchSearchPlaces() async {
         logger.start()
         
         print("[MapBoard] fetchSearchPlaces() called with input='\(self.searchInput)'")
-        // capture
+
         let oldIDs = self.searchPlaces
-        let rawQuery = self.searchInput
-            .trimmingCharacters(in: .whitespacesAndNewlines) // 앞뒤 공백 제거
+        let rawQuery = self.searchInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard rawQuery.isEmpty == false else {
+            self.searchPlaces = []
+            return
+        }
         
         let client = GMSPlacesClient.shared()                // Places SDK 클라이언트
         let token = GMSAutocompleteSessionToken()            // 자동완성/상세 호출 묶기 위한 세션 토큰(비용 최적화)
         let util = GooglePlaceUtil(client: client, token: token)
-
-        if rawQuery.isEmpty {
-            self.searchPlaces = []
-            return
-        }
+        
+        let t0 = CFAbsoluteTimeGetCurrent()
+        self.searchGen &+= 1
+        let myGen = self.searchGen
 
         // compute
         async let placeIDsTask: [String] = await withCheckedContinuation { (cont: CheckedContinuation<[String], Never>) in
@@ -102,21 +110,48 @@ public final class MapBoard: Sendable, ObservableObject {
             filter.types = ["establishment"]                 // 업장 유형만 제한
             filter.countries = ["KR"]
             
-            util.client.findAutocompletePredictions(
-                fromQuery: rawQuery,                         // 사용자 검색어
-                filter: filter,                              // 필터 적용
-                sessionToken: token                          // 같은 세션으로 묶어 과금 최적화
-            ) { predictions, error in
-                if let error = error {                       // 네트워크/쿼터 등 오류
-                    print("autocomplete error:", error)
-                    cont.resume(returning: [])               // 실패하면 빈 배열로 계속 진행
-                    return
-                }
-                // 상위 10개까지만 사용, placeID만 추출
-                let ids = (predictions ?? []).prefix(10).compactMap { $0.placeID }
-                cont.resume(returning: Array(ids))           // 연속선택으로 반환
+            util.client.findAutocompletePredictions(fromQuery: rawQuery, filter: filter, sessionToken: token) { preds, err in
+                if let err = err { print("autocomplete error:", err); cont.resume(returning: []); return }
+                let ids = (preds ?? []).prefix(6).compactMap { $0.placeID } // 6개로 제한
+                cont.resume(returning: Array(ids))
             }
         }
+
+        // 최신 입력만 반영
+        guard myGen == self.searchGen else { return }
+        print("T/snaps+photos", CFAbsoluteTimeGetCurrent() - t0)
+
+        // 3) 목록/캐시 빌드
+//        var assembled: [(placeID: String, name: String, data: PlaceData, summary: String?, image: UIImage)] = []
+//        assembled.reserveCapacity(tuples.count)
+
+//        for item in tuples {
+//            let s = item.snap
+//            let data = PlaceData(
+//                name: s.name,
+//                imageName: "",
+//                location: .init(latitude: s.lat, longitude: s.lon),
+//                address: s.address,
+//                number: s.phone
+//            )
+//            // 상세 캐시
+//            self.detailByName[s.name] = .init(
+//                placeID: s.placeID,
+//                name: s.name,
+//                lat: s.lat, lon: s.lon,
+//                address: s.address,
+//                phone: s.phone,
+//                website: s.website,
+//                rating: s.rating,
+//                priceLevelRaw: s.priceLevelRaw,
+//                types: s.types,
+//                weekdayText: s.weekdayText,
+//                editorialSummary: s.summary
+//            )
+//            self.editorialSummaryByName[s.name] = s.summary ?? ""
+//            assembled.append((s.placeID, s.name, data, s.summary, item.image))
+//        }
+
 
         // 3) 스냅샷들을 수집하여 목록/상세 캐시 빌드
         let placeIDs = await placeIDsTask
@@ -211,8 +246,8 @@ public final class MapBoard: Sendable, ObservableObject {
                  newPlaces.append(sp)               // ID 추가
             }
         }
-        
         self.searchPlaces = newPlaces
+        print("T/total", CFAbsoluteTimeGetCurrent() - t0)
     }
     
     public func removeRecentPlaces() {
@@ -227,12 +262,14 @@ public final class MapBoard: Sendable, ObservableObject {
     // MARK: Helphers
     private func fetchPlaceSnap(_ placeID: String, client: GMSPlacesClient, token: GMSAutocompleteSessionToken) async -> PlaceSnap? {
         // 호출할 피드
-        let fields: GMSPlaceField = [                    // 필요한 것만 명시
+        let fields: GMSPlaceField = [
             .placeID, .name, .coordinate,
-            .formattedAddress, .phoneNumber, .website,
-            .openingHours, .rating, .priceLevel, .types,
+            .formattedAddress,
+            .rating, .priceLevel, .types,
+            .openingHours,
             .editorialSummary
         ]
+        
         return await withCheckedContinuation { (cont: CheckedContinuation<PlaceSnap?, Never>) in
             client.fetchPlace(
                 fromPlaceID: placeID,                    // 대상 placeID
@@ -267,39 +304,25 @@ public final class MapBoard: Sendable, ObservableObject {
         }
     }
     private func fetchPlaceImage(placeID: String, client: GMSPlacesClient, token: GMSAutocompleteSessionToken) async -> UIImage {
-        // 요청할 정보
-        let fields: GMSPlaceField = [
-            .placeID, .name, .coordinate, .viewport,
-            .formattedAddress, .addressComponents,
-            .phoneNumber, .website,
-            .openingHours, .rating, .userRatingsTotal, .priceLevel, .types,
-            .editorialSummary, .photos
-        ]
-        
-        return await withCheckedContinuation { continuation in
-            // GoogleClient로 실제 요청
-            client.fetchPlace(fromPlaceID: placeID, placeFields: fields, sessionToken: token) { [weak self] place, error in
-                if let error = error { print("fetchPlace error:", error) }
-                guard let self, let place = place else { return }
+        if let cached = photoCache.object(forKey: placeID as NSString) { return cached }
+        let fallback = UIImage(systemName: "photo")!
+        let thumbSize = CGSize(width: 120, height: 120)
 
-                // 사진 로드(있을 경우)
-                if let meta = place.photos?.first {
-                    client.loadPlacePhoto(meta, constrainedTo: CGSize(width: 800, height: 600), scale: UIScreen.main.scale) { [weak self] image, err in
-                        if let err = err { print("loadPhoto error:", err) }
-                        
-                        let sampleImage = UIImage(systemName: "heart.fill")!
-                        continuation.resume(returning: image ?? sampleImage)
-                    }
-                } else {
-                    logger.failure("사진이 없습니다!!")
-                    
-                    // 사진이 없을 경우 SFSymbol로 대체
-                    continuation.resume(returning: UIImage(systemName: "person.circle")!)
+        return await withCheckedContinuation { cont in
+            client.fetchPlace(fromPlaceID: placeID,
+                              placeFields: [.photos],                 // photos만
+                              sessionToken: token) { place, err in
+                if let err = err { print("fetchPlace error:", err); cont.resume(returning: fallback); return }
+                guard let meta = place?.photos?.first else { cont.resume(returning: fallback); return }
+                client.loadPlacePhoto(meta, constrainedTo: thumbSize, scale: UIScreen.main.scale) { image, e in
+                    if let e = e { print("loadPhoto error:", e) }
+                    let img = image ?? fallback
+                    self.photoCache.setObject(img, forKey: placeID as NSString)
+                    cont.resume(returning: img)
                 }
             }
         }
     }
-    
     
     // MARK: value
     public struct PlaceDetail: Sendable, Hashable {

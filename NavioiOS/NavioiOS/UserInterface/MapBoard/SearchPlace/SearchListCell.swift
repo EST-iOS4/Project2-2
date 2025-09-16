@@ -11,45 +11,45 @@ import Navio
 // MARK: - SearchListCell
 // 역할: UITableView 안에 들어갈 개별 검색 결과 셀의 UI와 레이아웃 정의.
 class SearchListCell: UITableViewCell {
-  
-  private let itemImageView: UIImageView = {
-    let imageView = UIImageView()
-    imageView.contentMode = .scaleAspectFit
-    imageView.clipsToBounds = true
-    imageView.layer.cornerRadius = 25
-    imageView.backgroundColor = .systemGray5
-    imageView.tintColor = .systemBlue
-      imageView.translatesAutoresizingMaskIntoConstraints = false
-    return imageView
-  }()
-  
-  private let titleLabel: UILabel = {
-    let label = UILabel()
-    label.font = UIFont.systemFont(ofSize: 18, weight: .medium)
-    label.textColor = .label
-    label.numberOfLines = 1
-      label.translatesAutoresizingMaskIntoConstraints = false
-    return label
-  }()
-  
-  private let subtitleLabel: UILabel = {
-    let label = UILabel()
-    label.font = UIFont.systemFont(ofSize: 14)
-    label.textColor = .systemGray
-    label.numberOfLines = 1
-      label.translatesAutoresizingMaskIntoConstraints = false
-    return label
-  }()
-  
-  override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-    super.init(style: style, reuseIdentifier: reuseIdentifier)
-    setupUI()
-  }
-  
-  required init?(coder: NSCoder) {
-    fatalError("init(coder:) has not been implemented")
-  }
-  
+    
+    private let itemImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFit
+        imageView.clipsToBounds = true
+        imageView.layer.cornerRadius = 25
+        imageView.backgroundColor = .systemGray5
+        imageView.tintColor = .systemBlue
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
+    }()
+    
+    private let titleLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.systemFont(ofSize: 18, weight: .medium)
+        label.textColor = .label
+        label.numberOfLines = 1
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let subtitleLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.systemFont(ofSize: 14)
+        label.textColor = .systemGray
+        label.numberOfLines = 1
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+        setupUI()
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     private func setupUI() {
         contentView.addSubview(itemImageView)
         contentView.addSubview(titleLabel)
@@ -71,11 +71,17 @@ class SearchListCell: UITableViewCell {
             subtitleLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
             subtitleLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
         ])
-  }
-  
-  func configure(with data: SearchPlace) {
-    itemImageView.image = UIImage(systemName: data.imageName)
-      titleLabel.text = data.name
-      subtitleLabel.text = data.address
-  }
+    }
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        itemImageView.image = nil
+    }
+    
+    
+    func configure(with data: SearchPlace) {
+        itemImageView.image = UIImage(systemName: data.imageName)
+        titleLabel.text = data.name
+        subtitleLabel.text = data.address
+    }
 }

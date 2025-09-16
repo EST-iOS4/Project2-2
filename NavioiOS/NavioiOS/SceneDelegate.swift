@@ -20,7 +20,6 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
                    willConnectTo session: UISceneSession,
                    options connectionOptions: UIScene.ConnectionOptions) {
             guard let windowScene = (scene as? UIWindowScene) else { return }
-    
             self.window = UIWindow(windowScene: windowScene)
             // 여기서 직접 초기 화면을 설정
             let navio = Navio()
