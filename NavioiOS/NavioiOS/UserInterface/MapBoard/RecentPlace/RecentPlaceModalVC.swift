@@ -237,7 +237,7 @@ class RecentPlaceModalVC: UIViewController {
     
         return button
     }
-  // ✅ 즐겨찾기 버튼 탭 액션 메서드 추가
+  // 즐겨찾기 버튼 탭 액션 메서드 추가
   @objc private func shortcutButtonTapped(_ sender: UIButton) {
       guard let placeName = sender.accessibilityLabel,
             let likePlace = mapBoardRef.likePlaces.first(where: { $0.name == placeName }) else {
@@ -248,9 +248,6 @@ class RecentPlaceModalVC: UIViewController {
       // 1. 지도 이동
       let coord = likePlace.location.toCLLocationCoordinate2D
       NotificationCenter.default.post(name: .mapShouldMoveToCoordinate, object: nil, userInfo: ["coordinate": coord])
-      
-      // 2. LikeModalVC로 전환
-      NotificationCenter.default.post(name: .shouldSwitchToLikeModal, object: nil)
   }
   
   
