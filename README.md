@@ -9,6 +9,9 @@ Navio는 현재 위치에 기반하여 여행 장소를 추천해주는 서비�
 - ```URLSesssion```
 - ```UserDefaults```
 
+## 📱 개발 환경
+![Platform](https://img.shields.io/badge/Platform-iOS-blue) ![Xcode](https://img.shields.io/badge/Xcode-16.4-blue) ![iOS](https://img.shields.io/badge/iOS-18.5+-gray) ![Swift](https://img.shields.io/badge/Swift-6.1.2-orange) 
+
 ## ✔️커밋 컨벤션
 
 ```
@@ -23,6 +26,7 @@ Docs        : 문서 수정 (문서 추가, 수정, 삭제, README)
 Init        : 프로젝트 생성
 Rename      : 파일 혹은 폴더명을 수정하거나 옮기는 작업만 한 경우
 Remove      : 파일 삭제
+Refactor    : 리팩토링
 ```
 
 
@@ -43,4 +47,7 @@ develop/feat/각자-맡은-기능명
 5. 1~4 과정을 반복합니다.
 ```
 
-
+## 🔔 팀원 소개
+| 김민우 | 구현모 | 송영민 | 왕은영 | 정수안 |
+| --- | --- | --- | --- | --- |
+| 👑 팀장 | 팀원 | 팀원 | 팀원 | 팀원|
